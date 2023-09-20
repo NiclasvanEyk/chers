@@ -7,9 +7,9 @@ impl Color {
     fn for_coordinate(coordinate: Coordinate) -> Color {
         // Even rows have even numbers black, odd rows have odd ones
         if coordinate.y % 2 == coordinate.x % 2 {
-            return Color::Black;
-        } else {
             return Color::White;
+        } else {
+            return Color::Black;
         }
     }
 }
@@ -60,9 +60,9 @@ impl ToString for Piece {
             Color::White => match self.figure {
                 Figure::King => "♔",
                 Figure::Queen => "♕",
-                Figure::Rook => "♖",
+                Figure::Rook => "♜",
                 Figure::Bishop => "♗",
-                Figure::Knight => "♘",
+                Figure::Knight => "♞",
                 Figure::Pawn => "♙",
             },
             Color::Black => match self.figure {
@@ -71,7 +71,7 @@ impl ToString for Piece {
                 Figure::Rook => "♜",
                 Figure::Bishop => "♝",
                 Figure::Knight => "♞",
-                Figure::Pawn => "♟︎",
+                Figure::Pawn => "♙",
             },
         }
         .to_string();
@@ -266,9 +266,16 @@ const INITIAL_BOARD: Board = [
 ];
 
 fn to_terminal_string(coordinate: Coordinate, piece: &Option<Piece>) -> String {
-    let prefix = match Color::for_coordinate(coordinate) {
-        Color::White => "\x1b[47m",
-        Color::Black => "\x1b[40m",
+    let background = match Color::for_coordinate(coordinate) {
+        Color::White => "\x1b[48;5;216m",
+        Color::Black => "\x1b[48;5;173m",
+    };
+    let foreground = match piece {
+        Some(p) => match p.color {
+            Color::White => "\x1b[38;2;255;255;255m",
+            Color::Black => "\x1b[38;2;0;0;0m",
+        },
+        None => "",
     };
 
     let piece_str = match piece {
@@ -276,7 +283,7 @@ fn to_terminal_string(coordinate: Coordinate, piece: &Option<Piece>) -> String {
         None => " ".to_string(),
     };
 
-    return format!("{}{}\x1b[0m", prefix, piece_str);
+    return format!("{}{}{} \x1b[0m", background, foreground, piece_str);
 }
 
 fn show_board(board: Board) -> String {

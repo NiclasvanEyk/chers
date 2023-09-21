@@ -1,3 +1,5 @@
+use std::io::Write;
+
 enum Color {
     White,
     Black,
@@ -11,6 +13,13 @@ impl Color {
         } else {
             return Color::Black;
         }
+    }
+
+    pub fn switch(self) -> Color {
+        return match self {
+            Color::White => Color::Black,
+            Color::Black => Color::White,
+        };
     }
 }
 
@@ -35,6 +44,15 @@ impl ToString for Coordinate {
     }
 }
 
+#[derive(Debug)]
+enum CoordinateParserError {
+    Empty,
+    MissinColumn,
+    InvalidColumn,
+    MissingRow,
+    InvalidRow,
+}
+
 impl Coordinate {
     pub fn checked_from_board_index(row: usize, column: usize) -> Option<Coordinate> {
         return Coordinate::checked(8 - row, 8 - column);
@@ -45,7 +63,48 @@ impl Coordinate {
             return Option::None;
         }
 
-        return Option::Some(Coordinate { x: x, y: y });
+        return Option::Some(Coordinate { x, y });
+    }
+
+    pub fn parse(input: &str) -> Result<Coordinate, CoordinateParserError> {
+        let normalized = input.trim();
+        if normalized.is_empty() {
+            return Err(CoordinateParserError::Empty);
+        }
+
+        let characters: Vec<char> = normalized.chars().take(2).collect();
+
+        let x = match characters.get(0) {
+            Some(column) => match column.to_ascii_lowercase() {
+                'a' => 0,
+                'b' => 1,
+                'c' => 2,
+                'd' => 3,
+                'e' => 4,
+                'f' => 5,
+                'g' => 6,
+                'h' => 7,
+                _ => return Err(CoordinateParserError::InvalidColumn),
+            },
+            None => return Err(CoordinateParserError::MissinColumn),
+        };
+
+        let y = match characters.get(1) {
+            Some(row) => match row.to_ascii_lowercase() {
+                '1' => 7,
+                '2' => 6,
+                '3' => 5,
+                '4' => 4,
+                '5' => 3,
+                '6' => 2,
+                '7' => 1,
+                '8' => 0,
+                _ => return Err(CoordinateParserError::InvalidRow),
+            },
+            None => return Err(CoordinateParserError::MissingRow),
+        };
+
+        return Ok(Coordinate { x, y });
     }
 }
 
@@ -82,6 +141,50 @@ struct Move {
     pub piece: Piece,
     pub from: Coordinate,
     pub to: Coordinate,
+}
+
+#[derive(Debug)]
+enum ReadMoveError {
+    Empty,
+    InvalidFrom(CoordinateParserError),
+    InvalidTo(CoordinateParserError),
+}
+
+fn parse_move(input: &str) -> Result<(Coordinate, Coordinate), ReadMoveError> {
+    let words: Vec<&str> = input.trim().split(' ').take(2).collect();
+
+    let from = match words.get(0) {
+        Some(word) => match Coordinate::parse(word) {
+            Ok(coordinate) => coordinate,
+            Err(error) => return Err(ReadMoveError::InvalidFrom(error)),
+        },
+        None => return Err(ReadMoveError::InvalidFrom(CoordinateParserError::Empty)),
+    };
+
+    let to = match words.get(0) {
+        Some(word) => match Coordinate::parse(word) {
+            Ok(coordinate) => coordinate,
+            Err(error) => return Err(ReadMoveError::InvalidTo(error)),
+        },
+        None => return Err(ReadMoveError::InvalidFrom(CoordinateParserError::Empty)),
+    };
+
+    return Ok((from, to));
+}
+
+fn prompt_for_move() -> (Coordinate, Coordinate) {
+    let mut x = String::new();
+
+    loop {
+        print!("Your move: ");
+        std::io::stdout().flush();
+
+        std::io::stdin().read_line(&mut x);
+        match parse_move(&x) {
+            Ok(from_to) => return from_to,
+            Err(err) => println!("{:?}", err),
+        };
+    }
 }
 
 type Board = [[Option<Piece>; 8]; 8];
@@ -307,6 +410,36 @@ fn show_board(board: Board) -> String {
         .to_string();
 }
 
+struct Match {
+    board: Board,
+}
+
+enum AdvanceError {}
+
+impl Match {
+    pub fn new() -> Match {
+        return Match {
+            board: INITIAL_BOARD,
+        };
+    }
+
+    pub fn advance(&self, from: Coordinate, to: Coordinate) {}
+
+    pub fn checkmate(&self) -> bool {
+        return false;
+    }
+}
+
 fn main() {
-    println!("{}\n\n", show_board(INITIAL_BOARD));
+    let game = Match::new();
+    let mut player = Color::White;
+
+    while !game.checkmate() {
+        println!("{}\n", show_board(INITIAL_BOARD));
+
+        let (from, to) = prompt_for_move();
+        game.advance(from, to);
+
+        player = player.switch()
+    }
 }

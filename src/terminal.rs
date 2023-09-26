@@ -249,8 +249,7 @@ pub fn show_board(board: Board) -> String {
                 .join("")
         })
         .collect::<Vec<String>>()
-        .join("\n")
-        .to_string();
+        .join("\n");
 }
 
 pub fn clear_terminal() {

@@ -1,6 +1,8 @@
 use crate::terminal::show_board;
 
-use super::{Board, Color::White, Coordinate, Move, Piece, Player, State, INITIAL_BOARD};
+use super::{
+    Board, CastlingRights, Color::White, Coordinate, Move, Piece, Player, State, INITIAL_BOARD,
+};
 
 #[derive(Debug)]
 pub enum Event {
@@ -36,6 +38,10 @@ impl Engine {
         return State {
             player: White,
             board: INITIAL_BOARD,
+            castling_rights: CastlingRights::all(),
+            en_passant_target: None,
+            halfmove_clock: 0,
+            fullmove_number: 1,
         };
     }
 

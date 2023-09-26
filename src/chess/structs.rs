@@ -16,7 +16,7 @@ pub enum Figure {
     Pawn,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Coordinate {
     pub x: usize,
     pub y: usize,
@@ -32,16 +32,11 @@ pub struct Move {
 pub struct Piece {
     pub color: Color,
     pub figure: Figure,
-    pub moved: bool,
 }
 
 impl Piece {
     pub const fn new(color: Color, figure: Figure) -> Self {
-        return Self {
-            color,
-            figure,
-            moved: false,
-        };
+        return Self { color, figure };
     }
 
     pub const fn black(figure: Figure) -> Self {
@@ -75,15 +70,65 @@ pub const fn empty_board() -> Board {
     ];
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct CastlingRights {
+    white: CastleDirections,
+    black: CastleDirections,
+}
+
+impl CastlingRights {
+    pub const fn all() -> Self {
+        return Self {
+            white: CastleDirections::both(),
+            black: CastleDirections::both(),
+        };
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub struct CastleDirections {
+    queen_side: bool,
+    king_side: bool,
+}
+
+impl CastleDirections {
+    pub const fn both() -> Self {
+        return Self {
+            queen_side: true,
+            king_side: true,
+        };
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct State {
     pub player: Player,
     pub board: Board,
+    pub castling_rights: CastlingRights,
+    pub en_passant_target: Option<Coordinate>,
+    pub halfmove_clock: u8,
+    pub fullmove_number: u8,
 }
 
 impl PartialEq for State {
     fn eq(&self, other: &Self) -> bool {
         if self.player != other.player {
+            return false;
+        }
+
+        if self.castling_rights != other.castling_rights {
+            return false;
+        }
+
+        if self.en_passant_target != other.en_passant_target {
+            return false;
+        }
+
+        if self.halfmove_clock != other.halfmove_clock {
+            return false;
+        }
+
+        if self.fullmove_number != other.fullmove_number {
             return false;
         }
 
@@ -114,6 +159,13 @@ impl State {
         return Self {
             player: self.player.switch(),
             board: new_board,
+            castling_rights: self.castling_rights,     // TODO
+            en_passant_target: self.en_passant_target, // TODO
+            halfmove_clock: self.halfmove_clock,       // TODO
+            fullmove_number: match self.player {
+                Color::White => self.fullmove_number,
+                Color::Black => self.fullmove_number + 1,
+            },
         };
     }
 }

@@ -1,21 +1,53 @@
-use std::char;
+use std::{char, num::ParseIntError};
 
-use super::{empty_board, empty_row, Board, Figure, Piece, Player, Row, State, BOARD_SIZE};
+use super::{
+    empty_board, empty_row, Board, CastlingRights, Coordinate, Figure, Piece, Player, Row, State,
+    BOARD_SIZE,
+};
 
 #[derive(Debug)]
 pub enum CouldNotParse {
+    InvalidNumberOfParts,
+    InvalidPlayerChar(String),
     InvalidNumberOfRows,
     InvalidNumberOfColumns(String),
-    InvalidCharacter(char),
+    InvalidHalfmoveClock(ParseIntError),
+    InvalidFullmoveNumber(ParseIntError),
+    InvalidPiece(char),
 }
 
 pub fn parse_state(notation: &str) -> Result<State, CouldNotParse> {
-    let board = parse_board(notation)?;
+    let parts: Vec<&str> = notation.split(' ').into_iter().collect();
+    if parts.len() != 6 {
+        return Err(CouldNotParse::InvalidNumberOfParts);
+    }
 
     return Ok(State {
-        board,
-        player: super::Color::White,
+        board: parse_board(parts[0])?,
+        player: parse_player(parts[1])?,
+        castling_rights: parse_castling_rights(parts[2])?,
+        en_passant_target: parse_en_passant_target(parts[3])?,
+        halfmove_clock: parse_halfmove_clock(parts[4])?,
+        fullmove_number: parse_fullmove_number(parts[5])?,
     });
+}
+
+fn parse_halfmove_clock(notation: &str) -> Result<u8, CouldNotParse> {
+    return match notation.parse::<u8>() {
+        Ok(value) => Ok(value),
+        Err(err) => Err(CouldNotParse::InvalidHalfmoveClock(err)),
+    };
+}
+
+fn parse_fullmove_number(notation: &str) -> Result<u8, CouldNotParse> {
+    return match notation.parse::<u8>() {
+        Ok(value) => Ok(value),
+        Err(err) => Err(CouldNotParse::InvalidFullmoveNumber(err)),
+    };
+}
+
+fn parse_en_passant_target(notation: &str) -> Result<Option<Coordinate>, CouldNotParse> {
+    todo!();
 }
 
 pub fn parse_board(notation: &str) -> Result<Board, CouldNotParse> {
@@ -38,13 +70,13 @@ fn parse_row(row: &str) -> Result<Row, CouldNotParse> {
 
     for character in row.chars() {
         if index == BOARD_SIZE {
-            return Err(CouldNotParse::InvalidNumberOfColumns(String::from(row)));
+            return Err(CouldNotParse::InvalidNumberOfColumns(row.to_owned()));
         }
 
         if let Some(digit) = character.to_digit(10) {
             for _ in 0..digit {
                 if index == BOARD_SIZE {
-                    return Err(CouldNotParse::InvalidNumberOfColumns(String::from(row)));
+                    return Err(CouldNotParse::InvalidNumberOfColumns(row.to_owned()));
                 }
 
                 index += 1;
@@ -71,13 +103,12 @@ fn parse_piece(character: char) -> Result<Piece, CouldNotParse> {
         "q" => Figure::Queen,
         "k" => Figure::King,
         "p" => Figure::Pawn,
-        _ => return Err(CouldNotParse::InvalidCharacter(character)),
+        _ => return Err(CouldNotParse::InvalidPiece(character)),
     };
 
     return Ok(Piece {
         figure,
         color: owner(character),
-        moved: false, // TODO
     });
 }
 
@@ -89,6 +120,18 @@ fn owner(character: char) -> Player {
     return Player::Black;
 }
 
+fn parse_player(notation: &str) -> Result<Player, CouldNotParse> {
+    return match notation {
+        "b" => Ok(Player::Black),
+        "w" => Ok(Player::White),
+        _ => Err(CouldNotParse::InvalidPlayerChar(notation.to_owned())),
+    };
+}
+
+fn parse_castling_rights(notation: &str) -> Result<CastlingRights, CouldNotParse> {
+    todo!();
+}
+
 #[cfg(test)]
 mod tests {
     use crate::chess::Engine;
@@ -97,7 +140,7 @@ mod tests {
 
     #[test]
     fn it_parses_the_initial_board_state_correctly() {
-        let notation = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+        let notation = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w QKqk - 0 1";
         let parsed = parse_state(notation).unwrap();
 
         assert_eq!(Engine::new().start(), parsed);

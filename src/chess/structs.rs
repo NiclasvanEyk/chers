@@ -16,10 +16,96 @@ pub enum Figure {
     Pawn,
 }
 
+// A coordinate where top left is (0,0) when white is at the bottom
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Coordinate {
     pub x: usize,
     pub y: usize,
+}
+
+#[derive(Debug)]
+pub enum CoordinateParserError {
+    Empty,
+    MissingColumn,
+    InvalidColumn,
+    MissingRow,
+    InvalidRow,
+}
+
+impl Coordinate {
+    /// Parses a coordinate in algebraic notation
+    pub fn algebraic(input: &str) -> Result<Self, CoordinateParserError> {
+        let normalized = input.trim();
+        if normalized.is_empty() {
+            return Err(CoordinateParserError::Empty);
+        }
+
+        let characters: Vec<char> = normalized.chars().take(2).collect();
+
+        let x = match characters.first() {
+            Some(column) => match column.to_ascii_lowercase() {
+                'a' => 0,
+                'b' => 1,
+                'c' => 2,
+                'd' => 3,
+                'e' => 4,
+                'f' => 5,
+                'g' => 6,
+                'h' => 7,
+                _ => return Err(CoordinateParserError::InvalidColumn),
+            },
+            None => return Err(CoordinateParserError::MissingColumn),
+        };
+
+        let y = match characters.get(1) {
+            Some(row) => match row.to_ascii_lowercase() {
+                '1' => 7,
+                '2' => 6,
+                '3' => 5,
+                '4' => 4,
+                '5' => 3,
+                '6' => 2,
+                '7' => 1,
+                '8' => 0,
+                _ => return Err(CoordinateParserError::InvalidRow),
+            },
+            None => return Err(CoordinateParserError::MissingRow),
+        };
+
+        Ok(Coordinate { x, y })
+    }
+
+    pub fn forward(&self, color: Color, amount: usize) -> Self {
+        Coordinate {
+            x: self.x,
+            y: match color {
+                super::Color::White => self.y - amount,
+                super::Color::Black => self.y + amount,
+            },
+        }
+    }
+
+    pub fn sideways_right(&self, amount: usize) -> Coordinate {
+        Coordinate {
+            x: self.x + amount,
+            y: self.y,
+        }
+    }
+
+    pub fn sideways_left(&self, amount: usize) -> Coordinate {
+        Coordinate {
+            x: self.x - amount,
+            y: self.y,
+        }
+    }
+
+    pub fn is_free(&self, board: &Board) -> bool {
+        self.piece(board).is_none()
+    }
+
+    pub fn piece(&self, board: &Board) -> Option<Piece> {
+        board[self.y][self.x]
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

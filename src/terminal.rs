@@ -1,6 +1,8 @@
 use std::{fmt::Display, io::Write};
 
-use crate::chess::{Board, Color, Coordinate, Engine, Figure, Move, Piece, State};
+use crate::chess::{
+    Board, Color, Coordinate, CoordinateParserError, Engine, Figure, Move, Piece, State,
+};
 
 pub struct TerminalChersMatch {
     engine: Engine,
@@ -57,15 +59,6 @@ impl Color {
     }
 }
 
-#[derive(Debug)]
-pub enum CoordinateParserError {
-    Empty,
-    MissingColumn,
-    InvalidColumn,
-    MissingRow,
-    InvalidRow,
-}
-
 impl Coordinate {
     pub fn checked_from_board_index(row: usize, column: usize) -> Option<Coordinate> {
         return Coordinate::checked(8 - row, 8 - column);
@@ -77,47 +70,6 @@ impl Coordinate {
         }
 
         return Option::Some(Coordinate { x, y });
-    }
-
-    pub fn parse(input: &str) -> Result<Coordinate, CoordinateParserError> {
-        let normalized = input.trim();
-        if normalized.is_empty() {
-            return Err(CoordinateParserError::Empty);
-        }
-
-        let characters: Vec<char> = normalized.chars().take(2).collect();
-
-        let x = match characters.get(0) {
-            Some(column) => match column.to_ascii_lowercase() {
-                'a' => 0,
-                'b' => 1,
-                'c' => 2,
-                'd' => 3,
-                'e' => 4,
-                'f' => 5,
-                'g' => 6,
-                'h' => 7,
-                _ => return Err(CoordinateParserError::InvalidColumn),
-            },
-            None => return Err(CoordinateParserError::MissingColumn),
-        };
-
-        let y = match characters.get(1) {
-            Some(row) => match row.to_ascii_lowercase() {
-                '1' => 7,
-                '2' => 6,
-                '3' => 5,
-                '4' => 4,
-                '5' => 3,
-                '6' => 2,
-                '7' => 1,
-                '8' => 0,
-                _ => return Err(CoordinateParserError::InvalidRow),
-            },
-            None => return Err(CoordinateParserError::MissingRow),
-        };
-
-        return Ok(Coordinate { x, y });
     }
 }
 
@@ -176,7 +128,7 @@ fn parse_move(input: &str) -> Result<Move, ReadMoveError> {
     let words: Vec<&str> = input.trim().split(' ').take(2).collect();
 
     let from = match words.get(0) {
-        Some(word) => match Coordinate::parse(word) {
+        Some(word) => match Coordinate::algebraic(word) {
             Ok(coordinate) => coordinate,
             Err(error) => return Err(ReadMoveError::InvalidFrom(error)),
         },
@@ -184,7 +136,7 @@ fn parse_move(input: &str) -> Result<Move, ReadMoveError> {
     };
 
     let to = match words.get(1) {
-        Some(word) => match Coordinate::parse(word) {
+        Some(word) => match Coordinate::algebraic(word) {
             Ok(coordinate) => coordinate,
             Err(error) => return Err(ReadMoveError::InvalidTo(error)),
         },

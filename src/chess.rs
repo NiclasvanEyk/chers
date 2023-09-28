@@ -1,6 +1,8 @@
 mod engine;
-pub mod fen;
+mod moves;
 mod structs;
+
+pub mod fen;
 
 pub use engine::*;
 pub use structs::*;

@@ -22,31 +22,31 @@ pub fn parse_state(notation: &str) -> Result<State, CouldNotParse> {
         return Err(CouldNotParse::InvalidNumberOfParts);
     }
 
-    return Ok(State {
+    Ok(State {
         board: parse_board(parts[0])?,
         player: parse_player(parts[1])?,
         castling_rights: parse_castling_rights(parts[2])?,
         en_passant_target: parse_en_passant_target(parts[3])?,
         halfmove_clock: parse_halfmove_clock(parts[4])?,
         fullmove_number: parse_fullmove_number(parts[5])?,
-    });
+    })
 }
 
 fn parse_halfmove_clock(notation: &str) -> Result<u8, CouldNotParse> {
-    return match notation.parse::<u8>() {
+    match notation.parse::<u8>() {
         Ok(value) => Ok(value),
         Err(err) => Err(CouldNotParse::InvalidHalfmoveClock(err)),
-    };
+    }
 }
 
 fn parse_fullmove_number(notation: &str) -> Result<u8, CouldNotParse> {
-    return match notation.parse::<u8>() {
+    match notation.parse::<u8>() {
         Ok(value) => Ok(value),
         Err(err) => Err(CouldNotParse::InvalidFullmoveNumber(err)),
-    };
+    }
 }
 
-fn parse_en_passant_target(notation: &str) -> Result<Option<Coordinate>, CouldNotParse> {
+fn parse_en_passant_target(_notation: &str) -> Result<Option<Coordinate>, CouldNotParse> {
     todo!();
 }
 
@@ -61,7 +61,7 @@ pub fn parse_board(notation: &str) -> Result<Board, CouldNotParse> {
         board[index] = parse_row(row)?;
     }
 
-    return Ok(board);
+    Ok(board)
 }
 
 fn parse_row(row: &str) -> Result<Row, CouldNotParse> {
@@ -92,7 +92,7 @@ fn parse_row(row: &str) -> Result<Row, CouldNotParse> {
         return Err(CouldNotParse::InvalidNumberOfColumns(String::from(row)));
     }
 
-    return Ok(pieces);
+    Ok(pieces)
 }
 
 fn parse_piece(character: char) -> Result<Piece, CouldNotParse> {
@@ -106,10 +106,10 @@ fn parse_piece(character: char) -> Result<Piece, CouldNotParse> {
         _ => return Err(CouldNotParse::InvalidPiece(character)),
     };
 
-    return Ok(Piece {
+    Ok(Piece {
         figure,
         color: owner(character),
-    });
+    })
 }
 
 fn owner(character: char) -> Player {
@@ -117,18 +117,18 @@ fn owner(character: char) -> Player {
         return Player::White;
     }
 
-    return Player::Black;
+    Player::Black
 }
 
 fn parse_player(notation: &str) -> Result<Player, CouldNotParse> {
-    return match notation {
+    match notation {
         "b" => Ok(Player::Black),
         "w" => Ok(Player::White),
         _ => Err(CouldNotParse::InvalidPlayerChar(notation.to_owned())),
-    };
+    }
 }
 
-fn parse_castling_rights(notation: &str) -> Result<CastlingRights, CouldNotParse> {
+fn parse_castling_rights(_notation: &str) -> Result<CastlingRights, CouldNotParse> {
     todo!();
 }
 

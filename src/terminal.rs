@@ -13,10 +13,10 @@ impl TerminalChersMatch {
     pub fn new(engine: Engine) -> Self {
         let initial_state = engine.start();
 
-        return Self {
+        Self {
             engine,
             state: initial_state,
-        };
+        }
     }
 
     pub fn run(&mut self) {
@@ -45,23 +45,23 @@ impl Color {
     fn for_coordinate(coordinate: Coordinate) -> Color {
         // Even rows have even numbers black, odd rows have odd ones
         if coordinate.y % 2 == coordinate.x % 2 {
-            return Color::White;
+            Color::White
         } else {
-            return Color::Black;
+            Color::Black
         }
     }
 
     pub fn switch(self) -> Color {
-        return match self {
+        match self {
             Color::White => Color::Black,
             Color::Black => Color::White,
-        };
+        }
     }
 }
 
 impl Coordinate {
     pub fn checked_from_board_index(row: usize, column: usize) -> Option<Coordinate> {
-        return Coordinate::checked(8 - row, 8 - column);
+        Coordinate::checked(8 - row, 8 - column)
     }
 
     pub fn checked(x: usize, y: usize) -> Option<Coordinate> {
@@ -69,7 +69,7 @@ impl Coordinate {
             return Option::None;
         }
 
-        return Option::Some(Coordinate { x, y });
+        Option::Some(Coordinate { x, y })
     }
 }
 
@@ -89,13 +89,13 @@ impl Display for Coordinate {
 
         let y = 8 - self.y;
 
-        return write!(f, "{}{}", x.to_uppercase(), y);
+        write!(f, "{}{}", x.to_uppercase(), y)
     }
 }
 
 impl ToString for Piece {
     fn to_string(&self) -> String {
-        return match self.color {
+        match self.color {
             Color::White => match self.figure {
                 Figure::King => "♔",
                 Figure::Queen => "♕",
@@ -113,7 +113,7 @@ impl ToString for Piece {
                 Figure::Pawn => "♙",
             },
         }
-        .to_string();
+        .to_string()
     }
 }
 
@@ -127,7 +127,7 @@ enum ReadMoveError {
 fn parse_move(input: &str) -> Result<Move, ReadMoveError> {
     let words: Vec<&str> = input.trim().split(' ').take(2).collect();
 
-    let from = match words.get(0) {
+    let from = match words.first() {
         Some(word) => match Coordinate::algebraic(word) {
             Ok(coordinate) => coordinate,
             Err(error) => return Err(ReadMoveError::InvalidFrom(error)),
@@ -143,7 +143,7 @@ fn parse_move(input: &str) -> Result<Move, ReadMoveError> {
         None => return Err(ReadMoveError::InvalidFrom(CoordinateParserError::Empty)),
     };
 
-    return Ok(Move { from, to });
+    Ok(Move { from, to })
 }
 
 fn prompt_for_move(player: &Color) -> Move {
@@ -181,7 +181,7 @@ fn to_terminal_string(coordinate: Coordinate, piece: Option<Piece>) -> String {
         None => " ".to_string(),
     };
 
-    return format!("{}{}{} \x1b[0m", background, foreground, piece_str);
+    format!("{}{}{} \x1b[0m", background, foreground, piece_str)
 }
 
 pub fn show_board(board: Board) -> String {
@@ -195,7 +195,7 @@ pub fn show_board(board: Board) -> String {
                     let coordinate =
                         Coordinate::checked_from_board_index(cell_index, row_index).unwrap();
 
-                    return to_terminal_string(coordinate, *piece);
+                    to_terminal_string(coordinate, *piece)
                 })
                 .collect::<Vec<String>>()
                 .join("")

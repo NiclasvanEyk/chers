@@ -1,5 +1,3 @@
-use crate::terminal::show_board;
-
 use super::{
     Board, CastlingRights, Color::White, Coordinate, Move, Piece, Player, State, INITIAL_BOARD,
 };
@@ -31,26 +29,26 @@ pub struct Engine {}
 
 impl Engine {
     pub fn new() -> Self {
-        return Self {};
+        Self {}
     }
 
     pub fn start(&self) -> State {
-        return State {
+        State {
             player: White,
             board: INITIAL_BOARD,
             castling_rights: CastlingRights::all(),
             en_passant_target: None,
             halfmove_clock: 0,
             fullmove_number: 1,
-        };
+        }
     }
 
     pub fn available_moves(&self, state: &State, from: super::Coordinate) -> Vec<Move> {
-        let Some(piece) = state.board[from.y][from.x] else {
+        let Some(_piece) = state.board[from.y][from.x] else {
             return Vec::new();
         };
 
-        return Vec::new();
+        Vec::new()
     }
 
     pub fn move_piece(
@@ -80,12 +78,12 @@ impl Engine {
             })
         }
 
-        let mut new_board = state.board.clone();
+        let mut new_board = state.board;
         new_board[from.y][from.x] = None;
         new_board[to.y][to.x] = Some(moved);
 
         // TODO: Check for checkmate
 
-        return Ok((state.new_turn(new_board), events));
+        Ok((state.new_turn(new_board), events))
     }
 }

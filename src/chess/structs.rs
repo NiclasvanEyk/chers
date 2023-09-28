@@ -122,15 +122,15 @@ pub struct Piece {
 
 impl Piece {
     pub const fn new(color: Color, figure: Figure) -> Self {
-        return Self { color, figure };
+        Self { color, figure }
     }
 
     pub const fn black(figure: Figure) -> Self {
-        return Self::new(Color::Black, figure);
+        Self::new(Color::Black, figure)
     }
 
     pub const fn white(figure: Figure) -> Self {
-        return Self::new(Color::White, figure);
+        Self::new(Color::White, figure)
     }
 }
 
@@ -140,11 +140,11 @@ pub type Row = [Option<Piece>; BOARD_SIZE];
 pub type Board = [Row; BOARD_SIZE];
 
 pub const fn empty_row() -> Row {
-    return [None, None, None, None, None, None, None, None];
+    [None, None, None, None, None, None, None, None]
 }
 
 pub const fn empty_board() -> Board {
-    return [
+    [
         empty_row(),
         empty_row(),
         empty_row(),
@@ -153,7 +153,7 @@ pub const fn empty_board() -> Board {
         empty_row(),
         empty_row(),
         empty_row(),
-    ];
+    ]
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -164,10 +164,10 @@ pub struct CastlingRights {
 
 impl CastlingRights {
     pub const fn all() -> Self {
-        return Self {
+        Self {
             white: CastleDirections::both(),
             black: CastleDirections::both(),
-        };
+        }
     }
 }
 
@@ -179,10 +179,10 @@ pub struct CastleDirections {
 
 impl CastleDirections {
     pub const fn both() -> Self {
-        return Self {
+        Self {
             queen_side: true,
             king_side: true,
-        };
+        }
     }
 }
 
@@ -236,13 +236,13 @@ impl PartialEq for State {
             }
         }
 
-        return true;
+        true
     }
 }
 
 impl State {
     pub fn new_turn(&self, new_board: Board) -> Self {
-        return Self {
+        Self {
             player: self.player.switch(),
             board: new_board,
             castling_rights: self.castling_rights,     // TODO
@@ -252,7 +252,7 @@ impl State {
                 Color::White => self.fullmove_number,
                 Color::Black => self.fullmove_number + 1,
             },
-        };
+        }
     }
 }
 

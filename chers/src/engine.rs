@@ -29,6 +29,7 @@ pub enum CantMovePiece {
     },
 }
 
+#[derive(Default)]
 pub struct Engine {}
 
 impl Engine {

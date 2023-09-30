@@ -144,7 +144,7 @@ impl Coordinate {
 
     // TODO: Those two don't really fit in here. Maybe move somewhere else?
 
-    pub fn can_be_moved_to_by(&self, state: &State, piece: &Piece) -> bool {
+    pub fn can_be_moved_to_given(&self, state: &State) -> bool {
         match self.piece(&state.board) {
             None => true,
             Some(piece) => piece.color != state.player,

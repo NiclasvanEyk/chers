@@ -61,11 +61,7 @@ pub fn autocomplete_to(state: &State, from: Coordinate, piece: Piece) -> Vec<Coo
             ];
 
             let mut moves = Vec::new();
-            for potential_move in potential_moves {
-                let Some(potential_move) = potential_move else {
-                    continue;
-                };
-
+            for potential_move in potential_moves.into_iter().flatten() {
                 if potential_move.can_be_moved_to_by(state, &piece) {
                     moves.push(potential_move);
                 }
@@ -73,6 +69,10 @@ pub fn autocomplete_to(state: &State, from: Coordinate, piece: Piece) -> Vec<Coo
 
             moves
         }
+
+        super::Figure::Rook => expand_straight_until_collides(state, from, piece),
+
+        super::Figure::Bishop => expand_diagonally_until_collides(state, from, piece),
 
         super::Figure::Queen => {
             let mut moves = Vec::new();
@@ -82,9 +82,28 @@ pub fn autocomplete_to(state: &State, from: Coordinate, piece: Piece) -> Vec<Coo
 
             moves
         }
-        super::Figure::Rook => expand_straight_until_collides(state, from, piece),
-        super::Figure::Bishop => expand_diagonally_until_collides(state, from, piece),
-        super::Figure::Knight => todo!(),
+
+        super::Figure::Knight => {
+            let possible = [
+                from.up(2).and_then(|m| m.left(1)),
+                from.up(1).and_then(|m| m.left(2)),
+                from.down(1).and_then(|m| m.left(2)),
+                from.down(2).and_then(|m| m.left(1)),
+                from.up(2).and_then(|m| m.right(1)),
+                from.up(1).and_then(|m| m.right(2)),
+                from.down(1).and_then(|m| m.right(2)),
+                from.down(2).and_then(|m| m.right(1)),
+            ];
+
+            let mut moves = Vec::new();
+            for cell in possible.into_iter().flatten() {
+                if cell.can_be_moved_to_by(state, &piece) {
+                    moves.push(cell);
+                }
+            }
+
+            moves
+        }
     }
 }
 

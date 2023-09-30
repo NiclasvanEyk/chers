@@ -6,6 +6,15 @@ pub enum Color {
     Black,
 }
 
+impl Color {
+    pub fn switch(self) -> Color {
+        match self {
+            Color::White => Color::Black,
+            Color::Black => Color::White,
+        }
+    }
+}
+
 pub type Player = Color;
 
 #[derive(Debug, PartialEq, Clone, Copy)]

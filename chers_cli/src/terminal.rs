@@ -1,9 +1,6 @@
-use std::{fmt::Display, io::Write};
+use std::io::Write;
 
-use crate::chess::{
-    Board, CantMovePiece, Color, Coordinate, CoordinateParserError, Engine, Figure, Move, Piece,
-    State,
-};
+use chers::{Board, Color, Coordinate, CoordinateParserError, Engine, Figure, Move, Piece, State};
 
 pub struct TerminalChersMatch {
     engine: Engine,
@@ -45,65 +42,39 @@ impl TerminalChersMatch {
     }
 }
 
-impl Color {
-    fn for_coordinate(coordinate: Coordinate) -> Color {
-        // Even rows have even numbers black, odd rows have odd ones
-        if coordinate.y % 2 == coordinate.x % 2 {
-            Color::White
-        } else {
-            Color::Black
-        }
-    }
-
-    pub fn switch(self) -> Color {
-        match self {
-            Color::White => Color::Black,
-            Color::Black => Color::White,
-        }
+fn color_for_coordinate(coordinate: Coordinate) -> Color {
+    // Even rows have even numbers black, odd rows have odd ones
+    if coordinate.y % 2 == coordinate.x % 2 {
+        Color::White
+    } else {
+        Color::Black
     }
 }
 
-impl Coordinate {
-    pub fn checked_from_board_index(row: usize, column: usize) -> Option<Coordinate> {
-        Coordinate::checked(8 - row, 8 - column)
+fn piece_to_string(piece: &Piece) -> String {
+    match piece.color {
+        Color::White => match piece.figure {
+            Figure::King => "♔",
+            Figure::Queen => "♕",
+            Figure::Rook => "♜",
+            Figure::Bishop => "♗",
+            Figure::Knight => "♞",
+            Figure::Pawn => "♙",
+        },
+        Color::Black => match piece.figure {
+            Figure::King => "♚",
+            Figure::Queen => "♛",
+            Figure::Rook => "♜",
+            Figure::Bishop => "♝",
+            Figure::Knight => "♞",
+            Figure::Pawn => "♙",
+        },
     }
-
-    pub fn checked(x: usize, y: usize) -> Option<Coordinate> {
-        if x > 8 || y > 8 {
-            return Option::None;
-        }
-
-        Option::Some(Coordinate { x, y })
-    }
-}
-
-impl ToString for Piece {
-    fn to_string(&self) -> String {
-        match self.color {
-            Color::White => match self.figure {
-                Figure::King => "♔",
-                Figure::Queen => "♕",
-                Figure::Rook => "♜",
-                Figure::Bishop => "♗",
-                Figure::Knight => "♞",
-                Figure::Pawn => "♙",
-            },
-            Color::Black => match self.figure {
-                Figure::King => "♚",
-                Figure::Queen => "♛",
-                Figure::Rook => "♜",
-                Figure::Bishop => "♝",
-                Figure::Knight => "♞",
-                Figure::Pawn => "♙",
-            },
-        }
-        .to_string()
-    }
+    .to_string()
 }
 
 #[derive(Debug)]
 enum ReadMoveError {
-    Empty,
     InvalidFrom(CoordinateParserError),
     InvalidTo(CoordinateParserError),
 }
@@ -148,7 +119,7 @@ fn prompt_for_move(player: &Color) -> Move {
 }
 
 fn to_terminal_string(coordinate: Coordinate, piece: Option<Piece>) -> String {
-    let background = match Color::for_coordinate(coordinate) {
+    let background = match color_for_coordinate(coordinate) {
         Color::White => "\x1b[48;5;216m",
         Color::Black => "\x1b[48;5;173m",
     };
@@ -161,7 +132,7 @@ fn to_terminal_string(coordinate: Coordinate, piece: Option<Piece>) -> String {
     };
 
     let piece_str = match piece {
-        Some(p) => p.to_string(),
+        Some(p) => piece_to_string(&p),
         None => " ".to_string(),
     };
 
@@ -176,8 +147,10 @@ pub fn show_board(board: Board) -> String {
             row.iter()
                 .enumerate()
                 .map(|(cell_index, piece)| {
-                    let coordinate =
-                        Coordinate::checked_from_board_index(cell_index, row_index).unwrap();
+                    let coordinate = Coordinate {
+                        x: 8 - cell_index,
+                        y: 8 - row_index,
+                    };
 
                     to_terminal_string(coordinate, *piece)
                 })

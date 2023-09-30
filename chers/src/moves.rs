@@ -1,4 +1,4 @@
-use super::{Color, Coordinate, Piece, State, BOARD_SIZE};
+use super::{Color, Coordinate, Piece, State};
 
 pub fn autocomplete_to(state: &State, from: Coordinate, piece: Piece) -> Vec<Coordinate> {
     if state.player != piece.color {
@@ -199,7 +199,7 @@ fn resides_on_pawn_rank(from: Coordinate, color: Color) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::chess::{Engine, Figure::Pawn};
+    use crate::{Engine, Figure::Pawn};
 
     use super::*;
 

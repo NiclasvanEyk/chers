@@ -134,7 +134,7 @@ fn parse_castling_rights(_notation: &str) -> Result<CastlingRights, CouldNotPars
 
 #[cfg(test)]
 mod tests {
-    use crate::chess::Engine;
+    use crate::Engine;
 
     use super::*;
 

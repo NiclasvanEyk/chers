@@ -1,10 +1,5 @@
 use super::{Color, Coordinate, Piece, State, BOARD_SIZE};
 
-enum Axis {
-    Straight,
-    Diagonal,
-}
-
 pub fn autocomplete_to(state: &State, from: Coordinate, piece: Piece) -> Vec<Coordinate> {
     if state.player != piece.color {
         return Vec::new();
@@ -54,7 +49,7 @@ pub fn autocomplete_to(state: &State, from: Coordinate, piece: Piece) -> Vec<Coo
         }
 
         super::Figure::King => {
-            let mut potential_moves = [
+            let potential_moves = [
                 from.up(1),
                 from.right(1),
                 from.down(1),
@@ -79,18 +74,101 @@ pub fn autocomplete_to(state: &State, from: Coordinate, piece: Piece) -> Vec<Coo
             moves
         }
 
-        super::Figure::Queen => todo!(),
-        super::Figure::Rook => todo!(),
-        super::Figure::Bishop => todo!(),
+        super::Figure::Queen => {
+            let mut moves = Vec::new();
+
+            moves.append(&mut expand_straight_until_collides(state, from, piece));
+            moves.append(&mut expand_diagonally_until_collides(state, from, piece));
+
+            moves
+        }
+        super::Figure::Rook => expand_straight_until_collides(state, from, piece),
+        super::Figure::Bishop => expand_diagonally_until_collides(state, from, piece),
         super::Figure::Knight => todo!(),
     }
 }
 
-fn expand_until_collision(from: Coordinate, state: &State, axis: Axis) -> Vec<Coordinate> {
-    match axis {
-        Axis::Straight => todo!(),
-        Axis::Diagonal => todo!(),
+fn expand_straight_until_collides(
+    state: &State,
+    from: Coordinate,
+    piece: Piece,
+) -> Vec<Coordinate> {
+    let mut cells = Vec::new();
+
+    let mut directions = [1, -1, 1, -1];
+    for (index, direction) in directions.iter_mut().enumerate() {
+        loop {
+            if index % 2 == 0 {
+                match from.horizontal(*direction) {
+                    None => break,
+                    Some(cell) => {
+                        if !cell.can_be_moved_to_by(state, &piece) {
+                            break;
+                        }
+
+                        cells.push(cell)
+                    }
+                }
+            } else {
+                match from.vertical(*direction) {
+                    None => break,
+                    Some(cell) => {
+                        if !cell.can_be_moved_to_by(state, &piece) {
+                            break;
+                        }
+
+                        cells.push(cell)
+                    }
+                }
+            }
+
+            if *direction > 0 {
+                *direction += 1;
+            } else {
+                *direction -= 1;
+            }
+        }
     }
+
+    cells
+}
+
+fn expand_diagonally_until_collides(
+    state: &State,
+    from: Coordinate,
+    piece: Piece,
+) -> Vec<Coordinate> {
+    let mut cells = Vec::new();
+
+    let mut vectors = [(1, 1), (1, -1), (-1, 1), (-1, -1)];
+    for vector in vectors.iter_mut() {
+        loop {
+            match from.diagonal(vector.0, vector.1) {
+                None => break,
+                Some(cell) => {
+                    if !cell.can_be_moved_to_by(state, &piece) {
+                        break;
+                    }
+
+                    cells.push(cell)
+                }
+            }
+
+            if vector.0 > 0 {
+                vector.0 += 1;
+            } else {
+                vector.0 -= 1;
+            }
+
+            if vector.1 > 0 {
+                vector.1 += 1;
+            } else {
+                vector.1 -= 1;
+            }
+        }
+    }
+
+    cells
 }
 
 fn resides_on_pawn_rank(from: Coordinate, color: Color) -> bool {

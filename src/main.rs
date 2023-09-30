@@ -1,4 +1,7 @@
+/// A chess implementation.
 mod chess;
+
+/// A terminal user interface for playing chess.
 mod terminal;
 
 use chess::Engine;

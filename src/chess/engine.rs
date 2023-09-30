@@ -1,5 +1,6 @@
 use super::{
-    Board, CastlingRights, Color::White, Coordinate, Move, Piece, Player, State, INITIAL_BOARD,
+    moves::autocomplete_to, Board, CastlingRights, Color::White, Coordinate, Move, Piece, Player,
+    State, INITIAL_BOARD,
 };
 
 #[derive(Debug)]
@@ -22,7 +23,10 @@ pub enum Event {
 pub enum CantMovePiece {
     NoPieceToMove,
     ItBelongsToOtherPlayer,
-    IllegalMove,
+    IllegalMove {
+        attempted: Move,
+        legal: Vec<Coordinate>,
+    },
 }
 
 pub struct Engine {}
@@ -43,12 +47,12 @@ impl Engine {
         }
     }
 
-    pub fn available_moves(&self, state: &State, from: super::Coordinate) -> Vec<Move> {
-        let Some(_piece) = state.board[from.y][from.x] else {
+    pub fn available_moves(&self, state: &State, from: Coordinate) -> Vec<Coordinate> {
+        let Some(piece) = state.board[from.y][from.x] else {
             return Vec::new();
         };
 
-        Vec::new()
+        autocomplete_to(state, from, piece)
     }
 
     pub fn move_piece(
@@ -67,7 +71,13 @@ impl Engine {
             return Err(CantMovePiece::ItBelongsToOtherPlayer);
         }
 
-        // TODO: Check for illegal moves
+        let legal = self.available_moves(state, from);
+        if !legal.contains(&to) {
+            return Err(CantMovePiece::IllegalMove {
+                attempted: r#move,
+                legal,
+            });
+        }
 
         let mut events = Vec::new();
         if let Some(captured) = state.board[to.y][to.x] {

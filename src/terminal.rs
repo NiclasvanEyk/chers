@@ -1,7 +1,8 @@
 use std::{fmt::Display, io::Write};
 
 use crate::chess::{
-    Board, Color, Coordinate, CoordinateParserError, Engine, Figure, Move, Piece, State,
+    Board, CantMovePiece, Color, Coordinate, CoordinateParserError, Engine, Figure, Move, Piece,
+    State,
 };
 
 pub struct TerminalChersMatch {
@@ -20,18 +21,21 @@ impl TerminalChersMatch {
     }
 
     pub fn run(&mut self) {
-        loop {
-            clear_terminal();
-            println!("{}", show_board(self.state.board));
+        clear_terminal();
+        println!("{}", show_board(self.state.board));
 
+        loop {
             let r#move = prompt_for_move(&self.state.player);
 
             match self.engine.move_piece(&self.state, r#move) {
                 Err(error) => {
-                    println!("{:?}", error);
+                    println!("{:#?}", error);
                 }
                 Ok((new_state, events)) => {
                     self.state = new_state;
+                    clear_terminal();
+                    println!("{}", show_board(self.state.board));
+
                     for event in events {
                         println!("{:?}", event);
                     }
@@ -70,26 +74,6 @@ impl Coordinate {
         }
 
         Option::Some(Coordinate { x, y })
-    }
-}
-
-impl Display for Coordinate {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let x = match self.x {
-            0 => 'a',
-            1 => 'b',
-            2 => 'c',
-            3 => 'd',
-            4 => 'e',
-            5 => 'f',
-            6 => 'g',
-            7 => 'h',
-            _ => '?',
-        };
-
-        let y = 8 - self.y;
-
-        write!(f, "{}{}", x.to_uppercase(), y)
     }
 }
 

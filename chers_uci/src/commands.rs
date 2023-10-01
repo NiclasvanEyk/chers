@@ -78,7 +78,7 @@ enum Request {
     /// So the engine should not rely on this command even though all new GUIs should support it.
     /// As the engine's reaction to "ucinewgame" can take some time the GUI should always send "isready"
     /// after "ucinewgame" to wait for the engine to finish its operation.
-    UciNewGame,
+    NewGame,
 
     /// position [fen <fenstring> | startpos ]  moves <move1> .... <movei>
     ///
@@ -154,6 +154,51 @@ enum Request {
     ///
     /// Quit the program as soon as possible.
     Quit,
+}
+
+enum RequestParserError {
+    Empty,
+    UnknownCommand(String),
+}
+
+impl Request {
+    pub fn parse(input: &str) -> Result<Self, RequestParserError> {
+        let words: Vec<&str> = input.split(' ').collect();
+        let Some(command) = words.first() else {
+            return Err(RequestParserError::Empty);
+        };
+
+        match *command {
+            "uci" => Ok(Self::Uci),
+            "debug" => Ok(Self::Debug(false)), // TODO:
+            "isready" => Ok(Self::IsReady),
+            // "setoption" => Ok(Request::SetOption {
+            //     name: (),
+            //     value: (),
+            // }),
+            // "register" => Ok(Self::Register(())), // TODO: Implement subtokens
+            "ucinewgame" => Ok(Self::NewGame),
+            // "position" => Ok(Self::Position { fen: (), moves: () }),
+            // "go" => Ok(Self::Go {
+            //     search_moves: (),
+            //     ponder: (),
+            //     wtime: (),
+            //     btime: (),
+            //     winc: (),
+            //     binc: (),
+            //     movestogo: (),
+            //     depth: (),
+            //     nodes: (),
+            //     mate: (),
+            //     movetime: (),
+            //     infinite: (),
+            // }),
+            "stop" => Ok(Self::PonderHit),
+            "ponderhit" => Ok(Self::PonderHit),
+            "quit" => Ok(Self::Quit),
+            _ => Err(RequestParserError::UnknownCommand(command.to_string())),
+        }
+    }
 }
 
 /// Represents responses sent from the chess engine to the GUI.

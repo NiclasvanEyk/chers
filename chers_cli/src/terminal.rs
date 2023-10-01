@@ -1,10 +1,17 @@
-use std::io::Write;
+use std::{fmt::format, io::Write};
 
 use chers::{Board, Color, Coordinate, CoordinateParserError, Engine, Figure, Move, Piece, State};
 
+enum InputState {
+    PromptingFrom,
+    PromptingTo(Coordinate),
+    Execute(Move),
+}
+
 pub struct TerminalChersMatch {
     engine: Engine,
-    state: State,
+    game_state: State,
+    input_state: InputState,
 }
 
 impl TerminalChersMatch {
@@ -13,31 +20,68 @@ impl TerminalChersMatch {
 
         Self {
             engine,
-            state: initial_state,
+            game_state: initial_state,
+            input_state: InputState::PromptingFrom,
+        }
+    }
+
+    fn print_possible_moves(&self, from: Coordinate) {
+        println!("Possible moves:");
+
+        for possible in self.engine.available_moves(&self.game_state, from) {
+            println!("- {}", possible)
         }
     }
 
     pub fn run(&mut self) {
         clear_terminal();
-        println!("{}", show_board(self.state.board));
+        println!("{}", show_board(self.game_state.board));
 
         loop {
-            let r#move = prompt_for_move(&self.state.player);
-
-            match self.engine.move_piece(&self.state, r#move) {
-                Err(error) => {
-                    println!("{:#?}", error);
+            let new_state = match self.input_state {
+                InputState::PromptingFrom => {
+                    match prompt_for_coordinate_or_quit(&format!(
+                        "{:?}'s turn, input from: ",
+                        self.game_state.player
+                    )) {
+                        CoordinatePromptResult::Coord(from) => InputState::PromptingTo(from),
+                        CoordinatePromptResult::Back => InputState::PromptingFrom,
+                    }
                 }
-                Ok((new_state, events)) => {
-                    self.state = new_state;
-                    clear_terminal();
-                    println!("{}", show_board(self.state.board));
 
-                    for event in events {
-                        println!("{:?}", event);
+                InputState::PromptingTo(from) => {
+                    self.print_possible_moves(from);
+                    match prompt_for_coordinate_or_quit(&format!(
+                        "{:?}'s turn, input to: ",
+                        self.game_state.player
+                    )) {
+                        CoordinatePromptResult::Coord(to) => InputState::Execute(Move { from, to }),
+                        CoordinatePromptResult::Back => InputState::PromptingFrom,
+                    }
+                }
+
+                InputState::Execute(r#move) => {
+                    match self.engine.move_piece(&self.game_state, r#move) {
+                        Err(error) => {
+                            println!("{:#?}", error);
+                            InputState::PromptingTo(r#move.from)
+                        }
+                        Ok((new_state, events)) => {
+                            self.game_state = new_state;
+                            clear_terminal();
+                            println!("{}", show_board(self.game_state.board));
+
+                            for event in events {
+                                println!("{:?}", event);
+                            }
+
+                            InputState::PromptingFrom
+                        }
                     }
                 }
             };
+
+            self.input_state = new_state;
         }
     }
 }
@@ -101,19 +145,33 @@ fn parse_move(input: &str) -> Result<Move, ReadMoveError> {
     Ok(Move { from, to })
 }
 
-fn prompt_for_move(player: &Color) -> Move {
+fn prompt(question: &str) -> String {
+    let mut x = String::new();
+    print!("{}", question);
+    std::io::stdout().flush().expect("Could not flush stdout");
+
+    std::io::stdin()
+        .read_line(&mut x)
+        .expect("Could not read input");
+
+    x
+}
+
+enum CoordinatePromptResult {
+    Coord(Coordinate),
+    Back,
+}
+
+fn prompt_for_coordinate_or_quit(question: &str) -> CoordinatePromptResult {
     loop {
-        let mut x = String::new();
-        print!("{:?}'s turn: ", player);
-        std::io::stdout().flush().expect("Could not flush stdout");
+        let input = prompt(question);
 
-        std::io::stdin()
-            .read_line(&mut x)
-            .expect("Could not read input");
-
-        match parse_move(&x) {
-            Ok(from_to) => return from_to,
-            Err(err) => println!("{:?}", err),
+        match input.trim().to_lowercase().as_str() {
+            "b" => return CoordinatePromptResult::Back,
+            notation => match Coordinate::algebraic(notation) {
+                Ok(coordinate) => return CoordinatePromptResult::Coord(coordinate),
+                Err(err) => println!("{:?}", err),
+            },
         };
     }
 }

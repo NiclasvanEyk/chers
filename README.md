@@ -3,8 +3,8 @@
 Chess implemented in Rust.
 Contains:
 
-- A core [engine](.chers/) that validates and suggests moves
-- A [command line interface](.chers_cli/) that enables you to play chess inside your terminal
+- A core [engine](./chers/) that validates and suggests moves
+- A [command line interface](./chers_cli/) that enables you to play chess inside your terminal
 - A [Universal Chess Interface](./chers_uci/) implementation (WIP)
 
 ## Try it out

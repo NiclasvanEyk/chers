@@ -18,7 +18,7 @@ cargo run --bin chers_cli
 ## Engine TODOs
 
 - [x] En passant
-- [ ] Pawn promition
+- [ ] Pawn promotion
 - [ ] Castling
 - [ ] Halfmove clock
 - [ ] Fullmove number

@@ -122,6 +122,10 @@ impl Coordinate {
         })
     }
 
+    pub fn backward(&self, color: Color, amount: isize) -> Option<Self> {
+        self.forward(color, -amount)
+    }
+
     pub fn up(&self, amount: isize) -> Option<Self> {
         self.vertical(amount)
     }

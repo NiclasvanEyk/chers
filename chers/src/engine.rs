@@ -1,3 +1,5 @@
+use crate::Figure;
+
 use super::{
     moves::autocomplete_to, Board, CastlingRights, Color::White, Coordinate, Move, Piece, Player,
     State, INITIAL_BOARD,
@@ -81,20 +83,40 @@ impl Engine {
         }
 
         let mut events = Vec::new();
-        if let Some(captured) = state.board[to.y][to.x] {
+        let mut new_board = state.board;
+
+        if let Some(captured) = to.piece(&state.board) {
             events.push(Event::Capture {
                 at: to,
                 captured,
                 by: moved,
-            })
+            });
+        } else if let Some(en_passant) = state.en_passant_target {
+            let origin = en_passant.backward(state.player.other(), 1).unwrap();
+            if origin == to {
+                new_board[en_passant.y][en_passant.x] = None;
+                events.push(Event::Capture {
+                    // TODO: Maybe we need to introduce more fields here?
+                    at: to,
+                    // Save to unwrap, since en_passant target is present
+                    captured: en_passant.piece(&state.board).unwrap(),
+                    by: moved,
+                });
+            }
         }
 
-        let mut new_board = state.board;
         new_board[from.y][from.x] = None;
         new_board[to.y][to.x] = Some(moved);
 
         // TODO: Check for checkmate
 
-        Ok((state.new_turn(new_board), events))
+        let mut new_state = state.new_turn(new_board);
+
+        let enables_en_passant = moved.figure == Figure::Pawn && from.y.abs_diff(to.y) == 2;
+        if enables_en_passant {
+            new_state.en_passant_target = Some(to)
+        }
+
+        Ok((new_state, events))
     }
 }

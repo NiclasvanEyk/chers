@@ -13,6 +13,10 @@ impl Color {
             Color::Black => Color::White,
         }
     }
+
+    pub fn other(self) -> Color {
+        self.switch()
+    }
 }
 
 pub type Player = Color;
@@ -164,9 +168,9 @@ impl State {
         Self {
             player: self.player.switch(),
             board: new_board,
-            castling_rights: self.castling_rights,     // TODO
-            en_passant_target: self.en_passant_target, // TODO
-            halfmove_clock: self.halfmove_clock,       // TODO
+            castling_rights: self.castling_rights, // TODO
+            en_passant_target: None,               // Checked afterwards
+            halfmove_clock: self.halfmove_clock,   // TODO
             fullmove_number: match self.player {
                 Color::White => self.fullmove_number,
                 Color::Black => self.fullmove_number + 1,

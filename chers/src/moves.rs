@@ -37,9 +37,17 @@ pub fn autocomplete_to(state: &State, from: Coordinate, piece: Piece) -> Vec<Coo
                 capture_moves.push(m);
             }
 
+            let en_passant_target_origin = state
+                .en_passant_target
+                .and_then(|target| target.backward(state.player.other(), 1));
+
             for capture_move in capture_moves {
                 if let Some(piece) = capture_move.piece(&state.board) {
                     if piece.color != state.player {
+                        moves.push(capture_move)
+                    }
+                } else if let Some(en_passant_capture_move) = en_passant_target_origin {
+                    if en_passant_capture_move == capture_move {
                         moves.push(capture_move)
                     }
                 }

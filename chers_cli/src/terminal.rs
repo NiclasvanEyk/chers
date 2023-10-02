@@ -1,8 +1,8 @@
 use std::io::Write;
 
 use chers::{
-    Board, Color, Coordinate, CoordinateParserError, Engine, Figure, Move, Piece,
-    PromotedFigure, State,
+    Board, Color, Coordinate, Engine, Figure, Move, Piece, PromotedFigure,
+    State,
 };
 
 enum InputState {
@@ -140,12 +140,6 @@ fn piece_to_string(piece: &Piece) -> String {
         },
     }
     .to_string()
-}
-
-#[derive(Debug)]
-enum ReadMoveError {
-    InvalidFrom(CoordinateParserError),
-    InvalidTo(CoordinateParserError),
 }
 
 fn prompt(question: &str) -> String {

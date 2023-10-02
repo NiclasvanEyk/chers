@@ -1,4 +1,4 @@
-use crate::Figure;
+use crate::{Color, Figure, PromotedFigure, BOARD_SIZE};
 
 use super::{
     moves::autocomplete_to, Board, CastlingRights, Color::White, Coordinate, Move, Piece, Player,
@@ -11,6 +11,9 @@ pub enum Event {
         at: Coordinate,
         captured: Piece,
         by: Piece,
+    },
+    Promotion {
+        to: PromotedFigure,
     },
     Check {
         by: Player,
@@ -25,6 +28,7 @@ pub enum Event {
 pub enum CantMovePiece {
     NoPieceToMove,
     ItBelongsToOtherPlayer,
+    RequiresPromotion,
     IllegalMove {
         attempted: Move,
         legal: Vec<Coordinate>,
@@ -106,7 +110,20 @@ impl Engine {
         }
 
         new_board[from.y][from.x] = None;
-        new_board[to.y][to.x] = Some(moved);
+
+        if requires_promotion(state, moved, to) {
+            let Some(promoted) = r#move.promotion else {
+                return Err(CantMovePiece::RequiresPromotion);
+            };
+
+            events.push(Event::Promotion { to: promoted });
+            new_board[to.y][to.x] = Some(Piece {
+                color: state.player,
+                figure: promoted.to_figure(),
+            });
+        } else {
+            new_board[to.y][to.x] = Some(moved);
+        }
 
         // TODO: Check for checkmate
 
@@ -119,4 +136,13 @@ impl Engine {
 
         Ok((new_state, events))
     }
+}
+
+fn requires_promotion(state: &State, piece: Piece, to: Coordinate) -> bool {
+    let board_end = match state.player {
+        Color::White => 0,
+        Color::Black => BOARD_SIZE - 1,
+    };
+
+    piece.figure == Figure::Pawn && to.y == board_end
 }

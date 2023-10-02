@@ -1,6 +1,9 @@
-use std::{fmt::format, io::Write};
+use std::io::Write;
 
-use chers::{Board, Color, Coordinate, CoordinateParserError, Engine, Figure, Move, Piece, State};
+use chers::{
+    Board, Color, Coordinate, CoordinateParserError, Engine, Figure, Move, Piece, Player,
+    PromotedFigure, State, BOARD_SIZE,
+};
 
 enum InputState {
     PromptingFrom,
@@ -44,7 +47,9 @@ impl TerminalChersMatch {
                         "{:?}'s turn, input from: ",
                         self.game_state.player
                     )) {
-                        CoordinatePromptResult::Coord(from) => InputState::PromptingTo(from),
+                        CoordinatePromptResult::Coordinate(from, _) => {
+                            InputState::PromptingTo(from)
+                        }
                         CoordinatePromptResult::Back => InputState::PromptingFrom,
                     }
                 }
@@ -55,7 +60,13 @@ impl TerminalChersMatch {
                         "{:?}'s turn, input to: ",
                         self.game_state.player
                     )) {
-                        CoordinatePromptResult::Coord(to) => InputState::Execute(Move { from, to }),
+                        CoordinatePromptResult::Coordinate(to, input) => {
+                            InputState::Execute(Move {
+                                from,
+                                to,
+                                promotion: parse_promotion(input),
+                            })
+                        }
                         CoordinatePromptResult::Back => InputState::PromptingFrom,
                     }
                 }
@@ -83,6 +94,33 @@ impl TerminalChersMatch {
 
             self.input_state = new_state;
         }
+    }
+}
+
+fn requires_promotion(state: &State, to: Coordinate) -> bool {
+    let Some(piece) = to.piece(&state.board) else {
+        return false;
+    };
+
+    let board_end = match state.player {
+        Color::White => 0,
+        Color::Black => BOARD_SIZE - 1,
+    };
+
+    piece.figure == Figure::Pawn && to.y == board_end
+}
+
+fn parse_promotion(input: String) -> Option<PromotedFigure> {
+    let Some(promotion) = input.chars().skip(2).next() else {
+        return None;
+    };
+
+    match promotion {
+        'q' => Some(PromotedFigure::Queen),
+        'n' => Some(PromotedFigure::Knight),
+        'r' => Some(PromotedFigure::Rook),
+        'b' => Some(PromotedFigure::Bishop),
+        _ => None,
     }
 }
 
@@ -123,28 +161,6 @@ enum ReadMoveError {
     InvalidTo(CoordinateParserError),
 }
 
-fn parse_move(input: &str) -> Result<Move, ReadMoveError> {
-    let words: Vec<&str> = input.trim().split(' ').take(2).collect();
-
-    let from = match words.first() {
-        Some(word) => match Coordinate::algebraic(word) {
-            Ok(coordinate) => coordinate,
-            Err(error) => return Err(ReadMoveError::InvalidFrom(error)),
-        },
-        None => return Err(ReadMoveError::InvalidFrom(CoordinateParserError::Empty)),
-    };
-
-    let to = match words.get(1) {
-        Some(word) => match Coordinate::algebraic(word) {
-            Ok(coordinate) => coordinate,
-            Err(error) => return Err(ReadMoveError::InvalidTo(error)),
-        },
-        None => return Err(ReadMoveError::InvalidFrom(CoordinateParserError::Empty)),
-    };
-
-    Ok(Move { from, to })
-}
-
 fn prompt(question: &str) -> String {
     let mut x = String::new();
     print!("{}", question);
@@ -158,7 +174,7 @@ fn prompt(question: &str) -> String {
 }
 
 enum CoordinatePromptResult {
-    Coord(Coordinate),
+    Coordinate(Coordinate, String),
     Back,
 }
 
@@ -169,7 +185,9 @@ fn prompt_for_coordinate_or_quit(question: &str) -> CoordinatePromptResult {
         match input.trim().to_lowercase().as_str() {
             "b" => return CoordinatePromptResult::Back,
             notation => match Coordinate::algebraic(notation) {
-                Ok(coordinate) => return CoordinatePromptResult::Coord(coordinate),
+                Ok(coordinate) => {
+                    return CoordinatePromptResult::Coordinate(coordinate, notation.to_string());
+                }
                 Err(err) => println!("{:?}", err),
             },
         };
@@ -194,7 +212,7 @@ fn to_terminal_string(coordinate: Coordinate, piece: Option<Piece>) -> String {
         None => " ".to_string(),
     };
 
-    format!("{}{}{} \x1b[0m", background, foreground, piece_str)
+    format!("{background}{}{} \x1b[0m", foreground, piece_str)
 }
 
 pub fn show_board(board: Board) -> String {

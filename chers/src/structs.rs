@@ -31,10 +31,32 @@ pub enum Figure {
     Pawn,
 }
 
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum PromotedFigure {
+    King,
+    Queen,
+    Rook,
+    Bishop,
+    Knight,
+}
+
+impl PromotedFigure {
+    pub fn to_figure(&self) -> Figure {
+        match (self) {
+            PromotedFigure::King => Figure::King,
+            PromotedFigure::Queen => Figure::Queen,
+            PromotedFigure::Rook => Figure::Rook,
+            PromotedFigure::Bishop => Figure::Bishop,
+            PromotedFigure::Knight => Figure::Knight,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Move {
     pub from: Coordinate,
     pub to: Coordinate,
+    pub promotion: Option<PromotedFigure>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

@@ -1,8 +1,8 @@
 use std::io::Write;
 
 use chers::{
-    Board, Color, Coordinate, CoordinateParserError, Engine, Figure, Move, Piece, Player,
-    PromotedFigure, State, BOARD_SIZE,
+    Board, Color, Coordinate, CoordinateParserError, Engine, Figure, Move, Piece,
+    PromotedFigure, State,
 };
 
 enum InputState {
@@ -97,21 +97,8 @@ impl TerminalChersMatch {
     }
 }
 
-fn requires_promotion(state: &State, to: Coordinate) -> bool {
-    let Some(piece) = to.piece(&state.board) else {
-        return false;
-    };
-
-    let board_end = match state.player {
-        Color::White => 0,
-        Color::Black => BOARD_SIZE - 1,
-    };
-
-    piece.figure == Figure::Pawn && to.y == board_end
-}
-
 fn parse_promotion(input: String) -> Option<PromotedFigure> {
-    let Some(promotion) = input.chars().skip(2).next() else {
+    let Some(promotion) = input.chars().nth(2) else {
         return None;
     };
 

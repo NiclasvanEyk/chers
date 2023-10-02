@@ -1,7 +1,7 @@
 // NOTE: The documentation is copied from the UCI specification
 
 /// Represents commands sent from the GUI to the chess engine.
-enum Request {
+pub enum Request {
     /// uci
     ///
     /// Tell engine to use the uci (universal chess interface),
@@ -156,7 +156,7 @@ enum Request {
     Quit,
 }
 
-enum RequestParserError {
+pub enum RequestParserError {
     Empty,
     UnknownCommand(String),
 }
@@ -202,7 +202,7 @@ impl Request {
 }
 
 /// Represents responses sent from the chess engine to the GUI.
-enum Response {
+pub enum Response {
     /// id
     ///
     /// This must be sent after receiving the "uci" command to identify the engine.

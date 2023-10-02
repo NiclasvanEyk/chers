@@ -42,7 +42,7 @@ pub enum PromotedFigure {
 
 impl PromotedFigure {
     pub fn to_figure(&self) -> Figure {
-        match (self) {
+        match self {
             PromotedFigure::King => Figure::King,
             PromotedFigure::Queen => Figure::Queen,
             PromotedFigure::Rook => Figure::Rook,

@@ -1,5 +1,5 @@
 use crate::{
-    check::{self, checks, mates},
+    check::{checks, mates},
     moves_available::autocomplete_to,
     Color, Coordinate, Event, Figure, Move, Piece, State, BOARD_SIZE,
 };

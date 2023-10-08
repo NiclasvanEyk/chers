@@ -145,16 +145,24 @@ fn expand_until_collides(
 
             let Some(collided_piece) = cell_on_board.piece(&state.board) else {
                 // If we do not hit a piece, we can advance
-                if direction.0 > 0 {
-                    direction.0 += 1;
-                } else if direction.0 < 0 {
-                    direction.0 -= 1;
+                match direction.0.cmp(&0) {
+                    std::cmp::Ordering::Less => {
+                        direction.0 -= 1;
+                    },
+                    std::cmp::Ordering::Equal => {},
+                    std::cmp::Ordering::Greater => {
+                        direction.0 += 1;
+                    },
                 }
 
-                if direction.1 > 0 {
-                    direction.1 += 1;
-                } else if direction.1 < 0 {
-                    direction.1 -= 1;
+                match direction.1.cmp(&0) {
+                    std::cmp::Ordering::Less => {
+                        direction.1 -= 1;
+                    },
+                    std::cmp::Ordering::Equal => {},
+                    std::cmp::Ordering::Greater => {
+                        direction.1 += 1;
+                    },
                 }
 
                 cells.push(cell_on_board);

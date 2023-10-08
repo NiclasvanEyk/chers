@@ -12,7 +12,3 @@ version = "0.1.0"
 dependencies = [
  "chers",
 ]
-
-[[package]]
-name = "chers_uci"
-version = "0.1.0"

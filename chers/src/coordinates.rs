@@ -1,4 +1,4 @@
-use std::{fmt::Display, io::Write};
+use std::fmt::Display;
 
 use super::{Board, Color, Piece, State, BOARD_SIZE};
 
@@ -160,7 +160,7 @@ impl Coordinate {
     }
 }
 
-pub fn fmt_coordinates(coordinates: &Vec<Coordinate>) -> String {
+pub fn fmt_coordinates(coordinates: &[Coordinate]) -> String {
     let mut s = String::from("[");
 
     s += coordinates

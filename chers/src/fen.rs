@@ -17,7 +17,7 @@ pub enum CouldNotParse {
 }
 
 pub fn parse_state(notation: &str) -> Result<State, CouldNotParse> {
-    let parts: Vec<&str> = notation.split(' ').into_iter().collect();
+    let parts: Vec<&str> = notation.split(' ').collect();
     if parts.len() != 6 {
         return Err(CouldNotParse::InvalidNumberOfParts);
     }

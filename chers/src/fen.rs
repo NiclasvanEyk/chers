@@ -47,7 +47,8 @@ fn parse_fullmove_number(notation: &str) -> Result<u8, CouldNotParse> {
 }
 
 fn parse_en_passant_target(_notation: &str) -> Result<Option<Coordinate>, CouldNotParse> {
-    todo!();
+    // TODO
+    Ok(None)
 }
 
 pub fn parse_board(notation: &str) -> Result<Board, CouldNotParse> {
@@ -129,7 +130,8 @@ fn parse_player(notation: &str) -> Result<Player, CouldNotParse> {
 }
 
 fn parse_castling_rights(_notation: &str) -> Result<CastlingRights, CouldNotParse> {
-    todo!();
+    // TODO
+    Ok(CastlingRights::all())
 }
 
 #[cfg(test)]

@@ -8,11 +8,18 @@ mod engine;
 mod coordinates;
 
 /// Computes valid moves given a game state and a starting position.
-mod moves;
+mod moves_available;
+
+/// Computes the resulting state changes of a move.
+mod move_execution;
+
+/// Computes whether a given state represents check or even mate.
+mod check;
 
 /// Parses a description in Forsyth–Edwards Notation.
 pub mod fen;
 
 pub use coordinates::*;
 pub use engine::*;
+pub use move_execution::*;
 pub use structs::*;

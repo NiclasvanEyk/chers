@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, io::Write};
 
 use super::{Board, Color, Piece, State, BOARD_SIZE};
 
@@ -27,7 +27,7 @@ impl Display for Coordinate {
 
         let y = 8 - self.y;
 
-        write!(f, "{}{}", x.to_uppercase(), y)
+        write!(f, "{}{}", x, y)
     }
 }
 
@@ -157,5 +157,42 @@ impl Coordinate {
 
     pub fn piece(&self, board: &Board) -> Option<Piece> {
         board[self.y][self.x]
+    }
+}
+
+pub fn fmt_coordinates(coordinates: &Vec<Coordinate>) -> String {
+    let mut s = String::from("[");
+
+    s += coordinates
+        .iter()
+        .map(|coordinate| coordinate.to_string())
+        .collect::<Vec<String>>()
+        .join(", ")
+        .as_str();
+
+    s += "]";
+    s
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn display_and_parsing() {
+        assert_eq!(
+            Coordinate { x: 0, y: 0 },
+            Coordinate::algebraic("a8").unwrap(),
+        );
+        assert_eq!(
+            Coordinate { x: 0, y: 7 },
+            Coordinate::algebraic("a1").unwrap(),
+        );
+
+        let coord = Coordinate { x: 3, y: 4 };
+        assert_eq!(
+            Coordinate::algebraic(coord.to_string().as_str()).unwrap(),
+            coord
+        );
     }
 }

@@ -1,9 +1,6 @@
 use std::io::Write;
 
-use chers::{
-    Board, Color, Coordinate, Engine, Figure, Move, Piece, PromotedFigure,
-    State,
-};
+use chers::{Board, Color, Coordinate, Engine, Figure, Move, Piece, PromotedFigure, State};
 
 enum InputState {
     PromptingFrom,
@@ -38,9 +35,9 @@ impl TerminalChersMatch {
 
     pub fn run(&mut self) {
         clear_terminal();
-        println!("{}", show_board(self.game_state.board));
+        println!("{}", show_board(&self.game_state.board));
 
-        loop {
+        'game: loop {
             let new_state = match self.input_state {
                 InputState::PromptingFrom => {
                     match prompt_for_coordinate_or_quit(&format!(
@@ -78,12 +75,17 @@ impl TerminalChersMatch {
                             InputState::PromptingTo(r#move.from)
                         }
                         Ok((new_state, events)) => {
+                            let current_player = self.game_state.player;
                             self.game_state = new_state;
                             clear_terminal();
-                            println!("{}", show_board(self.game_state.board));
+                            println!("{}", show_board(&self.game_state.board));
 
                             for event in events {
                                 println!("{:?}", event);
+                                if let chers::Event::Mate = event {
+                                    println!("{:?} wins!", current_player);
+                                    break 'game;
+                                }
                             }
 
                             InputState::PromptingFrom
@@ -196,7 +198,7 @@ fn to_terminal_string(coordinate: Coordinate, piece: Option<Piece>) -> String {
     format!("{background}{}{} \x1b[0m", foreground, piece_str)
 }
 
-pub fn show_board(board: Board) -> String {
+pub fn show_board(board: &Board) -> String {
     return board
         .iter()
         .enumerate()
@@ -213,9 +215,11 @@ pub fn show_board(board: Board) -> String {
                 })
                 .collect::<Vec<String>>()
                 .join("")
+                + format!(" {}", 8 - row_index).as_str()
         })
         .collect::<Vec<String>>()
-        .join("\n");
+        .join("\n")
+        + "\na b c d e f g h\n";
 }
 
 pub fn clear_terminal() {

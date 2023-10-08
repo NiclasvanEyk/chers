@@ -1,6 +1,10 @@
-use super::{Color, Coordinate, Piece, State};
+use super::{Color, Coordinate, State};
 
-pub fn autocomplete_to(state: &State, from: Coordinate, piece: Piece) -> Vec<Coordinate> {
+pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
+    let Some(piece) = from.piece(&state.board) else {
+        return Vec::new();
+    };
+
     if state.player != piece.color {
         return Vec::new();
     }
@@ -88,6 +92,9 @@ pub fn autocomplete_to(state: &State, from: Coordinate, piece: Piece) -> Vec<Coo
             moves.append(&mut expand_straight_until_collides(state, from));
             moves.append(&mut expand_diagonally_until_collides(state, from));
 
+            moves.sort_by_key(|a| format!("{},{}", a.x, a.y));
+            moves.dedup();
+
             moves
         }
 
@@ -116,74 +123,51 @@ pub fn autocomplete_to(state: &State, from: Coordinate, piece: Piece) -> Vec<Coo
 }
 
 fn expand_straight_until_collides(state: &State, from: Coordinate) -> Vec<Coordinate> {
-    let mut cells = Vec::new();
-
-    let mut directions = [1, -1, 1, -1];
-    for (index, direction) in directions.iter_mut().enumerate() {
-        loop {
-            if index % 2 == 0 {
-                match from.horizontal(*direction) {
-                    None => break,
-                    Some(cell) => {
-                        if !cell.can_be_moved_to_given(state) {
-                            break;
-                        }
-
-                        cells.push(cell)
-                    }
-                }
-            } else {
-                match from.vertical(*direction) {
-                    None => break,
-                    Some(cell) => {
-                        if !cell.can_be_moved_to_given(state) {
-                            break;
-                        }
-
-                        cells.push(cell)
-                    }
-                }
-            }
-
-            if *direction > 0 {
-                *direction += 1;
-            } else {
-                *direction -= 1;
-            }
-        }
-    }
-
-    cells
+    expand_until_collides(state, from, [(0, 1), (0, -1), (1, 0), (-1, 0)])
 }
 
 fn expand_diagonally_until_collides(state: &State, from: Coordinate) -> Vec<Coordinate> {
+    expand_until_collides(state, from, [(1, 1), (1, -1), (-1, 1), (-1, -1)])
+}
+
+fn expand_until_collides(
+    state: &State,
+    from: Coordinate,
+    mut into: [(isize, isize); 4],
+) -> Vec<Coordinate> {
     let mut cells = Vec::new();
 
-    let mut vectors = [(1, 1), (1, -1), (-1, 1), (-1, -1)];
-    for vector in vectors.iter_mut() {
+    for direction in into.iter_mut() {
         loop {
-            match from.diagonal(vector.0, vector.1) {
-                None => break,
-                Some(cell) => {
-                    if !cell.can_be_moved_to_given(state) {
-                        break;
-                    }
+            let Some(cell_on_board) = from.diagonal(direction.0, direction.1) else {
+                break;
+            };
 
-                    cells.push(cell)
+            let Some(collided_piece) = cell_on_board.piece(&state.board) else {
+                // If we do not hit a piece, we can advance
+                if direction.0 > 0 {
+                    direction.0 += 1;
+                } else if direction.0 < 0 {
+                    direction.0 -= 1;
                 }
+
+                if direction.1 > 0 {
+                    direction.1 += 1;
+                } else if direction.1 < 0 {
+                    direction.1 -= 1;
+                }
+
+                cells.push(cell_on_board);
+                continue;
+            };
+
+            // If we hit a piece, we can move there if it belongd to the other player.
+            if collided_piece.belongs_to(state.opponent()) {
+                cells.push(cell_on_board);
             }
 
-            if vector.0 > 0 {
-                vector.0 += 1;
-            } else {
-                vector.0 -= 1;
-            }
-
-            if vector.1 > 0 {
-                vector.1 += 1;
-            } else {
-                vector.1 -= 1;
-            }
+            // In any case, we need to stop iterating after hitting a piece.
+            break;
         }
     }
 
@@ -199,21 +183,59 @@ fn resides_on_pawn_rank(from: Coordinate, color: Color) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Engine, Figure::Pawn};
+    use crate::{fen::parse_state, fmt_coordinates, Engine};
 
     use super::*;
 
     #[test]
     fn white_pawn_can_move_twice_at_the_beginning() {
-        let targets = autocomplete_to(
-            &Engine {}.start(),
-            Coordinate::algebraic("a2").unwrap(),
-            Piece::white(Pawn),
-        );
+        let targets = autocomplete_to(&Engine {}.start(), Coordinate::algebraic("a2").unwrap());
 
         println!("{:?}", targets);
         assert_eq!(2, targets.len());
         assert!(targets.contains(&Coordinate::algebraic("a3").unwrap()));
         assert!(targets.contains(&Coordinate::algebraic("a4").unwrap()));
+    }
+
+    #[test]
+    fn queen_movement() {
+        let notation = "rnbqkbnr/pppp3p/5pp1/4P3/3Q4/8/PPP1PPPP/RNB1KBNR w KQkq - 0 4";
+        let state = parse_state(notation).unwrap();
+
+        let moves = autocomplete_to(&state, Coordinate::algebraic("d4").unwrap());
+
+        for expected in [
+            // Up/Down
+            Coordinate::algebraic("d1").unwrap(),
+            Coordinate::algebraic("d2").unwrap(),
+            Coordinate::algebraic("d3").unwrap(),
+            Coordinate::algebraic("d5").unwrap(),
+            Coordinate::algebraic("d6").unwrap(),
+            Coordinate::algebraic("d7").unwrap(), // This one would even capture the pawn!
+            // Left/Right
+            Coordinate::algebraic("a4").unwrap(),
+            Coordinate::algebraic("b4").unwrap(),
+            Coordinate::algebraic("c4").unwrap(),
+            Coordinate::algebraic("e4").unwrap(),
+            Coordinate::algebraic("f4").unwrap(),
+            Coordinate::algebraic("g4").unwrap(),
+            Coordinate::algebraic("h4").unwrap(),
+            // Upleft/Downright
+            Coordinate::algebraic("a7").unwrap(), // This one would even capture the pawn!
+            Coordinate::algebraic("b6").unwrap(),
+            Coordinate::algebraic("c5").unwrap(),
+            Coordinate::algebraic("e3").unwrap(),
+            // Upright/Downleft
+            Coordinate::algebraic("c3").unwrap(),
+        ] {
+            assert!(
+                moves.contains(&expected),
+                "{} not in {}",
+                expected,
+                fmt_coordinates(&moves)
+            );
+        }
+
+        assert_eq!(18, moves.len());
     }
 }

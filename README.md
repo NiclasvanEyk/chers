@@ -22,8 +22,8 @@ cargo run --bin chers_cli
 - [ ] Castling
 - [ ] Halfmove clock
 - [ ] Fullmove number
-- [ ] Checkmate
-- [ ] Mate
+- [x] Checkmate
+- [x] Mate
 - [ ] Remove this list once all items are finished
 
 ## Ideas

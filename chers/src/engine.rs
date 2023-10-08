@@ -1,11 +1,14 @@
-use crate::{Color, Figure, PromotedFigure, BOARD_SIZE};
-
-use super::{
-    moves::autocomplete_to, Board, CastlingRights, Color::White, Coordinate, Move, Piece, Player,
-    State, INITIAL_BOARD,
+use crate::{
+    move_execution::{move_piece, CantMovePiece},
+    PromotedFigure,
 };
 
-#[derive(Debug)]
+use super::{
+    moves_available::autocomplete_to, CastlingRights, Color::White, Coordinate, Move, Piece, State,
+    INITIAL_BOARD,
+};
+
+#[derive(Debug, PartialEq)]
 pub enum Event {
     Capture {
         at: Coordinate,
@@ -16,23 +19,9 @@ pub enum Event {
         to: PromotedFigure,
     },
     Check {
-        by: Player,
+        by: Vec<(Coordinate, Piece)>,
     },
-    Mate {
-        by: Player,
-        board: Board,
-    },
-}
-
-#[derive(Debug)]
-pub enum CantMovePiece {
-    NoPieceToMove,
-    ItBelongsToOtherPlayer,
-    RequiresPromotion,
-    IllegalMove {
-        attempted: Move,
-        legal: Vec<Coordinate>,
-    },
+    Mate,
 }
 
 #[derive(Default)]
@@ -55,11 +44,7 @@ impl Engine {
     }
 
     pub fn available_moves(&self, state: &State, from: Coordinate) -> Vec<Coordinate> {
-        let Some(piece) = state.board[from.y][from.x] else {
-            return Vec::new();
-        };
-
-        autocomplete_to(state, from, piece)
+        autocomplete_to(state, from)
     }
 
     pub fn move_piece(
@@ -67,82 +52,6 @@ impl Engine {
         state: &State,
         r#move: Move,
     ) -> Result<(State, Vec<Event>), CantMovePiece> {
-        let from = r#move.from;
-        let to = r#move.to;
-
-        let Some(moved) = state.board[from.y][from.x] else {
-            return Err(CantMovePiece::NoPieceToMove)
-        };
-
-        if moved.color != state.player {
-            return Err(CantMovePiece::ItBelongsToOtherPlayer);
-        }
-
-        let legal = self.available_moves(state, from);
-        if !legal.contains(&to) {
-            return Err(CantMovePiece::IllegalMove {
-                attempted: r#move,
-                legal,
-            });
-        }
-
-        let mut events = Vec::new();
-        let mut new_board = state.board;
-
-        if let Some(captured) = to.piece(&state.board) {
-            events.push(Event::Capture {
-                at: to,
-                captured,
-                by: moved,
-            });
-        } else if let Some(en_passant) = state.en_passant_target {
-            let origin = en_passant.backward(state.player.other(), 1).unwrap();
-            if origin == to {
-                new_board[en_passant.y][en_passant.x] = None;
-                events.push(Event::Capture {
-                    // TODO: Maybe we need to introduce more fields here?
-                    at: to,
-                    // Save to unwrap, since en_passant target is present
-                    captured: en_passant.piece(&state.board).unwrap(),
-                    by: moved,
-                });
-            }
-        }
-
-        new_board[from.y][from.x] = None;
-
-        if requires_promotion(state, moved, to) {
-            let Some(promoted) = r#move.promotion else {
-                return Err(CantMovePiece::RequiresPromotion);
-            };
-
-            events.push(Event::Promotion { to: promoted });
-            new_board[to.y][to.x] = Some(Piece {
-                color: state.player,
-                figure: promoted.to_figure(),
-            });
-        } else {
-            new_board[to.y][to.x] = Some(moved);
-        }
-
-        // TODO: Check for checkmate
-
-        let mut new_state = state.new_turn(new_board);
-
-        let enables_en_passant = moved.figure == Figure::Pawn && from.y.abs_diff(to.y) == 2;
-        if enables_en_passant {
-            new_state.en_passant_target = Some(to)
-        }
-
-        Ok((new_state, events))
+        move_piece(state, r#move)
     }
-}
-
-fn requires_promotion(state: &State, piece: Piece, to: Coordinate) -> bool {
-    let board_end = match state.player {
-        Color::White => 0,
-        Color::Black => BOARD_SIZE - 1,
-    };
-
-    piece.figure == Figure::Pawn && to.y == board_end
 }

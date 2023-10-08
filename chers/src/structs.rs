@@ -77,6 +77,10 @@ impl Piece {
     pub const fn white(figure: Figure) -> Self {
         Self::new(Color::White, figure)
     }
+
+    pub fn belongs_to(&self, player: Player) -> bool {
+        self.color == player
+    }
 }
 
 pub const BOARD_SIZE: usize = 8;
@@ -186,18 +190,37 @@ impl PartialEq for State {
 }
 
 impl State {
-    pub fn new_turn(&self, new_board: Board) -> Self {
+    pub fn new_turn(
+        &self,
+        new_board: Board,
+        moved: Figure,
+        r#move: Move,
+        did_capture: bool,
+    ) -> Self {
+        let from = r#move.from;
+        let to = r#move.to;
+
         Self {
             player: self.player.switch(),
             board: new_board,
             castling_rights: self.castling_rights, // TODO
-            en_passant_target: None,               // Checked afterwards
-            halfmove_clock: self.halfmove_clock,   // TODO
+            en_passant_target: match moved == Figure::Pawn && from.y.abs_diff(to.y) == 2 {
+                true => Some(r#move.to),
+                false => None,
+            },
+            halfmove_clock: match did_capture || moved == Figure::Pawn {
+                true => 0,
+                false => self.halfmove_clock + 1,
+            },
             fullmove_number: match self.player {
                 Color::White => self.fullmove_number,
                 Color::Black => self.fullmove_number + 1,
             },
         }
+    }
+
+    pub fn opponent(&self) -> Player {
+        self.player.other()
     }
 }
 
@@ -247,3 +270,22 @@ pub const INITIAL_BOARD: Board = [
         Some(Piece::white(Figure::Rook)),
     ],
 ];
+
+pub fn cells(board: &Board) -> Vec<(Coordinate, Option<Piece>)> {
+    let mut cells = Vec::new();
+
+    for (y, row) in board.iter().enumerate() {
+        for (x, cell) in row.iter().enumerate() {
+            cells.push((Coordinate { x, y }, *cell));
+        }
+    }
+
+    cells
+}
+
+pub fn pieces(board: &Board) -> Vec<(Coordinate, Piece)> {
+    cells(board)
+        .into_iter()
+        .filter_map(|(coordinate, contents)| contents.map(|piece| (coordinate, piece)))
+        .collect()
+}

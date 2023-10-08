@@ -1,6 +1,10 @@
+use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::*;
+
 use super::Coordinate;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[wasm_bindgen]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum Color {
     White,
     Black,
@@ -21,7 +25,8 @@ impl Color {
 
 pub type Player = Color;
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[wasm_bindgen]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum Figure {
     King,
     Queen,
@@ -31,7 +36,8 @@ pub enum Figure {
     Pawn,
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[wasm_bindgen]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum PromotedFigure {
     King,
     Queen,
@@ -52,14 +58,28 @@ impl PromotedFigure {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Move {
     pub from: Coordinate,
     pub to: Coordinate,
     pub promotion: Option<PromotedFigure>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[wasm_bindgen]
+impl Move {
+    #[wasm_bindgen(constructor)]
+    pub fn new(from: Coordinate, to: Coordinate, promotion: Option<PromotedFigure>) -> Move {
+        Self {
+            from,
+            to,
+            promotion,
+        }
+    }
+}
+
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Piece {
     pub color: Color,
     pub figure: Figure,
@@ -105,7 +125,7 @@ pub const fn empty_board() -> Board {
     ]
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub struct CastlingRights {
     white: CastleDirections,
     black: CastleDirections,
@@ -120,7 +140,7 @@ impl CastlingRights {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub struct CastleDirections {
     queen_side: bool,
     king_side: bool,
@@ -135,7 +155,7 @@ impl CastleDirections {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct State {
     pub player: Player,
     pub board: Board,

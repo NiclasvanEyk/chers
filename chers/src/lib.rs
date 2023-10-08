@@ -19,6 +19,9 @@ mod check;
 /// Parses a description in Forsyth–Edwards Notation.
 pub mod fen;
 
+/// WASM bindings
+pub mod wasm;
+
 pub use coordinates::*;
 pub use engine::*;
 pub use move_execution::*;

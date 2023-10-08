@@ -1,7 +1,7 @@
 use crate::{
     check::{checks, mates},
     moves_available::autocomplete_to,
-    Color, Coordinate, Event, Figure, Move, Piece, State, BOARD_SIZE,
+    piece_at, Color, Coordinate, Event, Figure, Move, Piece, State, BOARD_SIZE,
 };
 
 #[derive(Debug)]
@@ -15,9 +15,9 @@ pub enum CantMovePiece {
     },
 }
 
-pub fn move_piece(state: &State, r#move: Move) -> Result<(State, Vec<Event>), CantMovePiece> {
-    let from = r#move.from;
-    let to = r#move.to;
+pub fn move_piece(state: &State, the_move: Move) -> Result<(State, Vec<Event>), CantMovePiece> {
+    let from = the_move.from;
+    let to = the_move.to;
 
     let Some(moved) = state.board[from.y][from.x] else {
         return Err(CantMovePiece::NoPieceToMove)
@@ -30,7 +30,7 @@ pub fn move_piece(state: &State, r#move: Move) -> Result<(State, Vec<Event>), Ca
     let legal = autocomplete_to(state, from);
     if !legal.contains(&to) {
         return Err(CantMovePiece::IllegalMove {
-            attempted: r#move,
+            attempted: the_move,
             legal,
         });
     }
@@ -39,7 +39,7 @@ pub fn move_piece(state: &State, r#move: Move) -> Result<(State, Vec<Event>), Ca
     let mut new_board = state.board;
 
     let mut did_capture = false;
-    if let Some(captured) = to.piece(&state.board) {
+    if let Some(captured) = piece_at(to, &state.board) {
         did_capture = true;
         events.push(Event::Capture {
             at: to,
@@ -55,7 +55,7 @@ pub fn move_piece(state: &State, r#move: Move) -> Result<(State, Vec<Event>), Ca
                 // TODO: Maybe we need to introduce more fields here?
                 at: to,
                 // Save to unwrap, since en_passant target is present
-                captured: en_passant.piece(&state.board).unwrap(),
+                captured: piece_at(en_passant, &state.board).unwrap(),
                 by: moved,
             });
         }
@@ -64,7 +64,7 @@ pub fn move_piece(state: &State, r#move: Move) -> Result<(State, Vec<Event>), Ca
     new_board[from.y][from.x] = None;
 
     if requires_promotion(state, moved, to) {
-        let Some(promoted) = r#move.promotion else {
+        let Some(promoted) = the_move.promotion else {
                 return Err(CantMovePiece::RequiresPromotion);
             };
 
@@ -93,7 +93,7 @@ pub fn move_piece(state: &State, r#move: Move) -> Result<(State, Vec<Event>), Ca
         }
     }
 
-    let new_state = state.new_turn(new_board, moved.figure, r#move, did_capture);
+    let new_state = state.new_turn(new_board, moved.figure, the_move, did_capture);
 
     // TODO: Enforce 50 turn limit using halfmove clock
 

@@ -1,7 +1,9 @@
+use crate::{can_be_moved_to_given, is_free, piece_at};
+
 use super::{Color, Coordinate, State};
 
 pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
-    let Some(piece) = from.piece(&state.board) else {
+    let Some(piece) = piece_at(from, &state.board) else {
         return Vec::new();
     };
 
@@ -19,7 +21,7 @@ pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
             // Safe to unwrap here, pawns can always move forward, since they
             // are promoted when they reach the end of the board.
             let single_step = from.forward(piece.color, 1).unwrap();
-            let single_step_is_free = single_step.is_free(&state.board);
+            let single_step_is_free = is_free(single_step, &state.board);
             if single_step_is_free {
                 moves.push(single_step)
             }
@@ -28,7 +30,7 @@ pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
                 // Here we can again unwrap safely, since paws can only move
                 // two steps, when they reside on the pawn rank.
                 let double_step = from.forward(piece.color, 2).unwrap();
-                if double_step.is_free(&state.board) {
+                if is_free(double_step, &state.board) {
                     moves.push(double_step);
                 }
             }
@@ -46,7 +48,7 @@ pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
                 .and_then(|target| target.backward(state.player.other(), 1));
 
             for capture_move in capture_moves {
-                if let Some(piece) = capture_move.piece(&state.board) {
+                if let Some(piece) = piece_at(capture_move, &state.board) {
                     if piece.color != state.player {
                         moves.push(capture_move)
                     }
@@ -74,7 +76,7 @@ pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
 
             let mut moves = Vec::new();
             for potential_move in potential_moves.into_iter().flatten() {
-                if potential_move.can_be_moved_to_given(state) {
+                if can_be_moved_to_given(potential_move, state) {
                     moves.push(potential_move);
                 }
             }
@@ -112,7 +114,7 @@ pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
 
             let mut moves = Vec::new();
             for cell in possible.into_iter().flatten() {
-                if cell.can_be_moved_to_given(state) {
+                if can_be_moved_to_given(cell, state) {
                     moves.push(cell);
                 }
             }
@@ -143,7 +145,7 @@ fn expand_until_collides(
                 break;
             };
 
-            let Some(collided_piece) = cell_on_board.piece(&state.board) else {
+            let Some(collided_piece) = piece_at(cell_on_board, &state.board) else {
                 // If we do not hit a piece, we can advance
                 match direction.0.cmp(&0) {
                     std::cmp::Ordering::Less => {

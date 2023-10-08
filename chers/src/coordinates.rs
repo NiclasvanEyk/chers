@@ -1,11 +1,15 @@
 use std::fmt::Display;
 
+use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::*;
+
 use super::{Board, Color, Piece, State, BOARD_SIZE};
 
 // An offset relative to the top left (0,0) from white's view
 //
 // Due to the [`Board`] being layed out as an array
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Coordinate {
     pub x: usize,
     pub y: usize,
@@ -32,6 +36,7 @@ impl Display for Coordinate {
 }
 
 #[derive(Debug)]
+#[wasm_bindgen]
 pub enum CoordinateParserError {
     Empty,
     MissingColumn,
@@ -40,9 +45,78 @@ pub enum CoordinateParserError {
     InvalidRow,
 }
 
+#[wasm_bindgen]
+impl Coordinate {
+    #[wasm_bindgen(constructor)]
+    pub fn new(x: usize, y: usize) -> Coordinate {
+        Coordinate { x, y }
+    }
+
+    pub fn horizontal(&self, amount: isize) -> Option<Coordinate> {
+        let Some(x) = self.x.checked_add_signed(amount) else {
+            return None;
+        };
+
+        if x >= BOARD_SIZE {
+            return None;
+        }
+
+        Some(Coordinate { x, y: self.y })
+    }
+
+    pub fn vertical(&self, amount: isize) -> Option<Coordinate> {
+        let Some(y) = self.y.checked_add_signed(amount) else {
+            return None;
+        };
+
+        if y >= BOARD_SIZE {
+            return None;
+        }
+
+        Some(Coordinate { x: self.x, y })
+    }
+
+    pub fn diagonal(&self, horizontal: isize, vertical: isize) -> Option<Coordinate> {
+        let Some(first) = self.horizontal(horizontal) else {
+            return None;
+        };
+
+        first.vertical(vertical)
+    }
+
+    pub fn forward(&self, color: Color, amount: isize) -> Option<Coordinate> {
+        self.vertical(match color {
+            super::Color::White => -amount,
+            super::Color::Black => amount,
+        })
+    }
+
+    pub fn backward(&self, color: Color, amount: isize) -> Option<Coordinate> {
+        self.forward(color, -amount)
+    }
+
+    pub fn up(&self, amount: isize) -> Option<Coordinate> {
+        self.vertical(amount)
+    }
+
+    pub fn down(&self, amount: isize) -> Option<Coordinate> {
+        self.vertical(-amount)
+    }
+
+    pub fn right(&self, amount: isize) -> Option<Coordinate> {
+        self.horizontal(amount)
+    }
+
+    pub fn left(&self, amount: isize) -> Option<Coordinate> {
+        self.horizontal(-amount)
+    }
+
+    // TODO: Those two don't really fit in here. Maybe move somewhere else?
+}
+
 impl Coordinate {
     /// Parses a coordinate in algebraic notation
-    pub fn algebraic(input: &str) -> Result<Self, CoordinateParserError> {
+    pub fn algebraic(input: &str) -> Result<Coordinate, CoordinateParserError> {
         let normalized = input.trim();
         if normalized.is_empty() {
             return Err(CoordinateParserError::Empty);
@@ -82,81 +156,20 @@ impl Coordinate {
 
         Ok(Coordinate { x, y })
     }
+}
 
-    pub fn horizontal(&self, amount: isize) -> Option<Self> {
-        let Some(x) = self.x.checked_add_signed(amount) else {
-            return None;
-        };
+pub fn is_free(coord: Coordinate, board: &Board) -> bool {
+    piece_at(coord, board).is_none()
+}
 
-        if x >= BOARD_SIZE {
-            return None;
-        }
+pub fn piece_at(coord: Coordinate, board: &Board) -> Option<Piece> {
+    board[coord.y][coord.x]
+}
 
-        Some(Self { x, y: self.y })
-    }
-
-    pub fn vertical(&self, amount: isize) -> Option<Self> {
-        let Some(y) = self.y.checked_add_signed(amount) else {
-            return None;
-        };
-
-        if y >= BOARD_SIZE {
-            return None;
-        }
-
-        Some(Self { x: self.x, y })
-    }
-
-    pub fn diagonal(&self, horizontal: isize, vertical: isize) -> Option<Self> {
-        let Some(first) = self.horizontal(horizontal) else {
-            return None;
-        };
-
-        first.vertical(vertical)
-    }
-
-    pub fn forward(&self, color: Color, amount: isize) -> Option<Self> {
-        self.vertical(match color {
-            super::Color::White => -amount,
-            super::Color::Black => amount,
-        })
-    }
-
-    pub fn backward(&self, color: Color, amount: isize) -> Option<Self> {
-        self.forward(color, -amount)
-    }
-
-    pub fn up(&self, amount: isize) -> Option<Self> {
-        self.vertical(amount)
-    }
-
-    pub fn down(&self, amount: isize) -> Option<Self> {
-        self.vertical(-amount)
-    }
-
-    pub fn right(&self, amount: isize) -> Option<Self> {
-        self.horizontal(amount)
-    }
-
-    pub fn left(&self, amount: isize) -> Option<Self> {
-        self.horizontal(-amount)
-    }
-
-    pub fn is_free(&self, board: &Board) -> bool {
-        self.piece(board).is_none()
-    }
-
-    // TODO: Those two don't really fit in here. Maybe move somewhere else?
-
-    pub fn can_be_moved_to_given(&self, state: &State) -> bool {
-        match self.piece(&state.board) {
-            None => true,
-            Some(piece) => piece.color != state.player,
-        }
-    }
-
-    pub fn piece(&self, board: &Board) -> Option<Piece> {
-        board[self.y][self.x]
+pub fn can_be_moved_to_given(coord: Coordinate, state: &State) -> bool {
+    match piece_at(coord, &state.board) {
+        None => true,
+        Some(piece) => piece.color != state.player,
     }
 }
 

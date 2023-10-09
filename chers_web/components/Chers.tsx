@@ -8,8 +8,14 @@ import init, {
   Move as MoveDTO,
 } from "@/lib/chers/chers";
 import { Board } from "./Board";
-import { ChessCommandsContext } from "@/lib/useChessCommands";
-import { Move, MoveExecutionResult, Coordinate } from "@/lib/chers";
+import { ChessContext } from "@/lib/useChessCommands";
+import {
+  Move,
+  MoveExecutionResult,
+  Coordinate,
+  Piece,
+  State,
+} from "@/lib/chers";
 
 function coordToDto(coordinate: Coordinate): CoordinateDTO {
   return new CoordinateDTO(coordinate.x, coordinate.y);
@@ -27,11 +33,12 @@ function moveToDto(move: Move): MoveDTO {
 
 export interface TouchedPiece {
   coordinate: Coordinate;
+  piece: Piece;
   moves: Coordinate[];
 }
 
 export default function Chers() {
-  const [game, setGame] = useState(null);
+  const [game, setGame] = useState<State | null>(null);
   const [touchedPiece, setTouchedPiece] = useState<TouchedPiece | null>(null);
 
   useEffect(function () {
@@ -48,13 +55,14 @@ export default function Chers() {
     setTouchedPiece(null);
   }
 
-  function showMoves(coordinate: Coordinate) {
+  const showMoves = (coordinate: Coordinate) => {
     const available = available_moves(game, coordToDto(coordinate));
     setTouchedPiece({
       coordinate,
+      piece: game.board[coordinate.y][coordinate.x]!,
       moves: available,
     });
-  }
+  };
 
   function executeMove(move: Move) {
     stopShowingMoves();
@@ -66,10 +74,16 @@ export default function Chers() {
   }
 
   return (
-    <ChessCommandsContext.Provider
-      value={{ showMoves, executeMove, stopShowingMoves }}
+    <ChessContext.Provider
+      value={{
+        showMoves,
+        executeMove,
+        stopShowingMoves,
+        touchedPiece,
+        player: game.player,
+      }}
     >
-      <Board state={game} touchedPiece={touchedPiece} />
-    </ChessCommandsContext.Provider>
+      <Board state={game} />
+    </ChessContext.Provider>
   );
 }

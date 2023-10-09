@@ -16,6 +16,7 @@ import {
   Piece,
   State,
 } from "@/lib/chers";
+import { LoadingIndicator } from "./LoadingIndicator";
 
 function coordToDto(coordinate: Coordinate): CoordinateDTO {
   return new CoordinateDTO(coordinate.x, coordinate.y);
@@ -48,7 +49,11 @@ export default function Chers() {
   }, []);
 
   if (!game) {
-    return "Loading...";
+    return (
+      <div className="h-screen w-screen flex justify-center items-center">
+        <LoadingIndicator className="h-10 w-10 animate-spin" />
+      </div>
+    );
   }
 
   function stopShowingMoves() {

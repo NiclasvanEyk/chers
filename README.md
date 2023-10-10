@@ -5,6 +5,7 @@ Contains:
 
 - A core [engine](./chers/) that validates and suggests moves
 - A [command line interface](./chers_cli/) that enables you to play chess inside your terminal
+- A [web interface](./chers_web/) that re-uses the core engine compiled to Webassembly to run chess in your browser
 
 ## Try it out
 

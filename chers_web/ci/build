@@ -3,8 +3,9 @@
 set -e
 
 echo "Building chers..."
-~/.cargo/bin/cargo build
-~/.cargo/bin/wasm-pack build --target web --out-dir ./lib/chers ../chers
+cd ../chers
+~/.cargo/bin/wasm-pack build --target web
 
 echo "Building chers_web..."
+cd ../chers_web
 bun run build

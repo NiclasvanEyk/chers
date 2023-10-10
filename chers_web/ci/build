@@ -4,7 +4,8 @@ set -e
 
 echo "Building chers..."
 cd ../chers
-~/.cargo/bin/wasm-pack build --target web
+cargo metadata
+wasm-pack build --target web
 
 echo "Building chers_web..."
 cd ../chers_web

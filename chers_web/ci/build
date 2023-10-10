@@ -3,7 +3,7 @@
 set -e
 
 echo "Building chers..."
-cargo build
+~/.cargo/bin/cargo build
 ~/.cargo/bin/wasm-pack build --target web --out-dir ./lib/chers ../chers
 
 echo "Building chers_web..."

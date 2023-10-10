@@ -2,11 +2,16 @@
 
 set -e
 
+export CARGO_HOME=/vercel/.cargo
+export RUSTUP_HOME=/vercel/.rustup
+
 echo "Installing Rust..."
-amazon-linux-extras install rust1
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source "$CARGO_HOME/env"
+cargo --version
 
 echo "Installing wasm-pack..."
-cargo install wasm-pack
+curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh -s -- -y
 
 echo "Installing NPM Dependencies..."
 bun install

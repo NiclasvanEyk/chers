@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo "Building chers..."
+~/.cargo/bin/wasm-pack build --target web --out-dir ./lib/chers ../chers
+
+echo "Building chers_web..."
+bun run build

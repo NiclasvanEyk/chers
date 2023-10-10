@@ -2,6 +2,10 @@
 
 set -e
 
+export CARGO_HOME=/vercel/.cargo
+export RUSTUP_HOME=/vercel/.rustup
+source "$CARGO_HOME/env"
+
 echo "Building chers..."
 cd ../chers
 cargo metadata

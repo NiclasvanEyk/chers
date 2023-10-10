@@ -14,7 +14,7 @@ export function Board(props: BoardProps) {
     useContext(ChessContext);
 
   return (
-    <div className="p-24 grid grid-cols-8 grid-rows-8">
+    <div className="md:p-24 grid grid-cols-8 grid-rows-8">
       {state.board.flatMap((row, y) =>
         row.map((piece, x) => {
           let moveable: null | boolean = null;

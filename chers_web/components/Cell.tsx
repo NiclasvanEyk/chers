@@ -31,7 +31,7 @@ export function Cell(props: CellProps) {
   return (
     <div
       onClick={props.onClick}
-      className={`${bgColor} ${hoverColor} relative h-16 w-16 overflow-hidden flex items-center justify-center select-none font-bold text-xl`}
+      className={`${bgColor} ${hoverColor} relative h-[min(calc(100vh/8),calc(100vw/8))] w-[min(calc(100vh/8),calc(100vw/8))] md:h-16 md:w-16 overflow-hidden flex items-center justify-center select-none font-bold text-xl`}
     >
       {props.moveable === true ? <MoveableIndicator /> : null}
       {props.children}

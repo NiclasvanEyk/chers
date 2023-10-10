@@ -11,6 +11,7 @@ export function Piece(props: PieceProps) {
   return (
     <img
       src={`/pieces/${piece.color}_${piece.figure}.svg`}
+      alt={`${piece.color} ${piece.figure}`}
       className="h-3/4 w-3/4"
     />
   );

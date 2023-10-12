@@ -23,13 +23,13 @@ export function Board() {
           const onCellClick = () => {
             // Select a piece to move if you could pick one up
             if (state.type === "SELECTING_FROM" && pickable) {
-              dispatch({ type: "SELECT_TO", from: { x, y } });
+              dispatch({ type: "SELECT_FROM", from: { x, y } });
               return;
             }
 
             // Select a field to move the currently picked up piece to
             if (state.type === "SELECTING_TO" && moveable) {
-              dispatch({ type: "", to: { x, y } });
+              dispatch({ type: "SELECT_TO", to: { x, y } });
               return;
             }
 

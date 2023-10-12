@@ -1,3 +1,13 @@
+import {
+  Coordinate as CoordinateDTO,
+  Move as MoveDTO,
+  available_moves,
+  next_state,
+} from "./chers/chers";
+
+// This file contains abstractions and hand-written types for the WASM
+// functions, since the generated ones are not that nice to use
+
 export type Figure = "King" | "Queen" | "Rook" | "Bishop" | "Knight" | "Pawn";
 export type Color = "White" | "Black";
 export type Cell = undefined | Piece;
@@ -28,8 +38,41 @@ export interface State {
   halvmove_clock: number;
 }
 
+export interface MoveExecutionError {
+  error: string;
+}
+
 export interface MoveExecutionResult {
   next_state: State;
   check: boolean;
   mate: boolean;
+}
+
+function coordToDto(coordinate: Coordinate): CoordinateDTO {
+  return new CoordinateDTO(coordinate.x, coordinate.y);
+}
+
+function moveToDto(move: Move): MoveDTO {
+  const dto = new MoveDTO(
+    coordToDto(move.from),
+    coordToDto(move.to),
+    undefined,
+  );
+
+  return dto;
+}
+
+export function getMoves(state: State, from: Coordinate) {
+  return available_moves(state, coordToDto(from)) as unknown as Coordinate[];
+}
+
+export function nextState(
+  current: State,
+  from: Coordinate,
+  to: Coordinate,
+  promotion: Figure | undefined = undefined,
+): MoveExecutionResult | MoveExecutionError {
+  return next_state(current, moveToDto({ from, to, promotion })) as unknown as
+    | MoveExecutionResult
+    | MoveExecutionError;
 }

@@ -9,11 +9,16 @@ Contains:
 
 ## Try it out
 
+Run
+
 ```shell
+cd /tmp
 git clone https://github.com/NiclasvanEyk/chers
 cd chers
 cargo run --bin chers_cli
 ```
+
+to get up and running in the terminal (requires Rust to be installed locally) or visit https://chers.niclasve.me and try out the web version.
 
 ## Engine TODOs
 

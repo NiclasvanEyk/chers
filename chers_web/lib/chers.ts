@@ -35,7 +35,7 @@ export interface State {
   board: Board;
   en_passant_target: undefined | Coordinate;
   fullmove_number: number;
-  halvmove_clock: number;
+  halfmove_clock: number;
 }
 
 export interface MoveExecutionError {

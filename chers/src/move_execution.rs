@@ -65,8 +65,8 @@ pub fn move_piece(state: &State, the_move: Move) -> Result<(State, Vec<Event>), 
 
     if requires_promotion(state, moved, to) {
         let Some(promoted) = the_move.promotion else {
-                return Err(CantMovePiece::RequiresPromotion);
-            };
+            return Err(CantMovePiece::RequiresPromotion);
+        };
 
         events.push(Event::Promotion { to: promoted });
         new_board[to.y][to.x] = Some(Piece {

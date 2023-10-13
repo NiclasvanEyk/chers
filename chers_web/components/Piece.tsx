@@ -2,7 +2,7 @@ import { Cell } from "@/lib/chers";
 
 interface PieceProps {
   piece: Cell;
-  className: string;
+  className?: string;
 }
 
 export function Piece(props: PieceProps) {

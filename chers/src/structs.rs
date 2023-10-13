@@ -39,7 +39,6 @@ pub enum Figure {
 #[wasm_bindgen]
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum PromotedFigure {
-    King,
     Queen,
     Rook,
     Bishop,
@@ -49,7 +48,6 @@ pub enum PromotedFigure {
 impl PromotedFigure {
     pub fn to_figure(&self) -> Figure {
         match self {
-            PromotedFigure::King => Figure::King,
             PromotedFigure::Queen => Figure::Queen,
             PromotedFigure::Rook => Figure::Rook,
             PromotedFigure::Bishop => Figure::Bishop,

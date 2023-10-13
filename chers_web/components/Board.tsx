@@ -1,6 +1,7 @@
 import { canPickUp, canMoveTo, hasPickedUp, useChers } from "@/lib/ui/state";
 import { Cell } from "./Cell";
 import { Piece } from "./Piece";
+import { Promotion } from "./Promotion";
 
 export function Board() {
   const [state, dispatch] = useChers();
@@ -13,7 +14,13 @@ export function Board() {
   }
 
   return (
-    <div className="md:p-24 grid grid-cols-8 grid-rows-8">
+    <div className="relative md:m-24 grid grid-cols-8 grid-rows-8">
+      {state.type === "PROMOTING" ? (
+        <Promotion
+          color={state.game.player}
+          onChoice={(figure) => dispatch({ type: "PROMOTE", to: figure })}
+        />
+      ) : null}
       {board.flatMap((row, y) =>
         row.map((piece, x) => {
           let pickable = canPickUp(piece, player);

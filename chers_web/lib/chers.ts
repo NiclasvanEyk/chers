@@ -56,7 +56,8 @@ function moveToDto(move: Move): MoveDTO {
   const dto = new MoveDTO(
     coordToDto(move.from),
     coordToDto(move.to),
-    undefined,
+    // @ts-ignore-next-line
+    move.promotion,
   );
 
   return dto;

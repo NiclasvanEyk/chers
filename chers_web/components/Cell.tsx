@@ -22,12 +22,17 @@ export function Cell({
   onClick,
   children,
 }: CellProps) {
-  let bgColor = color === "White" ? "bg-[#EDD6B0]" : "bg-[#B88662]";
+  let bgColor = color === "White" ? "bg-chess-beige" : "bg-chess-brown";
 
   let hoverColor = "";
   if (moveable || pickable) {
     hoverColor =
       color === "White" ? "hover:bg-[#e5c28b]" : "hover:bg-[#9e6b47]";
+  }
+
+  let cursor = "";
+  if (pickable || moveable) {
+    cursor = "cursor-pointer";
   }
 
   if (touched) {
@@ -38,7 +43,7 @@ export function Cell({
   return (
     <div
       onClick={onClick}
-      className={`${bgColor} ${hoverColor} relative h-[min(calc(100vh/8),calc(100vw/8))] w-[min(calc(100vh/8),calc(100vw/8))] md:h-16 md:w-16 overflow-hidden flex items-center justify-center select-none font-bold text-xl`}
+      className={`${bgColor} ${hoverColor} ${cursor} relative h-[min(calc(100vh/8),calc(100vw/8))] w-[min(calc(100vh/8),calc(100vw/8))] md:h-16 md:w-16 overflow-hidden flex items-center justify-center select-none font-bold text-xl`}
     >
       {moveable ? <MoveableIndicator /> : null}
       {children}

@@ -99,7 +99,12 @@ export function buildChersReducer(adapter: Adapter) {
           return state;
         }
 
-        const result = adapter.nextState(game, state.from, state.to);
+        const result = adapter.nextState(
+          game,
+          state.from,
+          state.to,
+          command.to,
+        );
         if ("error" in result) {
           return { type: "ERROR", error: result.error, game };
         }

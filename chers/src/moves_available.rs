@@ -1,8 +1,19 @@
-use crate::{can_be_moved_to_given, is_free, piece_at};
+use crate::{
+    can_be_moved_to_given, check::is_checked_by_opponent, force_move_piece, is_free, piece_at,
+    Move, Piece,
+};
 
-use super::{Color, Coordinate, State};
+use super::{Color, Coordinate, Figure, State};
 
+/// Returns all *legal* moves.
 pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
+    let moves = possible_moves(state, from);
+    without_checks(state, from, moves)
+}
+
+/// Returns all possible moves, also including ones that are not legal, e.g.
+/// because they would lead the current player to check themselves.
+pub fn possible_moves(state: &State, from: Coordinate) -> Vec<Coordinate> {
     let Some(piece) = piece_at(from, &state.board) else {
         return Vec::new();
     };
@@ -11,11 +22,39 @@ pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
         return Vec::new();
     }
 
-    // TODO: Afterwards we still need to check whether the move won't lead to
-    //       the king being taken!
+    valid_moves_for_piece(state, from, piece)
+}
 
+/// Returns all moves without the ones allowing the opponent to directly take
+/// their king the next turn.
+fn without_checks(state: &State, from: Coordinate, targets: Vec<Coordinate>) -> Vec<Coordinate> {
+    let mut valid_targets = Vec::new();
+
+    for target in targets {
+        let the_move = Move {
+            from,
+            to: target,
+            promotion: None,
+        };
+
+        let Ok((resulting_state, _)) = force_move_piece(state, the_move) else {
+            continue;
+        };
+
+        // only allow moves, that do not lead into a self-check
+        if !is_checked_by_opponent(&resulting_state).is_empty() {
+            continue;
+        }
+
+        valid_targets.push(target)
+    }
+
+    valid_targets
+}
+
+fn valid_moves_for_piece(state: &State, from: Coordinate, piece: Piece) -> Vec<Coordinate> {
     match piece.figure {
-        super::Figure::Pawn => {
+        Figure::Pawn => {
             let mut moves = Vec::new();
 
             // Safe to unwrap here, pawns can always move forward, since they
@@ -62,7 +101,7 @@ pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
             moves
         }
 
-        super::Figure::King => {
+        Figure::King => {
             let potential_moves = [
                 from.up(1),
                 from.right(1),
@@ -84,11 +123,11 @@ pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
             moves
         }
 
-        super::Figure::Rook => expand_straight_until_collides(state, from),
+        Figure::Rook => expand_straight_until_collides(state, from),
 
-        super::Figure::Bishop => expand_diagonally_until_collides(state, from),
+        Figure::Bishop => expand_diagonally_until_collides(state, from),
 
-        super::Figure::Queen => {
+        Figure::Queen => {
             let mut moves = Vec::new();
 
             moves.append(&mut expand_straight_until_collides(state, from));
@@ -100,7 +139,7 @@ pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
             moves
         }
 
-        super::Figure::Knight => {
+        Figure::Knight => {
             let possible = [
                 from.up(2).and_then(|m| m.left(1)),
                 from.up(1).and_then(|m| m.left(2)),
@@ -247,5 +286,21 @@ mod tests {
         }
 
         assert_eq!(18, moves.len());
+    }
+
+    #[test]
+    fn king_cant_move_if_result_still_checks() {
+        let notation = "rnb1kbnr/pppp1ppp/8/4P3/7q/8/PPPPP1PP/RNBQKBNR w KQkq - 0 1";
+        let state = parse_state(notation).unwrap();
+        let available_moves = autocomplete_to(&state, Coordinate::algebraic("e1").unwrap());
+
+        assert!(
+            !is_checked_by_opponent(&state).is_empty(),
+            "check was not even detected"
+        );
+        assert!(
+            available_moves.is_empty(),
+            "king can still move, even though it should not be able to"
+        );
     }
 }

@@ -21,6 +21,10 @@ impl Color {
     pub fn other(self) -> Color {
         self.switch()
     }
+
+    pub fn owns(self, piece: Piece) -> bool {
+        self == piece.color
+    }
 }
 
 pub type Player = Color;

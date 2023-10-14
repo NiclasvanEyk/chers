@@ -1,28 +1,22 @@
 use crate::{
-    fmt_coordinates, move_piece, moves_available::autocomplete_to, pieces, Board, Coordinate,
-    Figure, Move, Piece, Player, State,
+    move_piece, moves_available::possible_moves, pieces, Board, Coordinate, Figure, Move, Piece,
+    Player, State,
 };
 
 /// Computes if any of the current player's pieces can capture their opponents king.
-pub fn checks(state: &State) -> Vec<(Coordinate, Piece)> {
-    let opponent = state.player.other();
-    let king = find_king_of(&state.board, opponent);
-    println!("{opponent:?}'s king on {king}");
+pub fn is_checked_by_opponent(state: &State) -> Vec<(Coordinate, Piece)> {
+    let king = find_king_of(&state.board, state.player);
+    let mut other = state.clone();
+    other.player = state.opponent();
 
     let mut checking_pieces = Vec::new();
     for (coordinate, piece) in pieces(&state.board) {
-        if piece.color == opponent {
+        if state.player.owns(piece) {
             continue;
         }
 
-        let moves = autocomplete_to(state, coordinate);
-        if piece.figure == Figure::Queen {
-            println!(
-                "queen at {coordinate} can move to {}",
-                fmt_coordinates(&moves)
-            );
-        }
-
+        let moves = possible_moves(&other, coordinate);
+        println!("{:?}", moves);
         for maybe_checking_move in moves {
             if maybe_checking_move == king {
                 checking_pieces.push((coordinate, piece))
@@ -34,33 +28,40 @@ pub fn checks(state: &State) -> Vec<(Coordinate, Piece)> {
 }
 
 /// Computes if the state represents checkmate.
-pub fn mates(state: &State) -> bool {
-    let opponent = state.player.other();
-    let king = find_king_of(&state.board, opponent);
+///
+/// Note that state is the new state after the resulting move of the opponent.
+pub fn check_is_mate(state: &State) -> bool {
+    // If all potential moves all pieces still lead to a check, we have mate
+    for (from, piece) in pieces(&state.board) {
+        if !state.player.owns(piece) {
+            continue;
+        }
 
-    // If all potential moves of the king still lead to a ceck, we have mate
-    let escapes = autocomplete_to(state, king);
-    if escapes.is_empty() {
-        return true;
-    }
+        let escapes = possible_moves(state, from);
+        if escapes.is_empty() {
+            continue;
+        }
 
-    escapes.iter().any(|potential_escape| {
-        match move_piece(
-            state,
-            Move {
-                from: king,
-                to: *potential_escape,
-                promotion: None,
-            },
-        ) {
-            Err(err) => panic!("{:?}", err),
-            Ok((resulting_state, _)) => {
-                let checking_moves = checks(&resulting_state);
-                println!("Still checking: {checking_moves:?}",);
-                checking_moves.is_empty()
+        for to in escapes {
+            match move_piece(
+                state,
+                Move {
+                    from,
+                    to,
+                    promotion: None,
+                },
+            ) {
+                Err(err) => panic!("{:?}", err),
+                Ok((resulting_state, _)) => {
+                    if is_checked_by_opponent(&resulting_state).is_empty() {
+                        return false;
+                    }
+                }
             }
         }
-    })
+    }
+
+    true
 }
 
 /// Finds the king of the given [player].
@@ -100,7 +101,7 @@ mod tests {
         // functionality in isoloation
         let initial_state = Engine::new().start();
 
-        assert!(checks(&initial_state).is_empty());
+        assert!(is_checked_by_opponent(&initial_state).is_empty());
     }
 
     #[test]
@@ -110,10 +111,11 @@ mod tests {
         let notation = "rnbqkbnr/ppppp2p/8/5ppQ/5P2/4P3/PPPP2PP/RNB1KBNR w KQkq - 1 3";
         let parsed = parse_state(notation).unwrap();
 
-        let checks = checks(&parsed);
+        let checks = is_checked_by_opponent(&parsed);
+        println!("{:?}", checks);
 
         assert!(checks.contains(&(Coordinate::algebraic("h5").unwrap(), Piece::white(Queen))));
-        assert!(mates(&parsed));
+        assert!(check_is_mate(&parsed));
     }
 
     #[test]
@@ -131,7 +133,18 @@ mod tests {
         )
         .unwrap();
 
-        assert!(mates(&new_state));
+        assert!(check_is_mate(&new_state));
         assert!(events.contains(&crate::Event::Mate));
+    }
+
+    #[test]
+    fn king_cant_move_if_result_still_checks() {
+        let notation = "rnb1kbnr/pppp1ppp/8/4P3/7q/8/PPPPP1PP/RNBQKBNR w KQkq - 0 1";
+        let state = parse_state(notation).unwrap();
+
+        assert!(
+            !is_checked_by_opponent(&state).is_empty(),
+            "check was not even detected"
+        );
     }
 }

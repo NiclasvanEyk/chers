@@ -1,5 +1,5 @@
 use crate::{
-    check::{checks, mates},
+    check::{check_is_mate, is_checked_by_opponent},
     moves_available::autocomplete_to,
     piece_at, Color, Coordinate, Event, Figure, Move, Piece, State, BOARD_SIZE,
 };
@@ -16,6 +16,21 @@ pub enum CantMovePiece {
 }
 
 pub fn move_piece(state: &State, the_move: Move) -> Result<(State, Vec<Event>), CantMovePiece> {
+    inner_move_piece(state, the_move, true)
+}
+
+pub fn force_move_piece(
+    state: &State,
+    the_move: Move,
+) -> Result<(State, Vec<Event>), CantMovePiece> {
+    inner_move_piece(state, the_move, false)
+}
+
+fn inner_move_piece(
+    state: &State,
+    the_move: Move,
+    check_legality: bool,
+) -> Result<(State, Vec<Event>), CantMovePiece> {
     let from = the_move.from;
     let to = the_move.to;
 
@@ -27,12 +42,14 @@ pub fn move_piece(state: &State, the_move: Move) -> Result<(State, Vec<Event>), 
         return Err(CantMovePiece::ItBelongsToOtherPlayer);
     }
 
-    let legal = autocomplete_to(state, from);
-    if !legal.contains(&to) {
-        return Err(CantMovePiece::IllegalMove {
-            attempted: the_move,
-            legal,
-        });
+    if check_legality {
+        let legal = autocomplete_to(state, from);
+        if !legal.contains(&to) {
+            return Err(CantMovePiece::IllegalMove {
+                attempted: the_move,
+                legal,
+            });
+        }
     }
 
     let mut events = Vec::new();
@@ -77,23 +94,20 @@ pub fn move_piece(state: &State, the_move: Move) -> Result<(State, Vec<Event>), 
         new_board[to.y][to.x] = Some(moved);
     }
 
-    let checking_state = State {
-        board: new_board,
-        ..*state
-    };
+    let new_state = state.new_turn(new_board, moved.figure, the_move, did_capture);
 
-    let checking_pieces = checks(&checking_state);
-    if !checking_pieces.is_empty() {
-        events.push(Event::Check {
-            by: checking_pieces,
-        });
+    if check_legality {
+        let checking_pieces = is_checked_by_opponent(&new_state);
+        if !checking_pieces.is_empty() {
+            events.push(Event::Check {
+                by: checking_pieces,
+            });
 
-        if mates(&checking_state) {
-            events.push(Event::Mate);
+            if check_is_mate(&new_state) {
+                events.push(Event::Mate);
+            }
         }
     }
-
-    let new_state = state.new_turn(new_board, moved.figure, the_move, did_capture);
 
     // TODO: Enforce 50 turn limit using halfmove clock
 

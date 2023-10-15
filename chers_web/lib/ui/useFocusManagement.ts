@@ -13,8 +13,8 @@ export function useFocusManagement(state: State, dispatch: Dispatcher) {
   const cells = useRef([] as CellsByCoordinate);
 
   function listener(event: KeyboardEvent) {
-    useEscapeKeyToAbortMove(event, dispatch);
-    useArrowKeysToNavigateCells(event, cells.current);
+    escapeKeyAbortsMove(event, dispatch);
+    arrowKeysNavigateCells(event, cells.current);
   }
 
   useEffect(
@@ -44,13 +44,13 @@ export function useFocusManagement(state: State, dispatch: Dispatcher) {
   };
 }
 
-function useEscapeKeyToAbortMove(event: KeyboardEvent, dispatch: Dispatcher) {
+function escapeKeyAbortsMove(event: KeyboardEvent, dispatch: Dispatcher) {
   if (event.key !== "Escape") return;
 
   dispatch({ type: "ABORT_SELECTION" });
 }
 
-function useArrowKeysToNavigateCells(
+function arrowKeysNavigateCells(
   event: KeyboardEvent,
   cells: CellsByCoordinate,
 ) {

@@ -30,8 +30,8 @@ export function Board() {
         className="w-full h-full grid grid-cols-8 grid-rows-8"
       >
         {board.flatMap((row, y) =>
-          row.map((piece, x) => {
-            let pickable = canPickUp(piece, player);
+          row.map((contents, x) => {
+            let pickable = canPickUp(contents, player);
             let moveable = canMoveTo(state, { x, y });
             let touched = hasPickedUp(state, { x, y });
 
@@ -56,7 +56,7 @@ export function Board() {
 
               // If we click on an empty field and have picked up a piece, put it
               // down again
-              if (state.type === "SELECTING_TO" && !piece) {
+              if (state.type === "SELECTING_TO" && !contents) {
                 dispatch({ type: "ABORT_SELECTION" });
               }
             };
@@ -72,9 +72,8 @@ export function Board() {
                 moveable={moveable}
                 pickable={pickable}
                 touched={touched}
-              >
-                <Piece piece={piece} />
-              </Cell>
+                contents={contents}
+              />
             );
           }),
         )}

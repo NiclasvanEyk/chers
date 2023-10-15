@@ -1,5 +1,7 @@
-import { Color } from "@/lib/chers";
+import { Cell as CellContents, Color } from "@/lib/chers";
 import { ReactNode, Ref, forwardRef } from "react";
+import { Piece } from "./Piece";
+import { cellLabel } from "@/lib/ui/accessibility";
 
 interface CellProps {
   x: number;
@@ -9,7 +11,7 @@ interface CellProps {
   moveable: boolean;
   touched: boolean;
   onClick: () => void;
-  children: undefined | ReactNode;
+  contents: CellContents;
 }
 
 export function MoveableIndicator() {
@@ -17,7 +19,7 @@ export function MoveableIndicator() {
 }
 
 export const Cell = forwardRef(function Cell(
-  { x, y, color, pickable, moveable, touched, onClick, children }: CellProps,
+  { x, y, color, pickable, moveable, touched, onClick, contents }: CellProps,
   ref: Ref<HTMLButtonElement>,
 ) {
   let bgColor = color === "White" ? "bg-chess-beige" : "bg-chess-brown";
@@ -43,11 +45,12 @@ export const Cell = forwardRef(function Cell(
       data-x={x}
       data-y={y}
       ref={ref}
+      aria-label={cellLabel({ x, y }, contents)}
       onClick={onClick}
       className={`${bgColor} ${hoverColor} ${cursor} relative h-[min(calc(100vh/8),calc(100vw/8))] w-[min(calc(100vh/8),calc(100vw/8))] md:h-16 md:w-16 overflow-hidden flex items-center justify-center select-none font-bold text-xl`}
     >
       {moveable ? <MoveableIndicator /> : null}
-      {children}
+      <Piece piece={contents} />
     </button>
   );
 });

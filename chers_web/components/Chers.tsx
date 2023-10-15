@@ -5,7 +5,7 @@ import init from "@/lib/chers/chers";
 import { Board } from "./Board";
 
 export function LoadingIndicator(props: any) {
-  return <img src="/pieces/White_Unicorn.svg" {...props} />;
+  return <img src="/images/pieces/White_Unicorn.svg" {...props} />;
 }
 
 export default function Chers() {

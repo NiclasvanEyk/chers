@@ -150,21 +150,21 @@ fn expand_until_collides(
                 match direction.0.cmp(&0) {
                     std::cmp::Ordering::Less => {
                         direction.0 -= 1;
-                    },
-                    std::cmp::Ordering::Equal => {},
+                    }
+                    std::cmp::Ordering::Equal => {}
                     std::cmp::Ordering::Greater => {
                         direction.0 += 1;
-                    },
+                    }
                 }
 
                 match direction.1.cmp(&0) {
                     std::cmp::Ordering::Less => {
                         direction.1 -= 1;
-                    },
-                    std::cmp::Ordering::Equal => {},
+                    }
+                    std::cmp::Ordering::Equal => {}
                     std::cmp::Ordering::Greater => {
                         direction.1 += 1;
-                    },
+                    }
                 }
 
                 cells.push(cell_on_board);

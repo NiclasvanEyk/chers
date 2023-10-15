@@ -7,6 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Chers",
   description: "A rusty chess implementation for the terminal and web.",
+  manifest: "manifest.json",
 };
 
 export default function RootLayout({

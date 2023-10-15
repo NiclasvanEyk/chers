@@ -7,10 +7,24 @@ export interface PromotionProps {
 }
 
 export function Promotion({ color, onChoice }: PromotionProps) {
-  const Option = ({ figure }: { figure: Figure }) => {
+  function focusIfPlayingByKeyboard(dialog: HTMLDialogElement | null) {
+    if (dialog === null) return;
+    if (document.activeElement === null) return;
+
+    dialog.focus();
+  }
+
+  const Option = ({
+    figure,
+    tabindex,
+  }: {
+    figure: Figure;
+    tabindex: number;
+  }) => {
     return (
       <li>
         <button
+          tabIndex={tabindex}
           onClick={() => onChoice(figure)}
           className="p-1 md:p-3 hover:bg-black/25"
         >
@@ -21,13 +35,17 @@ export function Promotion({ color, onChoice }: PromotionProps) {
   };
 
   return (
-    <div className="absolute z-10 inset-0 flex items-center justify-center bg-black/50">
+    <dialog
+      open={true}
+      ref={focusIfPlayingByKeyboard}
+      className="absolute z-10 inset-0 flex items-center justify-center bg-black/50"
+    >
       <ol className="flex flex-row gap-2 md:gap-5 shrink-0">
-        <Option figure="Rook" />
-        <Option figure="Knight" />
-        <Option figure="Bishop" />
-        <Option figure="Queen" />
+        <Option tabindex={1} figure="Rook" />
+        <Option tabindex={2} figure="Knight" />
+        <Option tabindex={3} figure="Bishop" />
+        <Option tabindex={4} figure="Queen" />
       </ol>
-    </div>
+    </dialog>
   );
 }

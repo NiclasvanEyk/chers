@@ -27,18 +27,19 @@ export type State = (
 };
 
 export type Command =
-  | { type: "BEGIN"; game: GameState }
+  | { type: "BEGIN" }
   | { type: "ABORT_SELECTION" }
   | { type: "SELECT_FROM"; from: Coordinate }
   | { type: "SELECT_TO"; to: Coordinate }
   | { type: "PROMOTE"; to: Figure };
 
 export interface Adapter {
+  newGame(): GameState;
   nextState: typeof nextState;
   getMoves: typeof getMoves;
 }
 
-export const wasmAdapter = { nextState, getMoves };
+export const wasmAdapter = { nextState, getMoves, newGame: new_game };
 
 /**
  * @private
@@ -49,7 +50,7 @@ export function buildChersReducer(adapter: Adapter) {
 
     switch (command.type) {
       case "BEGIN": {
-        return { type: "SELECTING_FROM", game: command.game };
+        return { type: "SELECTING_FROM", game: adapter.newGame() };
       }
 
       case "SELECT_FROM": {
@@ -90,7 +91,10 @@ export function buildChersReducer(adapter: Adapter) {
           return { type: "ERROR", error: result.error, game };
         }
 
-        // TODO: Check for check
+        if (result.mate) {
+          return { type: "GAME_OVER", winner: game.player, game };
+        }
+
         return { type: "SELECTING_FROM", game: result.next_state };
       }
 
@@ -109,7 +113,10 @@ export function buildChersReducer(adapter: Adapter) {
           return { type: "ERROR", error: result.error, game };
         }
 
-        // TODO: Check for check
+        if (result.mate) {
+          return { type: "GAME_OVER", winner: game.player, game };
+        }
+
         return { type: "SELECTING_FROM", game: result.next_state };
       }
     }

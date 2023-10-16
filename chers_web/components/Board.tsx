@@ -1,6 +1,5 @@
 import { canPickUp, canMoveTo, hasPickedUp, useChers } from "@/lib/ui/state";
 import { Cell } from "./Cell";
-import { Piece } from "./Piece";
 import { Promotion } from "./Promotion";
 import { useFocusManagement } from "@/lib/ui/useFocusManagement";
 
@@ -17,12 +16,39 @@ export function Board() {
   }
 
   return (
-    <div className="relative md:m-24">
+    <div className="relative">
       {state.type === "PROMOTING" ? (
         <Promotion
           color={state.game.player}
           onChoice={(figure) => dispatch({ type: "PROMOTE", to: figure })}
         />
+      ) : null}
+      {state.type === "GAME_OVER" ? (
+        <div className="absolute inset-0 z-10">
+          <div className="flex flex-col h-full w-full bg-black/50 place-content-center text-center">
+            <dialog
+              open
+              style={{
+                color: state.winner,
+                textShadow:
+                  state.winner === "White"
+                    ? ""
+                    : "2px 0 #fff, -2px 0 #fff, 0 2px #fff, 0 -2px #fff, 1px 1px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff",
+              }}
+              className="p-5 flex flex-col gap-5 bg-transparent drop-shadow"
+            >
+              <p className="text-3xl font-extrabold leading-tight">
+                {state.winner} won
+              </p>
+              <button
+                onClick={() => dispatch({ type: "BEGIN" })}
+                className="text-white"
+              >
+                Start Over
+              </button>
+            </dialog>
+          </div>
+        </div>
       ) : null}
       <div
         // @ts-ignore-next-line

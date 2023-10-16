@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     move_execution::{move_piece, CantMovePiece},
     PromotedFigure,
@@ -8,7 +10,7 @@ use super::{
     INITIAL_BOARD,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum Event {
     Capture {
         at: Coordinate,

@@ -22,6 +22,7 @@ pub struct Error {
 #[derive(Serialize, Deserialize)]
 pub struct MoveResult {
     pub next_state: State,
+    pub events: Vec<Event>,
     pub check: bool,
     pub mate: bool,
 }
@@ -58,31 +59,38 @@ pub fn next_state(unsafe_state: JsValue, the_move: Move) -> JsValue {
             },
         })
         .unwrap(),
-        Ok((next_state, events)) => {
-            bridge::to_value(&MoveResult {
-                next_state,
-                check: events.iter().any(|x| match x {
-                    Event::Capture {
-                        at: _,
-                        captured: _,
-                        by: _,
-                    } => false,
-                    Event::Promotion { to: _ } => false,
-                    Event::Check { by: _ } => true,
-                    Event::Mate => false,
-                }), // TODO
-                mate: events.iter().any(|x| match x {
-                    Event::Capture {
-                        at: _,
-                        captured: _,
-                        by: _,
-                    } => false,
-                    Event::Promotion { to: _ } => false,
-                    Event::Check { by: _ } => false,
-                    Event::Mate => true,
-                }), // TODO
-            })
-            .unwrap()
-        }
+        Ok((next_state, events)) => bridge::to_value(&MoveResult {
+            next_state,
+            check: is_check(&events),
+            mate: is_mate(&events),
+            events,
+        })
+        .unwrap(),
     }
+}
+
+fn is_check(events: &[Event]) -> bool {
+    events.iter().any(|x| match x {
+        Event::Capture {
+            at: _,
+            captured: _,
+            by: _,
+        } => false,
+        Event::Promotion { to: _ } => false,
+        Event::Check { by: _ } => true,
+        Event::Mate => false,
+    })
+}
+
+fn is_mate(events: &[Event]) -> bool {
+    events.iter().any(|x| match x {
+        Event::Capture {
+            at: _,
+            captured: _,
+            by: _,
+        } => false,
+        Event::Promotion { to: _ } => false,
+        Event::Check { by: _ } => false,
+        Event::Mate => true,
+    })
 }

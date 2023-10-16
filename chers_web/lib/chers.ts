@@ -74,7 +74,6 @@ function moveToDto(move: Move): MoveDTO {
     coordToDto(move.to),
     promotionToSerialized(move.promotion),
   );
-  console.log("DTO[promotion]", dto.promotion);
 
   return dto;
 }
@@ -89,7 +88,15 @@ export function nextState(
   to: Coordinate,
   promotion: Figure | undefined = undefined,
 ): MoveExecutionResult | MoveExecutionError {
-  return next_state(current, moveToDto({ from, to, promotion })) as unknown as
-    | MoveExecutionResult
-    | MoveExecutionError;
+  const next = next_state(
+    current,
+    moveToDto({ from, to, promotion }),
+  ) as unknown as MoveExecutionResult | MoveExecutionError;
+
+  console.log("game state updated", {
+    previous: current,
+    next,
+  });
+
+  return next;
 }

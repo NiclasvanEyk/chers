@@ -27,7 +27,7 @@ export interface Coordinate {
 export interface Move {
   from: Coordinate;
   to: Coordinate;
-  promotion: undefined | Omit<Figure, "Pawn">;
+  promotion: undefined | Omit<Figure, "Pawn" | "King">;
 }
 
 export interface State {
@@ -52,13 +52,29 @@ function coordToDto(coordinate: Coordinate): CoordinateDTO {
   return new CoordinateDTO(coordinate.x, coordinate.y);
 }
 
+function promotionToSerialized(
+  promotion: Move["promotion"],
+): number | undefined {
+  if (!promotion) return undefined;
+
+  return (
+    {
+      Queen: 0,
+      Rook: 1,
+      Bishop: 2,
+      Knight: 3,
+      // @ts-ignore-next-line
+    }[promotion] ?? 0
+  );
+}
+
 function moveToDto(move: Move): MoveDTO {
   const dto = new MoveDTO(
     coordToDto(move.from),
     coordToDto(move.to),
-    // @ts-ignore-next-line
-    move.promotion,
+    promotionToSerialized(move.promotion),
   );
+  console.log("DTO[promotion]", dto.promotion);
 
   return dto;
 }

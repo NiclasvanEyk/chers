@@ -35,7 +35,7 @@ fn inner_move_piece(
     let to = the_move.to;
 
     let Some(moved) = state.board[from.y][from.x] else {
-        return Err(CantMovePiece::NoPieceToMove)
+        return Err(CantMovePiece::NoPieceToMove);
     };
 
     if moved.color != state.player {

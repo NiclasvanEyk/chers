@@ -13,7 +13,7 @@ export function Piece(props: PieceProps) {
 
   return (
     <img
-      src={`/pieces/${piece.color}_${piece.figure}.svg`}
+      src={`/images/pieces/${piece.color}_${piece.figure}.svg`}
       alt={`${piece.color} ${piece.figure}`}
       draggable="false"
       className={className}

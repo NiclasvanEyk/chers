@@ -1,27 +1,27 @@
-import { Color } from "@/lib/chers";
-import { ReactNode } from "react";
+import { Cell as CellContents, Color } from "@/lib/chers";
+import { ReactNode, Ref, forwardRef } from "react";
+import { Piece } from "./Piece";
+import { cellLabel } from "@/lib/ui/accessibility";
 
 interface CellProps {
+  x: number;
+  y: number;
   color: Color;
   pickable: boolean;
   moveable: boolean;
   touched: boolean;
   onClick: () => void;
-  children: undefined | ReactNode;
+  contents: CellContents;
 }
 
 export function MoveableIndicator() {
   return <div className="absolute w-1/3 h-1/3 rounded-full bg-black/40"></div>;
 }
 
-export function Cell({
-  color,
-  pickable,
-  moveable,
-  touched,
-  onClick,
-  children,
-}: CellProps) {
+export const Cell = forwardRef(function Cell(
+  { x, y, color, pickable, moveable, touched, onClick, contents }: CellProps,
+  ref: Ref<HTMLButtonElement>,
+) {
   let bgColor = color === "White" ? "bg-chess-beige" : "bg-chess-brown";
 
   let hoverColor = "";
@@ -31,8 +31,8 @@ export function Cell({
   }
 
   let cursor = "";
-  if (pickable || moveable) {
-    cursor = "cursor-pointer";
+  if (!pickable && !moveable) {
+    cursor = "cursor-initial";
   }
 
   if (touched) {
@@ -41,12 +41,16 @@ export function Cell({
   }
 
   return (
-    <div
+    <button
+      data-x={x}
+      data-y={y}
+      ref={ref}
+      aria-label={cellLabel({ x, y }, contents)}
       onClick={onClick}
       className={`${bgColor} ${hoverColor} ${cursor} relative h-[min(calc(100vh/8),calc(100vw/8))] w-[min(calc(100vh/8),calc(100vw/8))] md:h-16 md:w-16 overflow-hidden flex items-center justify-center select-none font-bold text-xl`}
     >
       {moveable ? <MoveableIndicator /> : null}
-      {children}
-    </div>
+      <Piece piece={contents} />
+    </button>
   );
-}
+});

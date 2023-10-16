@@ -62,15 +62,23 @@ pub fn next_state(unsafe_state: JsValue, the_move: Move) -> JsValue {
             bridge::to_value(&MoveResult {
                 next_state,
                 check: events.iter().any(|x| match x {
-                    Event::Capture { at, captured, by } => false,
-                    Event::Promotion { to } => false,
-                    Event::Check { by } => true,
+                    Event::Capture {
+                        at: _,
+                        captured: _,
+                        by: _,
+                    } => false,
+                    Event::Promotion { to: _ } => false,
+                    Event::Check { by: _ } => true,
                     Event::Mate => false,
                 }), // TODO
                 mate: events.iter().any(|x| match x {
-                    Event::Capture { at, captured, by } => false,
-                    Event::Promotion { to } => false,
-                    Event::Check { by } => false,
+                    Event::Capture {
+                        at: _,
+                        captured: _,
+                        by: _,
+                    } => false,
+                    Event::Promotion { to: _ } => false,
+                    Event::Check { by: _ } => false,
                     Event::Mate => true,
                 }), // TODO
             })

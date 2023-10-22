@@ -3,6 +3,8 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
+use crate::Player;
+
 use super::{Board, Color, Piece, State, BOARD_SIZE};
 
 // An offset relative to the top left (0,0) from white's view
@@ -166,10 +168,10 @@ pub fn piece_at(coord: Coordinate, board: &Board) -> Option<Piece> {
     board[coord.y][coord.x]
 }
 
-pub fn can_be_moved_to_given(coord: Coordinate, state: &State) -> bool {
-    match piece_at(coord, &state.board) {
+pub fn can_be_moved_to_given(to: Coordinate, by: Player, board: &Board) -> bool {
+    match piece_at(to, board) {
         None => true,
-        Some(piece) => piece.color != state.player,
+        Some(piece) => piece.color != by,
     }
 }
 

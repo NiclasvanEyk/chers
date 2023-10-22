@@ -1,9 +1,8 @@
 use crate::{
-    can_be_moved_to_given, check::is_checked_by_opponent, force_move_piece,
-    movement_patterns::pawn::moves as pawn_moves, piece_at, Move, Piece,
+    check::is_checked_by_opponent, force_move_piece, movement_patterns, piece_at, Move, Piece,
 };
 
-use super::{Coordinate, Figure, State};
+use super::{Coordinate, State};
 
 /// Returns all *legal* moves.
 pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
@@ -22,7 +21,7 @@ pub fn possible_moves(state: &State, from: Coordinate) -> Vec<Coordinate> {
         return Vec::new();
     }
 
-    valid_moves_for_piece(state, from, piece)
+    movement_patterns::of(state, from, piece)
 }
 
 /// Returns all moves without the ones allowing the opponent to directly take
@@ -52,141 +51,9 @@ fn without_checks(state: &State, from: Coordinate, targets: Vec<Coordinate>) -> 
     valid_targets
 }
 
-fn valid_moves_for_piece(state: &State, from: Coordinate, piece: Piece) -> Vec<Coordinate> {
-    match piece.figure {
-        Figure::Pawn => pawn_moves(
-            &state.board,
-            from,
-            piece.color,
-            state.player,
-            state.en_passant_target,
-        ),
-
-        Figure::King => {
-            let potential_moves = [
-                from.up(1),
-                from.right(1),
-                from.down(1),
-                from.left(1),
-                from.diagonal(1, 1),
-                from.diagonal(-1, 1),
-                from.diagonal(1, -1),
-                from.diagonal(-1, -1),
-            ];
-
-            let mut moves = Vec::new();
-            for potential_move in potential_moves.into_iter().flatten() {
-                if can_be_moved_to_given(potential_move, state) {
-                    moves.push(potential_move);
-                }
-            }
-
-            moves
-        }
-
-        Figure::Rook => expand_straight_until_collides(state, from),
-
-        Figure::Bishop => expand_diagonally_until_collides(state, from),
-
-        Figure::Queen => {
-            let mut moves = Vec::new();
-
-            moves.append(&mut expand_straight_until_collides(state, from));
-            moves.append(&mut expand_diagonally_until_collides(state, from));
-
-            moves.sort_by_key(|a| format!("{},{}", a.x, a.y));
-            moves.dedup();
-
-            moves
-        }
-
-        Figure::Knight => {
-            let possible = [
-                from.up(2).and_then(|m| m.left(1)),
-                from.up(1).and_then(|m| m.left(2)),
-                from.down(1).and_then(|m| m.left(2)),
-                from.down(2).and_then(|m| m.left(1)),
-                from.up(2).and_then(|m| m.right(1)),
-                from.up(1).and_then(|m| m.right(2)),
-                from.down(1).and_then(|m| m.right(2)),
-                from.down(2).and_then(|m| m.right(1)),
-            ];
-
-            let mut moves = Vec::new();
-            for cell in possible.into_iter().flatten() {
-                if can_be_moved_to_given(cell, state) {
-                    moves.push(cell);
-                }
-            }
-
-            moves
-        }
-    }
-}
-
-fn expand_straight_until_collides(state: &State, from: Coordinate) -> Vec<Coordinate> {
-    expand_until_collides(state, from, [(0, 1), (0, -1), (1, 0), (-1, 0)])
-}
-
-fn expand_diagonally_until_collides(state: &State, from: Coordinate) -> Vec<Coordinate> {
-    expand_until_collides(state, from, [(1, 1), (1, -1), (-1, 1), (-1, -1)])
-}
-
-fn expand_until_collides(
-    state: &State,
-    from: Coordinate,
-    mut into: [(isize, isize); 4],
-) -> Vec<Coordinate> {
-    let mut cells = Vec::new();
-
-    for direction in into.iter_mut() {
-        loop {
-            let Some(cell_on_board) = from.diagonal(direction.0, direction.1) else {
-                break;
-            };
-
-            let Some(collided_piece) = piece_at(cell_on_board, &state.board) else {
-                // If we do not hit a piece, we can advance
-                match direction.0.cmp(&0) {
-                    std::cmp::Ordering::Less => {
-                        direction.0 -= 1;
-                    }
-                    std::cmp::Ordering::Equal => {}
-                    std::cmp::Ordering::Greater => {
-                        direction.0 += 1;
-                    }
-                }
-
-                match direction.1.cmp(&0) {
-                    std::cmp::Ordering::Less => {
-                        direction.1 -= 1;
-                    }
-                    std::cmp::Ordering::Equal => {}
-                    std::cmp::Ordering::Greater => {
-                        direction.1 += 1;
-                    }
-                }
-
-                cells.push(cell_on_board);
-                continue;
-            };
-
-            // If we hit a piece, we can move there if it belongd to the other player.
-            if collided_piece.belongs_to(state.opponent()) {
-                cells.push(cell_on_board);
-            }
-
-            // In any case, we need to stop iterating after hitting a piece.
-            break;
-        }
-    }
-
-    cells
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::{fen::parse_state, fmt_coordinates, Engine};
+    use crate::{fen::parse_state, fmt_coordinates};
 
     use super::*;
 

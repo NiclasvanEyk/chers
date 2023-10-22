@@ -34,7 +34,7 @@ export const Cell = forwardRef(function Cell(
 
   let cursor = "";
   if (!pickable && !moveable) {
-    cursor = "cursor-initial";
+    cursor = "cursor-default";
   }
 
   if (touched) {

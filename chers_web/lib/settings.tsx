@@ -1,7 +1,7 @@
 import { ReactNode, createContext, useContext, useState } from "react";
 
 export const ChersSettingsDefaults = Object.freeze({
-  showLegalMoves: true as boolean,
+  highlightLegalMoves: true as boolean,
   displayCapturedPieces: true as boolean,
   displayLabels: true as boolean,
   onlyLegalTabTargets: false as boolean,

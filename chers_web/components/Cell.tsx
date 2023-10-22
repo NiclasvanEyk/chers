@@ -23,7 +23,7 @@ export const Cell = forwardRef(function Cell(
   { x, y, color, pickable, moveable, touched, onClick, contents }: CellProps,
   ref: Ref<HTMLButtonElement>,
 ) {
-  const { highlightLegalMoves: showLegalMoves } = useSettings();
+  const { highlightLegalMoves } = useSettings();
   let bgColor = color === "White" ? "bg-chess-beige" : "bg-chess-brown";
 
   let hoverColor = "";
@@ -51,7 +51,7 @@ export const Cell = forwardRef(function Cell(
       onClick={onClick}
       className={`${bgColor} ${hoverColor} ${cursor} relative h-[min(calc(100vh/8),calc(100vw/8))] w-[min(calc(100vh/8),calc(100vw/8))] md:h-16 md:w-16 overflow-hidden flex items-center justify-center select-none font-bold text-xl`}
     >
-      {moveable && showLegalMoves ? <MoveableIndicator /> : null}
+      {moveable && highlightLegalMoves ? <MoveableIndicator /> : null}
       <Piece piece={contents} />
       <RankLabels x={x} y={y} color={color} />
     </button>

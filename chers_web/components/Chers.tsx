@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import init from "@/lib/chers/chers";
+import init from "@/generated/chers/chers";
 import { Board } from "./Board";
 import { ChersSettingsProvider } from "@/lib/settings";
 

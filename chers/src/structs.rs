@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use wasm_bindgen::prelude::*;
 
 use super::Coordinate;
 
 #[wasm_bindgen]
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub enum Color {
     White,
     Black,
@@ -30,7 +32,8 @@ impl Color {
 pub type Player = Color;
 
 #[wasm_bindgen]
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub enum Figure {
     King,
     Queen,
@@ -41,7 +44,8 @@ pub enum Figure {
 }
 
 #[wasm_bindgen]
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub enum PromotedFigure {
     Queen,
     Rook,
@@ -61,7 +65,8 @@ impl PromotedFigure {
 }
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, TS)]
+#[ts(export)]
 pub struct Move {
     pub from: Coordinate,
     pub to: Coordinate,
@@ -81,7 +86,8 @@ impl Move {
 }
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct Piece {
     pub color: Color,
     pub figure: Figure,
@@ -127,7 +133,8 @@ pub const fn empty_board() -> Board {
     ]
 }
 
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct CastlingRights {
     white: CastleDirections,
     black: CastleDirections,
@@ -142,7 +149,8 @@ impl CastlingRights {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct CastleDirections {
     queen_side: bool,
     king_side: bool,
@@ -157,9 +165,11 @@ impl CastleDirections {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct State {
     pub player: Player,
+    #[ts(skip)] // This gets rendered as `Array`, which is not valid TS
     pub board: Board,
     pub castling_rights: CastlingRights,
     /// The cell that a pawn could move to, in order to capture the passing

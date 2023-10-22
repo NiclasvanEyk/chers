@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::{
     move_execution::{move_piece, CantMovePiece},
@@ -10,8 +11,14 @@ use super::{
     INITIAL_BOARD,
 };
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub enum Event {
+    Move {
+        piece: Piece,
+        from: Coordinate,
+        to: Coordinate,
+    },
     Capture {
         at: Coordinate,
         captured: Piece,

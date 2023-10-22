@@ -8,18 +8,19 @@ import {
   nextState,
   getMoves,
   Cell,
+  PromotedFigure,
 } from "../chers";
-import { new_game } from "../chers/chers";
+import { new_game } from "@/generated/chers/chers";
 
 export type State = (
   | { type: "ERROR"; error: string }
   | { type: "SELECTING_FROM" }
   | {
-      type: "SELECTING_TO";
-      from: Coordinate;
-      piece: Piece;
-      moves: Coordinate[];
-    }
+    type: "SELECTING_TO";
+    from: Coordinate;
+    piece: Piece;
+    moves: Coordinate[];
+  }
   | { type: "PROMOTING"; from: Coordinate; to: Coordinate }
   | { type: "GAME_OVER"; winner: Color }
 ) & {
@@ -31,7 +32,7 @@ export type Command =
   | { type: "ABORT_SELECTION" }
   | { type: "SELECT_FROM"; from: Coordinate }
   | { type: "SELECT_TO"; to: Coordinate }
-  | { type: "PROMOTE"; to: Figure };
+  | { type: "PROMOTE"; to: PromotedFigure };
 
 export interface Adapter {
   newGame(): GameState;

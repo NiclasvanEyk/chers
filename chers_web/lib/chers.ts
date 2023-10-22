@@ -1,52 +1,40 @@
+import type { State as PartialState } from "@/generated/chers-serde/State";
+import type { Piece } from "@/generated/chers-serde/Piece";
+import type { Coordinate } from "@/generated/chers-serde/Coordinate";
+import type { Move } from "@/generated/chers-serde/Move";
+import type { MoveError } from "@/generated/chers-serde/MoveError";
+import type { MoveResult } from "@/generated/chers-serde/MoveResult";
+import type { PromotedFigure } from "@/generated/chers-serde/PromotedFigure";
+
 import {
   Coordinate as CoordinateDTO,
   Move as MoveDTO,
   available_moves,
   next_state,
-} from "./chers/chers";
+} from "@/generated/chers/chers";
 
 // This file contains abstractions and hand-written types for the WASM
 // functions, since the generated ones are not that nice to use
 
-export type Figure = "King" | "Queen" | "Rook" | "Bishop" | "Knight" | "Pawn";
-export type Color = "White" | "Black";
+export type { Figure } from "@/generated/chers-serde/Figure";
+export type { PromotedFigure } from "@/generated/chers-serde/PromotedFigure";
+export type { Color } from "@/generated/chers-serde/Color";
+export type { Piece } from "@/generated/chers-serde/Piece";
+export type { Coordinate } from "@/generated/chers-serde/Coordinate";
+export type { Move } from "@/generated/chers-serde/Move";
+
 export type Cell = undefined | Piece;
 export type Row = [Cell, Cell, Cell, Cell, Cell, Cell, Cell, Cell];
 export type Board = [Row, Row, Row, Row, Row, Row, Row, Row];
-
-export interface Piece {
-  color: Color;
-  figure: Figure;
-}
-
-export interface Coordinate {
-  x: number;
-  y: number;
-}
-
-export interface Move {
-  from: Coordinate;
-  to: Coordinate;
-  promotion: undefined | Omit<Figure, "Pawn" | "King">;
-}
-
-export interface State {
-  player: Color;
+export interface State extends PartialState {
   board: Board;
-  en_passant_target: undefined | Coordinate;
-  fullmove_number: number;
-  halfmove_clock: number;
 }
 
 export interface MoveExecutionError {
-  error: string;
+  error: MoveError;
 }
 
-export interface MoveExecutionResult {
-  next_state: State;
-  check: boolean;
-  mate: boolean;
-}
+export type MoveExecutionResult = MoveResult;
 
 function coordToDto(coordinate: Coordinate): CoordinateDTO {
   return new CoordinateDTO(coordinate.x, coordinate.y);
@@ -86,9 +74,15 @@ export function nextState(
   current: State,
   from: Coordinate,
   to: Coordinate,
-  promotion: Figure | undefined = undefined,
+  promotion: PromotedFigure | null = null,
 ): MoveExecutionResult | MoveExecutionError {
-  return next_state(current, moveToDto({ from, to, promotion })) as unknown as
+  const next = next_state(current, moveToDto({ from, to, promotion })) as unknown as
     | MoveExecutionResult
     | MoveExecutionError;
+
+  if ("events" in next) {
+    console.log(next.events);
+  }
+
+  return next;
 }

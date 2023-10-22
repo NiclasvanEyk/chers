@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use wasm_bindgen::prelude::*;
 
 use crate::{
@@ -8,18 +9,21 @@ use crate::{
 
 use serde_wasm_bindgen as bridge;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export)]
 pub enum MoveError {
     RequiresPromotion,
     InvalidMove,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct Error {
     pub error: MoveError,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct MoveResult {
     pub next_state: State,
     pub events: Vec<Event>,
@@ -76,6 +80,11 @@ fn is_check(events: &[Event]) -> bool {
             captured: _,
             by: _,
         } => false,
+        Event::Move {
+            piece: _,
+            from: _,
+            to: _,
+        } => false,
         Event::Promotion { to: _ } => false,
         Event::Check { by: _ } => true,
         Event::Mate => false,
@@ -88,6 +97,11 @@ fn is_mate(events: &[Event]) -> bool {
             at: _,
             captured: _,
             by: _,
+        } => false,
+        Event::Move {
+            piece: _,
+            from: _,
+            to: _,
         } => false,
         Event::Promotion { to: _ } => false,
         Event::Check { by: _ } => false,

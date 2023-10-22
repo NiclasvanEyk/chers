@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 use wasm_bindgen::prelude::*;
 
 use crate::Player;
@@ -11,7 +12,8 @@ use super::{Board, Color, Piece, BOARD_SIZE};
 //
 // Due to the [`Board`] being layed out as an array
 #[wasm_bindgen]
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct Coordinate {
     pub x: usize,
     pub y: usize,

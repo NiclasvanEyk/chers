@@ -9,6 +9,7 @@ source "$CARGO_HOME/env"
 echo "Building chers..."
 cd ../chers
 cargo metadata
+cargo test
 wasm-pack build --release --target web
 
 echo "Building chers_web..."

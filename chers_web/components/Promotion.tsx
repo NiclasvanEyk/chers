@@ -1,8 +1,8 @@
-import { Color, Figure } from "@/lib/chers";
+import { Color, PromotedFigure } from "@/lib/chers";
 import { Piece } from "./Piece";
 
 export interface PromotionProps {
-  onChoice: (figure: Figure) => void;
+  onChoice: (figure: PromotedFigure) => void;
   color: Color;
 }
 
@@ -18,7 +18,7 @@ export function Promotion({ color, onChoice }: PromotionProps) {
     figure,
     tabindex,
   }: {
-    figure: Figure;
+    figure: PromotedFigure;
     tabindex: number;
   }) => {
     return (

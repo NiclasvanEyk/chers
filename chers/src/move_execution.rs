@@ -52,7 +52,11 @@ fn inner_move_piece(
         }
     }
 
-    let mut events = Vec::new();
+    let mut events = vec![Event::Move {
+        piece: moved,
+        from,
+        to,
+    }];
     let mut new_board = state.board;
 
     let mut did_capture = false;

@@ -27,10 +27,7 @@ to get up and running in the terminal (requires Rust to be installed locally) or
 - [ ] Castling
 - [ ] Halfmove clock
 - [ ] Fullmove number
-- [x] Checkmate
-- [x] Mate
+- [ ] Checkmate
+- [ ] Mate
 - [ ] Remove this list once all items are finished
 
-## Ideas
-
-- Add prettier board state rendering, when the terminal supports the [kitty graphics protocol](https://sw.kovidgoyal.net/kitty/graphics-protocol/)

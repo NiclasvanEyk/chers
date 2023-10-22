@@ -75,6 +75,6 @@ function RankLabels(props: { x: number, y: number, color: Color }) {
       5: 'f',
       6: 'g',
       7: 'h',
-    }[7 - props.x]}</span>}
+    }[props.x]}</span>}
   </>;
 }

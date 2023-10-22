@@ -2,8 +2,11 @@ import { canPickUp, canMoveTo, hasPickedUp, useChers } from "@/lib/ui/state";
 import { Cell } from "./Cell";
 import { Promotion } from "./Promotion";
 import { useFocusManagement } from "@/lib/ui/useFocusManagement";
+import { Settings, SettingsTrigger } from "./Settings";
+import { useState } from "react";
 
 export function Board() {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [state, dispatch] = useChers();
   const { board, player } = state.game;
 
@@ -17,6 +20,14 @@ export function Board() {
 
   return (
     <div className="relative">
+      <SettingsTrigger
+        onClick={() => setSettingsOpen(true)}
+        className="fixed top-3 left-3 z-10"
+      />
+      <Settings
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
       {state.type === "PROMOTING" ? (
         <Promotion
           color={state.game.player}
@@ -64,26 +75,23 @@ export function Board() {
             const onCellClick = () => {
               // Select a piece to move if you could pick one up
               if (state.type === "SELECTING_FROM" && pickable) {
-                dispatch({ type: "SELECT_FROM", from: { x, y } });
-                return;
+                return dispatch({ type: "SELECT_FROM", from: { x, y } });
               }
 
               // Select a field to move the currently picked up piece to
               if (state.type === "SELECTING_TO" && moveable) {
-                dispatch({ type: "SELECT_TO", to: { x, y } });
-                return;
+                return dispatch({ type: "SELECT_TO", to: { x, y } });
               }
 
               // Change the currently picked up piece to a different one
               if (state.type === "SELECTING_TO" && pickable) {
-                dispatch({ type: "SELECT_FROM", from: { x, y } });
-                return;
+                return dispatch({ type: "SELECT_FROM", from: { x, y } });
               }
 
               // If we click on an empty field and have picked up a piece, put it
               // down again
               if (state.type === "SELECTING_TO" && !contents) {
-                dispatch({ type: "ABORT_SELECTION" });
+                return dispatch({ type: "ABORT_SELECTION" });
               }
             };
 

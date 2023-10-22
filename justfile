@@ -3,3 +3,6 @@ wasm:
 
 play:
     cargo run --bin=chers_cli
+
+web:
+    cd chers_web && bun run dev

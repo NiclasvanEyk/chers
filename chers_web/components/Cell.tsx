@@ -1,7 +1,8 @@
 import { Cell as CellContents, Color } from "@/lib/chers";
-import { ReactNode, Ref, forwardRef } from "react";
+import { Ref, forwardRef } from "react";
 import { Piece } from "./Piece";
 import { cellLabel } from "@/lib/ui/accessibility";
+import { useSettings } from "@/lib/settings";
 
 interface CellProps {
   x: number;
@@ -22,6 +23,7 @@ export const Cell = forwardRef(function Cell(
   { x, y, color, pickable, moveable, touched, onClick, contents }: CellProps,
   ref: Ref<HTMLButtonElement>,
 ) {
+  const { highlightLegalMoves: showLegalMoves } = useSettings();
   let bgColor = color === "White" ? "bg-chess-beige" : "bg-chess-brown";
 
   let hoverColor = "";
@@ -49,8 +51,30 @@ export const Cell = forwardRef(function Cell(
       onClick={onClick}
       className={`${bgColor} ${hoverColor} ${cursor} relative h-[min(calc(100vh/8),calc(100vw/8))] w-[min(calc(100vh/8),calc(100vw/8))] md:h-16 md:w-16 overflow-hidden flex items-center justify-center select-none font-bold text-xl`}
     >
-      {moveable ? <MoveableIndicator /> : null}
+      {moveable && showLegalMoves ? <MoveableIndicator /> : null}
       <Piece piece={contents} />
+      <RankLabels x={x} y={y} color={color} />
     </button>
   );
 });
+
+function RankLabels(props: { x: number, y: number, color: Color }) {
+  const { displayLabels } = useSettings();
+  if (!displayLabels) return null;
+
+  let labelColor = props.color === "Black" ? "text-chess-beige" : "text-chess-brown";
+
+  return <>
+    {props.x !== 0 ? null : <span className={`${labelColor} absolute top-0 left-1 text-xs sm:text-sm`}>{8 - props.y}</span>}
+    {props.y !== 7 ? null : <span className={`${labelColor} absolute bottom-0 right-1 text-xs sm:text-sm`}>{{
+      0: 'a',
+      1: 'b',
+      2: 'c',
+      3: 'd',
+      4: 'e',
+      5: 'f',
+      6: 'g',
+      7: 'h',
+    }[7 - props.x]}</span>}
+  </>;
+}

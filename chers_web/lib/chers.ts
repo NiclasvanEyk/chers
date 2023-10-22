@@ -88,15 +88,7 @@ export function nextState(
   to: Coordinate,
   promotion: Figure | undefined = undefined,
 ): MoveExecutionResult | MoveExecutionError {
-  const next = next_state(
-    current,
-    moveToDto({ from, to, promotion }),
-  ) as unknown as MoveExecutionResult | MoveExecutionError;
-
-  console.log("game state updated", {
-    previous: current,
-    next,
-  });
-
-  return next;
+  return next_state(current, moveToDto({ from, to, promotion })) as unknown as
+    | MoveExecutionResult
+    | MoveExecutionError;
 }

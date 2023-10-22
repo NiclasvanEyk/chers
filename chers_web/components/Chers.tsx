@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import init from "@/lib/chers/chers";
 import { Board } from "./Board";
+import { ChersSettingsProvider } from "@/lib/settings";
 
 export function LoadingIndicator(props: any) {
   return <img src="/images/pieces/White_Unicorn.svg" {...props} />;
@@ -11,7 +12,7 @@ export function LoadingIndicator(props: any) {
 export default function Chers() {
   const [loading, setLoading] = useState(true);
 
-  useEffect(function () {
+  useEffect(function() {
     init().then(() => setLoading(false));
   }, []);
 
@@ -23,5 +24,7 @@ export default function Chers() {
     );
   }
 
-  return <Board />;
+  return <ChersSettingsProvider>
+    <Board />
+  </ChersSettingsProvider>;
 }

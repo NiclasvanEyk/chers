@@ -144,7 +144,7 @@ mod tests {
         let targets = moves(&state.board, from, state.player, state.en_passant_target);
 
         println!("{:?}", targets);
-        assert!(targets.contains(&Coordinate::algebraic("a3").unwrap()));
-        assert!(targets.contains(&Coordinate::algebraic("c3").unwrap()));
+        assert!(targets.contains(&Coordinate::algebraic("a6").unwrap()));
+        assert!(targets.contains(&Coordinate::algebraic("b6").unwrap()));
     }
 }

@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::Player;
 
-use super::{Board, Color, Piece, State, BOARD_SIZE};
+use super::{Board, Color, Piece, BOARD_SIZE};
 
 // An offset relative to the top left (0,0) from white's view
 //

@@ -1,13 +1,10 @@
-use crate::{
-    check::is_checked_by_opponent, force_move_piece, movement_patterns, piece_at, Move, Piece,
-};
+use crate::{check::is_checked_by_opponent, force_move_piece, movement_patterns, piece_at, Move};
 
 use super::{Coordinate, State};
 
 /// Returns all *legal* moves.
 pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
-    let moves = possible_moves(state, from);
-    without_checks(state, from, moves)
+    possible_moves(state, from)
 }
 
 /// Returns all possible moves, also including ones that are not legal, e.g.

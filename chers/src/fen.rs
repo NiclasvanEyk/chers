@@ -48,7 +48,7 @@ fn parse_fullmove_number(notation: &str) -> Result<u8, CouldNotParse> {
 }
 
 fn parse_en_passant_target(notation: &str) -> Result<Option<Coordinate>, CouldNotParse> {
-    if notation.is_empty() {
+    if notation.is_empty() || notation == "-" {
         return Ok(None);
     }
 

@@ -246,6 +246,13 @@ impl State {
     pub fn opponent(&self) -> Player {
         self.player.other()
     }
+
+    pub fn reversed(&self) -> State {
+        State {
+            player: self.opponent(),
+            ..*self
+        }
+    }
 }
 
 pub const INITIAL_BOARD: Board = [

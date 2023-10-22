@@ -1,5 +1,5 @@
 import { useAdjustableSettings } from "@/lib/settings";
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useId, useRef } from "react";
 
 export function SettingsTrigger(props: any) {
   const { className, ...rest } = props
@@ -41,20 +41,20 @@ export function Settings(props: { open: boolean, onClose: () => void }) {
     <div className="space-y-7">
       <Section heading="Gameplay">
         <Toggle
-          id="setting-highlightLegalMoves" value={settings.all.highlightLegalMoves}
+          value={settings.all.highlightLegalMoves}
           onChange={value => settings.adjust("highlightLegalMoves", value)}
         >
           Highlight possible moves using dark circles.
         </Toggle>
         <Toggle
-          id="setting-displayLabels" value={settings.all.displayLabels}
+          value={settings.all.displayLabels}
           onChange={value => settings.adjust("displayLabels", value)}
         >
           Display rank and file labels.
         </Toggle>
         <Toggle
           functional={false}
-          id="setting-displayCapturedPieces" value={settings.all.displayCapturedPieces}
+          value={settings.all.displayCapturedPieces}
           onChange={value => settings.adjust("displayCapturedPieces", value)}
         >
           Display captured pieces.
@@ -64,7 +64,7 @@ export function Settings(props: { open: boolean, onClose: () => void }) {
       <Section heading="Keyboard Navigation">
         <Toggle
           functional={false}
-          id="setting-onlyLegalTabTargets" value={settings.all.onlyLegalTabTargets}
+          value={settings.all.onlyLegalTabTargets}
           onChange={value => settings.adjust("onlyLegalTabTargets", value)}
         >
           Skip non-selectable cells when tabbing.
@@ -82,11 +82,12 @@ function Section(props: { heading: String, children: ReactNode }) {
   </section>
 }
 
-function Toggle(props: { id: string, children: ReactNode, functional?: boolean, value: boolean, onChange: (value: boolean) => void }) {
+function Toggle(props: { children: ReactNode, functional?: boolean, value: boolean, onChange: (value: boolean) => void }) {
   const placeholder = props.functional === false
+  const id = useId();
 
-  return <label htmlFor={props.id} className={`flex flex-row items-center select-none ${placeholder ? "opacity-50" : ""}`}>
-    <input type="checkbox" id={props.id} className="mr-3" disabled={placeholder} checked={props.value} onChange={(event) => props.onChange(event.target.checked)} />
+  return <label htmlFor={id} className={`flex flex-row items-center select-none ${placeholder ? "opacity-50" : ""}`}>
+    <input type="checkbox" id={id} className="mr-3" disabled={placeholder} checked={props.value} onChange={(event) => props.onChange(event.target.checked)} />
     {props.children} {placeholder ? "-- todo" : null}
   </label>
 }

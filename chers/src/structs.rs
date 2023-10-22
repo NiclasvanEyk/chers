@@ -162,6 +162,8 @@ pub struct State {
     pub player: Player,
     pub board: Board,
     pub castling_rights: CastlingRights,
+    /// The cell that a pawn could move to, in order to capture the passing
+    /// piece using the "en passant" special rule.
     pub en_passant_target: Option<Coordinate>,
     pub halfmove_clock: u8,
     pub fullmove_number: u8,
@@ -227,7 +229,7 @@ impl State {
             board: new_board,
             castling_rights: self.castling_rights, // TODO
             en_passant_target: match moved == Figure::Pawn && from.y.abs_diff(to.y) == 2 {
-                true => Some(r#move.to),
+                true => Some(r#move.to.backward(self.player, 1).unwrap()),
                 false => None,
             },
             halfmove_clock: match did_capture || moved == Figure::Pawn {

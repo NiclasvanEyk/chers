@@ -14,6 +14,7 @@ pub enum CouldNotParse {
     InvalidHalfmoveClock(ParseIntError),
     InvalidFullmoveNumber(ParseIntError),
     InvalidPiece(char),
+    InvalidEnPassantTarget(String),
 }
 
 pub fn parse_state(notation: &str) -> Result<State, CouldNotParse> {
@@ -46,9 +47,15 @@ fn parse_fullmove_number(notation: &str) -> Result<u8, CouldNotParse> {
     }
 }
 
-fn parse_en_passant_target(_notation: &str) -> Result<Option<Coordinate>, CouldNotParse> {
-    // TODO
-    Ok(None)
+fn parse_en_passant_target(notation: &str) -> Result<Option<Coordinate>, CouldNotParse> {
+    if notation.is_empty() {
+        return Ok(None);
+    }
+
+    match Coordinate::algebraic(notation) {
+        Ok(coordinate) => Ok(Some(coordinate)),
+        Err(_) => Err(CouldNotParse::InvalidEnPassantTarget(notation.to_owned())),
+    }
 }
 
 pub fn parse_board(notation: &str) -> Result<Board, CouldNotParse> {

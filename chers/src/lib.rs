@@ -10,6 +10,9 @@ mod coordinates;
 /// Computes valid moves given a game state and a starting position.
 mod moves_available;
 
+/// TODO: Document
+mod movement_patterns;
+
 /// Computes the resulting state changes of a move.
 mod move_execution;
 

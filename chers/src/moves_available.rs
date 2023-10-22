@@ -1,9 +1,9 @@
 use crate::{
-    can_be_moved_to_given, check::is_checked_by_opponent, force_move_piece, is_free, piece_at,
-    Move, Piece,
+    can_be_moved_to_given, check::is_checked_by_opponent, force_move_piece,
+    movement_patterns::pawn::moves as pawn_moves, piece_at, Move, Piece,
 };
 
-use super::{Color, Coordinate, Figure, State};
+use super::{Coordinate, Figure, State};
 
 /// Returns all *legal* moves.
 pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
@@ -54,52 +54,13 @@ fn without_checks(state: &State, from: Coordinate, targets: Vec<Coordinate>) -> 
 
 fn valid_moves_for_piece(state: &State, from: Coordinate, piece: Piece) -> Vec<Coordinate> {
     match piece.figure {
-        Figure::Pawn => {
-            let mut moves = Vec::new();
-
-            // Safe to unwrap here, pawns can always move forward, since they
-            // are promoted when they reach the end of the board.
-            let single_step = from.forward(piece.color, 1).unwrap();
-            let single_step_is_free = is_free(single_step, &state.board);
-            if single_step_is_free {
-                moves.push(single_step)
-            }
-
-            if single_step_is_free && resides_on_pawn_rank(from, piece.color) {
-                // Here we can again unwrap safely, since paws can only move
-                // two steps, when they reside on the pawn rank.
-                let double_step = from.forward(piece.color, 2).unwrap();
-                if is_free(double_step, &state.board) {
-                    moves.push(double_step);
-                }
-            }
-
-            let mut capture_moves = Vec::new();
-            if let Some(m) = single_step.left(1) {
-                capture_moves.push(m);
-            }
-            if let Some(m) = single_step.right(1) {
-                capture_moves.push(m);
-            }
-
-            let en_passant_target_origin = state
-                .en_passant_target
-                .and_then(|target| target.backward(state.player.other(), 1));
-
-            for capture_move in capture_moves {
-                if let Some(piece) = piece_at(capture_move, &state.board) {
-                    if piece.color != state.player {
-                        moves.push(capture_move)
-                    }
-                } else if let Some(en_passant_capture_move) = en_passant_target_origin {
-                    if en_passant_capture_move == capture_move {
-                        moves.push(capture_move)
-                    }
-                }
-            }
-
-            moves
-        }
+        Figure::Pawn => pawn_moves(
+            &state.board,
+            from,
+            piece.color,
+            state.player,
+            state.en_passant_target,
+        ),
 
         Figure::King => {
             let potential_moves = [
@@ -223,28 +184,11 @@ fn expand_until_collides(
     cells
 }
 
-fn resides_on_pawn_rank(from: Coordinate, color: Color) -> bool {
-    match color {
-        Color::White => from.y == 6,
-        Color::Black => from.y == 1,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::{fen::parse_state, fmt_coordinates, Engine};
 
     use super::*;
-
-    #[test]
-    fn white_pawn_can_move_twice_at_the_beginning() {
-        let targets = autocomplete_to(&Engine {}.start(), Coordinate::algebraic("a2").unwrap());
-
-        println!("{:?}", targets);
-        assert_eq!(2, targets.len());
-        assert!(targets.contains(&Coordinate::algebraic("a3").unwrap()));
-        assert!(targets.contains(&Coordinate::algebraic("a4").unwrap()));
-    }
 
     #[test]
     fn queen_movement() {

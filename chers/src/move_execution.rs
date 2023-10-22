@@ -64,9 +64,9 @@ fn inner_move_piece(
             by: moved,
         });
     } else if let Some(en_passant) = state.en_passant_target {
-        let origin = en_passant.backward(state.player.other(), 1).unwrap();
-        if origin == to {
-            new_board[en_passant.y][en_passant.x] = None;
+        if en_passant == to {
+            let piece_location = en_passant.forward(state.player.other(), 1).unwrap();
+            new_board[piece_location.y][piece_location.x] = None;
             did_capture = true;
             events.push(Event::Capture {
                 // TODO: Maybe we need to introduce more fields here?

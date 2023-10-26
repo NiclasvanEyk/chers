@@ -13,8 +13,8 @@ wasm-pack build --release --target web
 
 echo "Creating symlinks..."
 cd ../chers_web
-ln -s ../chers/pkg/ ./generated/chers/
-ln -s ../chers/bindings/ ./generated/chers-serde/
+ln -s ../../chers/pkg/ ./generated/chers
+ln -s ../../chers/bindings/ ./generated/chers-serde
 
 echo "Building chers_web..."
 bun run build

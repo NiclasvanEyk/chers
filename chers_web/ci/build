@@ -8,13 +8,11 @@ source "$CARGO_HOME/env"
 
 echo "Building chers..."
 cd ../chers
-cargo metadata
 cargo test
 wasm-pack build --release --target web
 
 echo "Creating symlinks..."
 cd ../chers_web
-mkdir ./generated
 ln -s ../chers/pkg/ ./generated/chers/
 ln -s ../chers/bindings/ ./generated/chers-serde/
 

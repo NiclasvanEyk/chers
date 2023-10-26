@@ -107,8 +107,9 @@ mod tests {
         // k
         let notation = "8/8/8/8/8/r1k5/8/K7 w - - 0 1";
         let state = parse_state(notation).unwrap();
+        let checking_pieces = checking_pieces_of_opponent(&state);
 
-        assert!(is_checked_by_opponent(&state), "check was not detected");
+        assert!(!checking_pieces.is_empty(), "check was not detected");
     }
 
     #[test]

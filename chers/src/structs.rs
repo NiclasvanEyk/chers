@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use wasm_bindgen::prelude::*;
@@ -83,6 +85,14 @@ impl Move {
             promotion,
         }
     }
+
+    pub fn simple(from: Coordinate, to: Coordinate) -> Self {
+        Self {
+            from,
+            to,
+            promotion: None,
+        }
+    }
 }
 
 #[wasm_bindgen]
@@ -91,6 +101,12 @@ impl Move {
 pub struct Piece {
     pub color: Color,
     pub figure: Figure,
+}
+
+impl Display for Piece {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?} {:?}", self.color, self.figure)
+    }
 }
 
 impl Piece {

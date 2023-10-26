@@ -16,9 +16,7 @@ pub fn expand_until_collides(
 
     for direction in into.iter_mut() {
         loop {
-            println!("Checking {direction:?}");
             let Some(cell_on_board) = from.diagonal(direction.0, direction.1) else {
-                println!("Moved out of the board! Stopping iteration in direction");
                 break;
             };
 
@@ -48,14 +46,9 @@ pub fn expand_until_collides(
                 continue;
             };
 
-            println!("Hit a piece! Stopping iteration in direction");
-
             // If we hit a piece, we can move there if it belongd to the other player.
             if collided_piece.belongs_to(player.other()) {
-                println!("Adding piece to possible moves");
                 cells.push(cell_on_board);
-            } else {
-                println!("Hit our own piece, cant move there");
             }
 
             // In any case, we need to stop iterating after hitting a piece.

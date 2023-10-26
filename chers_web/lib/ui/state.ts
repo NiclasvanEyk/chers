@@ -4,7 +4,6 @@ import {
   State as GameState,
   Color,
   Piece,
-  Figure,
   nextState,
   getMoves,
   Cell,

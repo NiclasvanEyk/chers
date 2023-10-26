@@ -1,8 +1,8 @@
-use crate::{can_be_moved_to_given, Board, Color, Coordinate};
+use crate::{can_be_moved_to_given, Board, Coordinate, Piece};
 
 /// Computes the movement patterns of a [piece_color] [crate::Figure::Knight]
 /// residing on [from], given that [player] owns and wants to move it.
-pub fn moves(board: &Board, from: Coordinate, player: Color) -> Vec<Coordinate> {
+pub fn moves(board: &Board, from: Coordinate, piece: Piece) -> Vec<Coordinate> {
     // Knights move in "L"-shapes. We simply pre-compute those here and check
     // every possible combination.
     let possible = [
@@ -18,7 +18,7 @@ pub fn moves(board: &Board, from: Coordinate, player: Color) -> Vec<Coordinate> 
 
     let mut moves = Vec::new();
     for cell in possible.into_iter().flatten() {
-        if can_be_moved_to_given(cell, player, board) {
+        if can_be_moved_to_given(cell, piece.color, board) {
             moves.push(cell);
         }
     }

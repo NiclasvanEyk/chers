@@ -1,14 +1,14 @@
-use crate::{Board, Color, Coordinate};
+use crate::{Board, Coordinate, Piece};
 
 use super::expansion::expand_until_collides;
 
 /// Computes the movement patterns of a [piece_color] [crate::Figure::Bishop]
 /// residing on [from], given that [player] owns and wants to move it.
-pub fn moves(board: &Board, from: Coordinate, player: Color) -> Vec<Coordinate> {
+pub fn moves(board: &Board, from: Coordinate, piece: Piece) -> Vec<Coordinate> {
     expand_until_collides(
         board,
         from,
-        player,
+        piece.color,
         [
             (1, 1),   // North West
             (1, -1),  // North East
@@ -20,7 +20,7 @@ pub fn moves(board: &Board, from: Coordinate, player: Color) -> Vec<Coordinate> 
 
 #[cfg(test)]
 mod tests {
-    use crate::{fen, fmt_coordinates};
+    use crate::{fen, fmt_coordinates, piece_at};
 
     use super::*;
 
@@ -37,7 +37,7 @@ mod tests {
         //      a   b   c   d   e   f   g
         let state = fen::parse_state("8/P5p1/8/8/3B4/8/8/8 w - - 0 1").unwrap();
         let from = Coordinate::algebraic("d4").unwrap();
-        let targets = moves(&state.board, from, state.player);
+        let targets = moves(&state.board, from, piece_at(from, &state.board).unwrap());
 
         let expected = [
             "c5", "b6", // Top Left

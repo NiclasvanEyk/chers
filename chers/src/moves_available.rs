@@ -1,20 +1,26 @@
-use crate::{check::is_checked_by_opponent, force_move_piece, movement_patterns, piece_at, Move};
+use crate::{
+    check::checking_pieces_of_opponent, force_move_piece, movement_patterns, piece_at, Move, Player,
+};
 
 use super::{Coordinate, State};
 
 /// Returns all *legal* moves.
 pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
-    possible_moves(state, from)
+    without_checks(state, from, possible_moves(state, from))
 }
 
 /// Returns all possible moves, also including ones that are not legal, e.g.
 /// because they would lead the current player to check themselves.
 pub fn possible_moves(state: &State, from: Coordinate) -> Vec<Coordinate> {
+    possible_moves_by(state, state.player, from)
+}
+
+pub fn possible_moves_by(state: &State, player: Player, from: Coordinate) -> Vec<Coordinate> {
     let Some(piece) = piece_at(from, &state.board) else {
         return Vec::new();
     };
 
-    if state.player != piece.color {
+    if player != piece.color {
         return Vec::new();
     }
 
@@ -38,7 +44,7 @@ fn without_checks(state: &State, from: Coordinate, targets: Vec<Coordinate>) -> 
         };
 
         // only allow moves, that do not lead into a self-check
-        if !is_checked_by_opponent(&resulting_state).is_empty() {
+        if !checking_pieces_of_opponent(&resulting_state.reversed()).is_empty() {
             continue;
         }
 

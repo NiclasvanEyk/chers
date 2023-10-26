@@ -1,5 +1,5 @@
 use crate::{
-    check::{check_is_mate, is_checked_by_opponent},
+    check::{check_by_opponent_is_mate, checking_pieces_of_opponent},
     moves_available::autocomplete_to,
     piece_at, Color, Coordinate, Event, Figure, Move, Piece, State, BOARD_SIZE,
 };
@@ -101,13 +101,13 @@ fn inner_move_piece(
     let new_state = state.new_turn(new_board, moved.figure, the_move, did_capture);
 
     if check_legality {
-        let checking_pieces = is_checked_by_opponent(&new_state);
+        let checking_pieces = checking_pieces_of_opponent(&new_state);
         if !checking_pieces.is_empty() {
             events.push(Event::Check {
                 by: checking_pieces,
             });
 
-            if check_is_mate(&new_state) {
+            if check_by_opponent_is_mate(&new_state) {
                 events.push(Event::Mate);
             }
         }

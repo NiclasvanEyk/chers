@@ -1,17 +1,17 @@
 use crate::{
     movement_patterns::bishop::moves as bishop_moves, movement_patterns::rook::moves as rook_moves,
-    Board, Color, Coordinate,
+    Board, Coordinate, Piece,
 };
 
 /// Computes the movement patterns of a [piece_color] [crate::Figure::Queen]
 /// residing on [from], given that [player] owns and wants to move it.
-pub fn moves(board: &Board, from: Coordinate, player: Color) -> Vec<Coordinate> {
+pub fn moves(board: &Board, from: Coordinate, piece: Piece) -> Vec<Coordinate> {
     let mut moves = Vec::new();
 
     // A queen can move diagonally like a bishop and straight like a rook,
     // so we just re-use those functions.
-    moves.append(&mut rook_moves(board, from, player));
-    moves.append(&mut bishop_moves(board, from, player));
+    moves.append(&mut rook_moves(board, from, piece));
+    moves.append(&mut bishop_moves(board, from, piece));
 
     // There might be some duplication, which we want to avoid
     // TODO: Not sure if necessary?
@@ -23,7 +23,7 @@ pub fn moves(board: &Board, from: Coordinate, player: Color) -> Vec<Coordinate> 
 
 #[cfg(test)]
 mod tests {
-    use crate::{fen, fmt_coordinates};
+    use crate::{fen, fmt_coordinates, piece_at};
 
     use super::*;
 
@@ -40,7 +40,7 @@ mod tests {
         //      a   b   c   d   e   f   g   h
         let state = fen::parse_state("8/P7/8/4p3/3Q2p1/8/8/3p4 w - - 0 1").unwrap();
         let from = Coordinate::algebraic("d4").unwrap();
-        let targets = moves(&state.board, from, state.player);
+        let targets = moves(&state.board, from, piece_at(from, &state.board).unwrap());
 
         let expected = [
             // Straight
@@ -74,7 +74,7 @@ mod tests {
             fen::parse_state("rnbqkbnr/ppp2ppp/3p4/4p3/3P4/3Q4/PPP1PPPP/RNB1KBNR w KQkq - 0 1")
                 .unwrap();
         let from = Coordinate::algebraic("d3").unwrap();
-        let targets = moves(&state.board, from, state.player);
+        let targets = moves(&state.board, from, piece_at(from, &state.board).unwrap());
 
         let coordinate = &Coordinate::algebraic("b5").unwrap();
         assert!(

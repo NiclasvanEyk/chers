@@ -1,4 +1,4 @@
-use crate::{is_free, piece_at, Board, Color, Coordinate};
+use crate::{is_free, piece_at, Board, Color, Coordinate, Piece};
 
 /// Computes the movement patterns of a [piece_color] [crate::Figure::Pawn]
 /// residing on [from], given that [player] owns and wants to move it.
@@ -9,11 +9,11 @@ use crate::{is_free, piece_at, Board, Color, Coordinate};
 pub fn moves(
     board: &Board,
     from: Coordinate,
-    player: Color,
+    piece: Piece,
     en_passant_target: Option<Coordinate>,
 ) -> Vec<Coordinate> {
     let mut moves = Vec::new();
-    let piece_color = player;
+    let piece_color = piece.color;
 
     // The most common move for a pawn is forward. We can safely assume that
     // the next cell exists on the board, since pawns get promoted to another
@@ -39,8 +39,8 @@ pub fn moves(
     // and the cell is still on the board.
     let diagonals = capture_moves(single_step);
     for capture_move in diagonals.iter() {
-        if let Some(piece) = piece_at(*capture_move, board) {
-            if piece.color != player {
+        if let Some(capture_target) = piece_at(*capture_move, board) {
+            if capture_target.color != piece.color {
                 moves.push(*capture_move)
             }
         }
@@ -95,7 +95,12 @@ mod tests {
     fn pawns_can_move_forward_once_and_twice_at_the_beginning() {
         let state = Engine {}.start();
         let from = Coordinate::algebraic("a2").unwrap();
-        let targets = moves(&state.board, from, state.player, state.en_passant_target);
+        let targets = moves(
+            &state.board,
+            from,
+            piece_at(from, &state.board).unwrap(),
+            state.en_passant_target,
+        );
 
         println!("{:?}", targets);
         assert!(targets.contains(&Coordinate::algebraic("a3").unwrap()));
@@ -111,7 +116,12 @@ mod tests {
         //      a
         let state = fen::parse_state("8/8/8/8/p7/8/P7/8 w - - 0 1").unwrap();
         let from = Coordinate::algebraic("a2").unwrap();
-        let targets = moves(&state.board, from, state.player, state.en_passant_target);
+        let targets = moves(
+            &state.board,
+            from,
+            piece_at(from, &state.board).unwrap(),
+            state.en_passant_target,
+        );
 
         println!("{:?}", targets);
         assert_eq!(1, targets.len());
@@ -125,7 +135,12 @@ mod tests {
         //      a
         let state = fen::parse_state("8/8/8/8/8/p7/P7/8 w - - 0 1").unwrap();
         let from = Coordinate::algebraic("a2").unwrap();
-        let targets = moves(&state.board, from, state.player, state.en_passant_target);
+        let targets = moves(
+            &state.board,
+            from,
+            piece_at(from, &state.board).unwrap(),
+            state.en_passant_target,
+        );
 
         println!("{:?}", targets);
         assert!(!targets.contains(&Coordinate::algebraic("a3").unwrap()));
@@ -141,7 +156,12 @@ mod tests {
         //      a    b                   a    b
         let state = fen::parse_state("7k/8/8/pP6/8/8/8/7K w - a6 0 2").unwrap();
         let from = Coordinate::algebraic("b5").unwrap();
-        let targets = moves(&state.board, from, state.player, state.en_passant_target);
+        let targets = moves(
+            &state.board,
+            from,
+            piece_at(from, &state.board).unwrap(),
+            state.en_passant_target,
+        );
 
         println!("{:?}", targets);
         assert!(targets.contains(&Coordinate::algebraic("a6").unwrap()));

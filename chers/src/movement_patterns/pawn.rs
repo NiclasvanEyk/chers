@@ -87,13 +87,13 @@ fn capture_moves(forward: Coordinate) -> Vec<Coordinate> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{fen, Engine};
+    use crate::{fen, Game};
 
     use super::*;
 
     #[test]
     fn pawns_can_move_forward_once_and_twice_at_the_beginning() {
-        let state = Engine {}.start();
+        let state = Game {}.start();
         let from = Coordinate::algebraic("a2").unwrap();
         let targets = moves(
             &state.board,

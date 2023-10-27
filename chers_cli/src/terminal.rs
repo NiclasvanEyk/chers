@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use chers::{Board, Color, Coordinate, Engine, Figure, Move, Piece, PromotedFigure, State};
+use chers::{Board, Color, Coordinate, Figure, Game, Move, Piece, PromotedFigure, State};
 
 enum InputState {
     PromptingFrom,
@@ -9,13 +9,13 @@ enum InputState {
 }
 
 pub struct TerminalChersMatch {
-    engine: Engine,
+    engine: Game,
     game_state: State,
     input_state: InputState,
 }
 
 impl TerminalChersMatch {
-    pub fn new(engine: Engine) -> Self {
+    pub fn new(engine: Game) -> Self {
         let initial_state = engine.start();
 
         Self {

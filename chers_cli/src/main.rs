@@ -1,11 +1,11 @@
 /// A terminal user interface for playing chess.
 mod terminal;
 
-use chers::Engine;
+use chers::Game;
 use terminal::TerminalChersMatch;
 
 fn main() {
-    let engine = Engine::new();
+    let engine = Game::new();
     let mut ui = TerminalChersMatch::new(engine);
 
     ui.run();

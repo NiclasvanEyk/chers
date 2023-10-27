@@ -34,9 +34,9 @@ pub enum Event {
 }
 
 #[derive(Default)]
-pub struct Engine {}
+pub struct Game {}
 
-impl Engine {
+impl Game {
     pub fn new() -> Self {
         Self {}
     }

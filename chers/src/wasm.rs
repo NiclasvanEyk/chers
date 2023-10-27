@@ -3,7 +3,7 @@ use ts_rs::TS;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    move_piece, moves_available::autocomplete_to, CantMovePiece, Coordinate, Engine, Event, Move,
+    move_piece, moves_available::autocomplete_to, CantMovePiece, Coordinate, Event, Game, Move,
     State,
 };
 
@@ -33,7 +33,7 @@ pub struct MoveResult {
 
 #[wasm_bindgen]
 pub fn new_game() -> JsValue {
-    let state = Engine::new().start();
+    let state = Game::new().start();
 
     bridge::to_value(&state).unwrap()
 }

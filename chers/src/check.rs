@@ -73,13 +73,13 @@ fn find_king_of(board: &Board, player: Player) -> Coordinate {
 
 #[cfg(test)]
 mod tests {
-    use crate::{fen::parse_state, Engine};
+    use crate::{fen::parse_state, Game};
 
     use super::*;
 
     #[test]
     fn it_finds_the_king() {
-        let initial_state = Engine::new().start();
+        let initial_state = Game::new().start();
 
         assert_eq!(
             Coordinate::algebraic("e1").unwrap(),
@@ -95,7 +95,7 @@ mod tests {
     fn at_the_beginning_no_mate_exist() {
         // This is theoretically invalid state, but it allows us to test the
         // functionality in isoloation
-        let initial_state = Engine::new().start();
+        let initial_state = Game::new().start();
 
         assert!(checking_pieces_of_opponent(&initial_state).is_empty());
     }

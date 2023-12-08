@@ -1,6 +1,6 @@
-use std::io::Write;
-
 use chers::{Board, Color, Coordinate, Figure, Game, Move, Piece, PromotedFigure, State};
+
+use crate::cli::prompt;
 
 enum InputState {
     PromptingFrom,
@@ -142,18 +142,6 @@ fn piece_to_string(piece: &Piece) -> String {
         },
     }
     .to_string()
-}
-
-fn prompt(question: &str) -> String {
-    let mut x = String::new();
-    print!("{}", question);
-    std::io::stdout().flush().expect("Could not flush stdout");
-
-    std::io::stdin()
-        .read_line(&mut x)
-        .expect("Could not read input");
-
-    x
 }
 
 enum CoordinatePromptResult {

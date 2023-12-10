@@ -14,6 +14,33 @@ pub struct TerminalChersMatch {
     input_state: InputState,
 }
 
+trait MoveSource {
+    fn prompt(question: &str) -> CoordinatePromptResult;
+}
+
+struct LocalTerminalMoveSource {}
+
+impl MoveSource for LocalTerminalMoveSource {
+    fn prompt(question: &str) -> CoordinatePromptResult {
+        loop {
+            let input = prompt(question);
+
+            match input.trim().to_lowercase().as_str() {
+                "b" => return CoordinatePromptResult::Back,
+                notation => match Coordinate::algebraic(notation) {
+                    Ok(coordinate) => {
+                        return CoordinatePromptResult::Coordinate(
+                            coordinate,
+                            notation.to_string(),
+                        );
+                    }
+                    Err(err) => println!("{:?}", err),
+                },
+            };
+        }
+    }
+}
+
 impl TerminalChersMatch {
     pub fn new(engine: Game) -> Self {
         let initial_state = engine.start();

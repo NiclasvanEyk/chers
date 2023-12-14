@@ -5,15 +5,12 @@ use std::net::TcpStream;
 
 use crate::cli::prompt;
 
-// ============================================================================
-// Connection negotiation
-//
-// You either wait for another client to connect to your port, or try to
-// connect to another waiting client.
-// ============================================================================
-
+/// How the connection is initiated.
 pub enum Role {
+    /// Waits for incoming TCP connections.
     Server,
+
+    /// Initiates a connection with a [Role::Server].
     Client,
 }
 
@@ -24,7 +21,16 @@ impl Role {
             _ => Self::Client,
         }
     }
+
+    pub fn connect(&self) -> Option<TcpStream> {
+        match self {
+            Self::Server => wait_for_incoming_connections(),
+            Self::Client => try_connecting_to_other_client(),
+        }
+    }
 }
+
+// ============================================================================
 
 pub fn wait_for_incoming_connections() -> Option<TcpStream> {
     // We bind port 0 to let the operating system choose a free one for us
@@ -93,12 +99,4 @@ fn other_confirms_connection(stream: &mut TcpStream) -> bool {
     return buffer.trim() == "accept";
 }
 
-// ============================================================================
-
-struct RemoteChersMatch {
-    stream: TcpStream,
-}
-
-impl RemoteChersMatch {}
-
-// ============================================================================
+// =============================================================================

@@ -3,9 +3,12 @@ use std::io::Write;
 use std::net::TcpListener;
 use std::net::TcpStream;
 
+use clap::ValueEnum;
+
 use crate::cli::prompt;
 
 /// How the connection is initiated.
+#[derive(ValueEnum, Clone, Debug)]
 pub enum Role {
     /// Waits for incoming TCP connections.
     Server,
@@ -22,22 +25,32 @@ impl Role {
         }
     }
 
-    pub fn connect(&self) -> Option<TcpStream> {
+    pub fn connect(
+        &self,
+        host: Option<String>,
+        port: Option<u32>,
+    ) -> std::io::Result<Option<TcpStream>> {
         match self {
-            Self::Server => wait_for_incoming_connections(),
-            Self::Client => try_connecting_to_other_client(),
+            Self::Server => wait_for_incoming_connections(host, port),
+            Self::Client => try_connecting_to_other_client(host, port),
         }
     }
 }
 
 // ============================================================================
-
-pub fn wait_for_incoming_connections() -> Option<TcpStream> {
+pub fn wait_for_incoming_connections(
+    host: Option<String>,
+    port: Option<u32>,
+) -> std::io::Result<Option<TcpStream>> {
     // We bind port 0 to let the operating system choose a free one for us
-    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let listener = TcpListener::bind(format!(
+        "{}:{}",
+        host.unwrap_or(String::from("127.0.0.1")),
+        port.unwrap_or(0),
+    ))?;
 
     // And then also tell the user which port we used
-    let address = listener.local_addr().unwrap();
+    let address = listener.local_addr()?;
     let port = address.port();
     println!("Listening for incoming connections on port {port}...");
 
@@ -47,7 +60,7 @@ pub fn wait_for_incoming_connections() -> Option<TcpStream> {
             continue;
         };
 
-        let address = stream.peer_addr().unwrap();
+        let address = stream.peer_addr()?;
         let ip = address.ip().to_string();
         let port = address.port();
         let response = prompt(&format!(
@@ -57,27 +70,34 @@ pub fn wait_for_incoming_connections() -> Option<TcpStream> {
         .to_string();
 
         if response.is_empty() || response.to_lowercase() == "y" {
-            let _ = stream.write_all("accept".as_bytes());
-            return Some(stream);
+            stream.write_all("accept".as_bytes())?;
+            return Ok(Some(stream));
         }
     }
 
-    None
+    Ok(None)
 }
 
 // ============================================================================
 
-pub fn try_connecting_to_other_client() -> Option<TcpStream> {
+pub fn try_connecting_to_other_client(
+    host: Option<String>,
+    port: Option<u32>,
+) -> std::io::Result<Option<TcpStream>> {
     loop {
-        let target = prompt("Enter IP and port to connect to:\n")
-            .trim()
-            .to_string();
+        let real_host = host
+            .clone()
+            .unwrap_or_else(|| prompt("Enter host to connect to:\n").trim().to_string());
+        let real_port = port
+            .map(|numeric_port| numeric_port.to_string())
+            .unwrap_or_else(|| prompt("Enter port to connect to:\n").trim().to_string());
+        let target = format!("{}:{}", real_host, real_port);
 
         match TcpStream::connect(target) {
             Ok(mut stream) => {
                 println!("Waiting for other party to accept the connection request...");
                 if other_confirms_connection(&mut stream) {
-                    return Some(stream);
+                    return Ok(Some(stream));
                 }
 
                 println!("Other party denied the connection request.");

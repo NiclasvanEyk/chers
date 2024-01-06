@@ -55,6 +55,10 @@ pub enum PromotedFigure {
     Knight,
 }
 
+pub enum PromotionError {
+    UnknownPiece { piece: String },
+}
+
 impl PromotedFigure {
     pub fn to_figure(&self) -> Figure {
         match self {
@@ -62,6 +66,29 @@ impl PromotedFigure {
             PromotedFigure::Rook => Figure::Rook,
             PromotedFigure::Bishop => Figure::Bishop,
             PromotedFigure::Knight => Figure::Knight,
+        }
+    }
+
+    pub fn parse(string: &str) -> Result<Self, PromotionError> {
+        match string {
+            "Queen" => Ok(PromotedFigure::Queen),
+            "Rook" => Ok(PromotedFigure::Rook),
+            "Bishop" => Ok(PromotedFigure::Bishop),
+            "Knight" => Ok(PromotedFigure::Knight),
+            _ => Err(PromotionError::UnknownPiece {
+                piece: String::from(string),
+            }),
+        }
+    }
+}
+
+impl Display for PromotedFigure {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PromotedFigure::Queen => write!(f, "Queen "),
+            PromotedFigure::Rook => write!(f, "Rook "),
+            PromotedFigure::Bishop => write!(f, "Bishop "),
+            PromotedFigure::Knight => write!(f, "Knight "),
         }
     }
 }

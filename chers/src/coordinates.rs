@@ -40,6 +40,61 @@ impl Display for Coordinate {
 }
 
 #[derive(Debug)]
+pub enum CoordinateParseError {
+    UnknownLetter(char),
+    MissingXCoordinate,
+    MissingYCoordinate,
+    NonDigitYCoordinate(char),
+}
+
+impl Display for CoordinateParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let message = match self {
+            CoordinateParseError::UnknownLetter(letter) => format!("Unknown letter: '{letter}'"),
+            CoordinateParseError::MissingXCoordinate => String::from("No x coordinate specified"),
+            CoordinateParseError::MissingYCoordinate => String::from("No y coordinate specified"),
+            CoordinateParseError::NonDigitYCoordinate(letter) => {
+                format!("y must represent a digit. '{letter}' passed.")
+            }
+        };
+
+        write!(f, "{}", message)
+    }
+}
+
+impl Coordinate {
+    pub fn parse(string: &str) -> Result<Self, CoordinateParseError> {
+        let mut characters = string.chars();
+
+        let Some(x_raw) = characters.next() else {
+            return Err(CoordinateParseError::MissingXCoordinate);
+        };
+
+        let x = match x_raw {
+            'a' => 0,
+            'b' => 1,
+            'c' => 2,
+            'd' => 3,
+            'e' => 4,
+            'f' => 5,
+            'g' => 6,
+            'h' => 7,
+            letter => return Err(CoordinateParseError::UnknownLetter(letter)),
+        };
+
+        let Some(y_raw) = characters.next() else {
+            return Err(CoordinateParseError::MissingYCoordinate);
+        };
+
+        let Some(y) = y_raw.to_digit(10) else {
+            return Err(CoordinateParseError::NonDigitYCoordinate(y_raw));
+        };
+
+        Ok(Coordinate { x, y: y as usize })
+    }
+}
+
+#[derive(Debug)]
 #[wasm_bindgen]
 pub enum CoordinateParserError {
     Empty,

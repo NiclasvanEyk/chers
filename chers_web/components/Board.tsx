@@ -19,7 +19,7 @@ export function Board() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative touch-manipulation">
       <SettingsTrigger
         onClick={() => setSettingsOpen(true)}
         className="fixed top-3 left-3 z-10"

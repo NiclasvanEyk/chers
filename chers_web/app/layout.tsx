@@ -19,8 +19,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Makes this feel more native on mobile, but still like a regular website on
+  // desktop.
+  const overScrollBehaviors = "overscroll-none md:overscroll-auto";
+
   return (
-    <html lang="en">
+    <html lang="en" className={overScrollBehaviors}>
       <body>{children}</body>
       <Analytics />
     </html>

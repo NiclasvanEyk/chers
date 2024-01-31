@@ -48,7 +48,7 @@ export const Cell = forwardRef(function Cell(
       data-y={y}
       ref={ref}
       aria-label={cellLabel({ x, y }, contents)}
-      onClick={onClick}
+      onPointerDown={onClick}
       className={`${bgColor} ${hoverColor} ${cursor} relative h-[min(calc(100vh/8),calc(100vw/8))] w-[min(calc(100vh/8),calc(100vw/8))] md:h-16 md:w-16 overflow-hidden flex items-center justify-center select-none font-bold text-xl`}
     >
       {moveable && highlightLegalMoves ? <MoveableIndicator /> : null}

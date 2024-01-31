@@ -41,7 +41,7 @@ impl RemoteChersMatch {
         }
     }
 
-    pub fn run(&mut self) {
+    pub async fn run(&mut self) {
         self.renderer.render(&self.game_state.board);
 
         'game: loop {
@@ -95,7 +95,7 @@ impl RemoteChersMatch {
                                 }
                             }
 
-                            match self.coordinator.send(&the_move) {
+                            match self.coordinator.send(&the_move).await {
                                 Ok(()) => {
                                     println!("Waiting for other player to make a move...");
                                 }

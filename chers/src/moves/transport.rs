@@ -1,6 +1,5 @@
 use std::error::Error;
-use std::io::Read;
-use std::{io::Write, net::TcpStream};
+use tokio::net::TcpStream;
 
 use crate::Move;
 
@@ -9,9 +8,10 @@ use super::serialization::Converter;
 /// Converts moves from and into different string representations.
 pub trait Transport {
     /// Send [`a_move`] to the other party
-    fn send(&mut self, a_move: &Move) -> Result<(), Box<dyn Error>>;
+    async fn send(&mut self, a_move: &Move) -> Result<(), Box<dyn Error>>;
+
     /// Wait and block, until the other party has made their move.
-    fn receive(&mut self) -> Result<Move, Box<dyn Error>>;
+    async fn receive(&mut self) -> Result<Move, Box<dyn Error>>;
 }
 
 /// Juggles transferring moves and updating game state.
@@ -22,17 +22,24 @@ pub struct TcpTransport {
 
 impl Transport for TcpTransport {
     /// Sends a local move to the remote party.
-    fn send(&mut self, a_move: &Move) -> Result<(), Box<dyn Error>> {
+    async fn send(&mut self, a_move: &Move) -> Result<(), Box<dyn Error>> {
         let serialized = self.converter.serialize(a_move);
 
-        Ok(self.stream.write_all(serialized.as_bytes())?)
+        self.stream.writable().await;
+
+        match self.stream.try_write(serialized.as_bytes()) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(Box::new(err)),
+        }
     }
 
     /// Waits for the remote party to make their move.
-    fn receive(&mut self) -> Result<Move, Box<dyn Error>> {
+    async fn receive(&mut self) -> Result<Move, Box<dyn Error>> {
+        self.stream.readable().await;
+
         // 128 should be more than enough to serialize a simple move
         let mut buffer: [u8; 128] = [0; 128];
-        match self.stream.read_exact(&mut buffer) {
+        match self.stream.try_read(&mut buffer) {
             Ok(it) => it,
             Err(err) => return Err(Box::new(err)),
         };
@@ -55,17 +62,23 @@ impl Coordinator {
     }
 
     /// Sends a local move to the remote party.
-    pub fn send(&mut self, a_move: &Move) -> Result<(), std::io::Error> {
+    pub async fn send(&mut self, a_move: &Move) -> Result<(), std::io::Error> {
         let serialized = self.converter.serialize(a_move);
 
-        self.stream.write_all(serialized.as_bytes())
+        self.stream.writable().await;
+        match self.stream.try_write(serialized.as_bytes()) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err),
+        }
     }
 
     /// Waits for the remote party to make their move.
-    pub fn receive(&mut self) -> Result<Move, Box<dyn Error>> {
+    pub async fn receive(&mut self) -> Result<Move, Box<dyn Error>> {
+        self.stream.readable().await;
+
         // 128 should be more than enough to serialize a simple move
         let mut buffer: [u8; 128] = [0; 128];
-        self.stream.read_exact(&mut buffer)?;
+        self.stream.try_write(&mut buffer)?;
 
         let serialized = String::from_utf8_lossy(&buffer).to_string();
 

@@ -1,10 +1,11 @@
-use std::{env, process::exit};
+use std::process::exit;
 
-use chers::Game;
 use clap::Parser;
 
 use chers::moves::serialization::SimpleMoveConverter;
 use chers::moves::transport::Coordinator;
+use chers::Game;
+
 use chers_cli::modes::local::TerminalChersMatch;
 use chers_cli::modes::remote::connection::Role;
 use chers_cli::modes::remote::game::RemoteChersMatch;
@@ -30,7 +31,8 @@ struct Cli {
     port: Option<u32>,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
 
     let Some(role) = cli.role else {
@@ -41,7 +43,7 @@ fn main() {
         exit(0);
     };
 
-    let maybe_stream = match role.connect(cli.host, cli.port) {
+    let maybe_stream = match role.connect(cli.host, cli.port).await {
         Ok(x) => x,
         Err(error) => {
             println!(
@@ -51,9 +53,10 @@ fn main() {
             exit(1);
         }
     };
-    let Some(stream) = maybe_stream else { println!("That did not work. Maybe try again?");
-            exit(1);
-        };
+    let Some(stream) = maybe_stream else {
+        println!("That did not work. Maybe try again?");
+        exit(1);
+    };
 
     let other = stream.peer_addr().unwrap().to_string();
     println!("Successfully connected to {other}!");
@@ -62,5 +65,5 @@ fn main() {
     let coordinator = Coordinator::new(stream, Box::new(SimpleMoveConverter::new()));
     let mut ui = RemoteChersMatch::new(engine, coordinator);
 
-    ui.run();
+    ui.run().await;
 }

@@ -1,7 +1,5 @@
-use std::io::Read;
-use std::io::Write;
-use std::net::TcpListener;
-use std::net::TcpStream;
+use tokio::net::TcpListener;
+use tokio::net::TcpStream;
 
 use clap::ValueEnum;
 
@@ -25,20 +23,20 @@ impl Role {
         }
     }
 
-    pub fn connect(
+    pub async fn connect(
         &self,
         host: Option<String>,
         port: Option<u32>,
     ) -> std::io::Result<Option<TcpStream>> {
         match self {
-            Self::Server => wait_for_incoming_connections(host, port),
-            Self::Client => try_connecting_to_other_client(host, port),
+            Self::Server => wait_for_incoming_connections(host, port).await,
+            Self::Client => try_connecting_to_other_client(host, port).await,
         }
     }
 }
 
 // ============================================================================
-pub fn wait_for_incoming_connections(
+pub async fn wait_for_incoming_connections(
     host: Option<String>,
     port: Option<u32>,
 ) -> std::io::Result<Option<TcpStream>> {
@@ -47,20 +45,16 @@ pub fn wait_for_incoming_connections(
         "{}:{}",
         host.unwrap_or(String::from("127.0.0.1")),
         port.unwrap_or(0),
-    ))?;
+    ))
+    .await?;
 
     // And then also tell the user which port we used
     let address = listener.local_addr()?;
     let port = address.port();
     println!("Listening for incoming connections on port {port}...");
 
-    for request in listener.incoming() {
-        let Ok(mut stream) = request else {
-            println!("A connection failed!");
-            continue;
-        };
-
-        let address = stream.peer_addr()?;
+    loop {
+        let (stream, address) = listener.accept().await?;
         let ip = address.ip().to_string();
         let port = address.port();
         let response = prompt(&format!(
@@ -70,17 +64,15 @@ pub fn wait_for_incoming_connections(
         .to_string();
 
         if response.is_empty() || response.to_lowercase() == "y" {
-            stream.write_all("accept".as_bytes())?;
+            stream.try_write("accept".as_bytes())?;
             return Ok(Some(stream));
         }
     }
-
-    Ok(None)
 }
 
 // ============================================================================
 
-pub fn try_connecting_to_other_client(
+pub async fn try_connecting_to_other_client(
     host: Option<String>,
     port: Option<u32>,
 ) -> std::io::Result<Option<TcpStream>> {
@@ -93,10 +85,10 @@ pub fn try_connecting_to_other_client(
             .unwrap_or_else(|| prompt("Enter port to connect to:\n").trim().to_string());
         let target = format!("{}:{}", real_host, real_port);
 
-        match TcpStream::connect(target) {
+        match TcpStream::connect(target).await {
             Ok(mut stream) => {
                 println!("Waiting for other party to accept the connection request...");
-                if other_confirms_connection(&mut stream) {
+                if other_confirms_connection(&mut stream).await {
                     return Ok(Some(stream));
                 }
 
@@ -109,14 +101,44 @@ pub fn try_connecting_to_other_client(
     }
 }
 
-fn other_confirms_connection(stream: &mut TcpStream) -> bool {
-    let mut buffer = String::new();
-    let result = stream.read_to_string(&mut buffer);
-    if result.is_err() {
-        return false;
-    }
+async fn other_confirms_connection(stream: &mut TcpStream) -> bool {
+    loop {
+        // Wait for the socket to be readable
+        stream.readable().await;
 
-    return buffer.trim() == "accept";
+        // Creating the buffer **after** the `await` prevents it from
+        // being stored in the async task.
+        let mut buf = [0; 4096];
+
+        // Try to read data, this may still fail with `WouldBlock`
+        // if the readiness event is a false positive.
+        match stream.try_read(&mut buf) {
+            Ok(0) => {
+                println!("Nothing was read");
+                return false;
+            }
+            Ok(n) => {
+                let received = String::from_utf8_lossy(&buf);
+                println!("read {} bytes ('{}')", n, received);
+                return if received == "accept" {
+                    true
+                } else {
+                    println!("Did not accept");
+                    false
+                };
+            }
+            Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                continue;
+            }
+            Err(err) => {
+                println!(
+                    "An error occurred while trying to read from socket: {}",
+                    err
+                );
+                return false;
+            }
+        }
+    }
 }
 
 // =============================================================================

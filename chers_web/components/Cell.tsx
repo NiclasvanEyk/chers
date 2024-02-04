@@ -18,7 +18,7 @@ interface CellProps {
 
 export function MoveableIndicator() {
 	return (
-		<div className="absolute h-1/4 w-1/4 rounded-full bg-black/30 animate-scale-in-bouncy"></div>
+		<div className="absolute h-1/4 w-1/4 rounded-full bg-black/30 animate-scale-in-bouncy" />
 	);
 }
 
@@ -27,7 +27,7 @@ export function CaptureableIndicator() {
 		"absolute h-3 w-2/4 bg-black/30 transform animate-scale-in-bouncy";
 	return (
 		<>
-			<div className={`${shared}`}></div>
+			<div className={`${shared}`} />
 		</>
 	);
 }
@@ -72,7 +72,7 @@ export const Cell = forwardRef(function Cell(
 
 	return (
 		<button
-			tabIndex={1}
+			tabIndex="0"
 			data-x={x}
 			data-y={y}
 			ref={ref}
@@ -91,7 +91,7 @@ function RankLabels(props: { x: number; y: number; color: Color }) {
 	const { displayLabels } = useSettings();
 	if (!displayLabels) return null;
 
-	let labelColor =
+	const labelColor =
 		props.color === "Black" ? "text-chess-beige" : "text-chess-brown";
 
 	return (

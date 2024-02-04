@@ -18,7 +18,7 @@ export function useFocusManagement(state: State, dispatch: Dispatcher) {
 	}
 
 	useEffect(
-		function () {
+		() => {
 			document.addEventListener("keydown", listener);
 			return () => {
 				document.removeEventListener("keydown", listener);
@@ -81,7 +81,7 @@ function findActiveCellCoordinates(): [number, number] | null {
 	const focused = document.activeElement;
 	if (!(focused instanceof HTMLElement)) return null;
 
-	let [rawX, rawY] = [focused.dataset.x, focused.dataset.y];
+	const [rawX, rawY] = [focused.dataset.x, focused.dataset.y];
 	if (rawX === undefined) return null;
 	const x = Number.parseInt(rawX);
 

@@ -71,10 +71,10 @@ export function Board() {
 			>
 				{board.flatMap((row, y) =>
 					row.map((contents, x) => {
-						let pickable = canPickUp(contents, player);
-						let moveable = canMoveTo(state, { x, y });
-						let touched = hasPickedUp(state, { x, y });
-						let captures = doesCapture(state, { x, y });
+						const pickable = canPickUp(contents, player);
+						const moveable = canMoveTo(state, { x, y });
+						const touched = hasPickedUp(state, { x, y });
+						const captures = doesCapture(state, { x, y });
 
 						const onCellClick = () => {
 							// Select a piece to move if you could pick one up
@@ -105,7 +105,7 @@ export function Board() {
 								x={x}
 								y={y}
 								key={`${x},${y}`}
-								color={x % 2 == y % 2 ? "White" : "Black"}
+								color={x % 2 === y % 2 ? "White" : "Black"}
 								onClick={onCellClick}
 								{...{ moveable, pickable, touched, captures }}
 								contents={contents}

@@ -11,7 +11,7 @@ export function SettingsTrigger(props: any) {
 			}`}
 			title="Open Settings"
 			{...rest}
-		></button>
+		/>
 	);
 }
 
@@ -82,7 +82,7 @@ export function Settings(props: { open: boolean; onClose: () => void }) {
 	);
 }
 
-function Section(props: { heading: String; children: ReactNode }) {
+function Section(props: { heading: string; children: ReactNode }) {
 	return (
 		<section>
 			<h3 className="text-xl mb-1">{props.heading}</h3>

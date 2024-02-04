@@ -12,7 +12,7 @@ export function LoadingIndicator(props: any) {
 export default function Chers() {
 	const [loading, setLoading] = useState(true);
 
-	useEffect(function () {
+	useEffect(() => {
 		init().then(() => setLoading(false));
 	}, []);
 

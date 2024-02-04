@@ -67,7 +67,11 @@ function moveToDto(move: Move): MoveDTO {
 }
 
 export function getMoves(state: State, from: Coordinate) {
-  return available_moves(state, coordToDto(from)) as unknown as Coordinate[];
+  console.time('getMoves');
+  const moves = available_moves(state, coordToDto(from)) as unknown as Coordinate[];
+  console.timeEnd('getMoves');
+
+  return moves;
 }
 
 export function nextState(

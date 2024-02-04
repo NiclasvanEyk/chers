@@ -155,6 +155,17 @@ export function canMoveTo(state: State, to: Coordinate): boolean {
   );
 }
 
+export function doesCapture(state: State, to: Coordinate): boolean {
+  if (state.type !== "SELECTING_TO") {
+    return false;
+  }
+
+  const target = state.game.board[to.y][to.x];
+  if (!target) return false;
+
+  return target.color !== state.game.player;
+}
+
 function initialChersState(): State {
   return {
     type: "SELECTING_FROM",

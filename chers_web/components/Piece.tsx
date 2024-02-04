@@ -9,7 +9,7 @@ export function Piece(props: PieceProps) {
   let { piece, className } = props;
   if (!piece) return null;
 
-  className ??= "h-3/4 w-3/4";
+  className ??= "h-3/4 w-3/4 z-10";
 
   return (
     <img

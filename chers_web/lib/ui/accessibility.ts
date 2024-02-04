@@ -1,10 +1,10 @@
 import { Cell, Coordinate } from "../chers";
 
-export function cellLabel(position: Coordinate, contents: Cell): string {
+export function cellLabel(position: Coordinate, captures: boolean, contents: Cell): string {
   const origin = algebraicNotation(position);
   if (contents) {
     const { color, figure } = contents;
-    return `${color} ${figure} at ${origin}`;
+    return `${captures ? "capture" : ""} ${color} ${figure} at ${origin}`.trim();
   }
 
   return origin;

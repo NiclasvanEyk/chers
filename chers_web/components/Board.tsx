@@ -1,4 +1,4 @@
-import { canPickUp, canMoveTo, hasPickedUp, useChers } from "@/lib/ui/state";
+import { canPickUp, canMoveTo, hasPickedUp, useChers, doesCapture } from "@/lib/ui/state";
 import { Cell } from "./Cell";
 import { Promotion } from "./Promotion";
 import { useFocusManagement } from "@/lib/ui/useFocusManagement";
@@ -71,6 +71,7 @@ export function Board() {
             let pickable = canPickUp(contents, player);
             let moveable = canMoveTo(state, { x, y });
             let touched = hasPickedUp(state, { x, y });
+            let captures = doesCapture(state, { x, y });
 
             const onCellClick = () => {
               // Select a piece to move if you could pick one up
@@ -88,8 +89,8 @@ export function Board() {
                 return dispatch({ type: "SELECT_FROM", from: { x, y } });
               }
 
-              // If we click on an empty field and have picked up a piece, put it
-              // down again
+              // If we click on an empty field and have picked up a piece, put 
+              // it down again
               if (state.type === "SELECTING_TO" && !contents) {
                 return dispatch({ type: "ABORT_SELECTION" });
               }
@@ -103,9 +104,7 @@ export function Board() {
                 key={`${x},${y}`}
                 color={x % 2 == y % 2 ? "White" : "Black"}
                 onClick={onCellClick}
-                moveable={moveable}
-                pickable={pickable}
-                touched={touched}
+                {...{ moveable, pickable, touched, captures }}
                 contents={contents}
               />
             );

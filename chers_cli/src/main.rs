@@ -1,4 +1,4 @@
-use std::{env, process::exit};
+use std::{process::exit};
 
 use chers::Game;
 use clap::Parser;

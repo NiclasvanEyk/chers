@@ -20,7 +20,7 @@ pub fn moves(board: &Board, from: Coordinate, piece: Piece) -> Vec<Coordinate> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{fen, fmt_coordinates, piece_at};
+    use crate::{fen, fmt_coordinates, piece_at, Cell};
 
     use super::*;
 
@@ -36,21 +36,26 @@ mod tests {
         // 1
         //      a   b   c   d   e   f   g
         let state = fen::parse_state("8/P5p1/8/8/3B4/8/8/8 w - - 0 1").unwrap();
-        let from = Coordinate::algebraic("d4").unwrap();
+        let from = Cell::D4;
         let targets = moves(&state.board, from, piece_at(from, &state.board).unwrap());
 
         let expected = [
-            "c5", "b6", // Top Left
-            "e5", "f6", "g7", // Top Right
-            "e3", "f2", "g1", // Bottom Left
-            "c3", "b2", "a1", // Bottom Right
+            Cell::C5,
+            Cell::B6, // Top Left
+            Cell::E5,
+            Cell::F6,
+            Cell::G7, // Top Right
+            Cell::E3,
+            Cell::F2,
+            Cell::G1, // Bottom Left Cell::C3,
+            Cell::B2,
+            Cell::A1, // Bottom Right
         ];
 
-        for notation in expected.iter() {
-            let coordinate = &Coordinate::algebraic(notation).unwrap();
+        for cell in expected.iter() {
             assert!(
-                targets.contains(coordinate),
-                "The bishop should be able to move to {notation}, but it is missing in {:?}",
+                targets.contains(cell),
+                "The bishop should be able to move to {cell}, but it is missing in {:?}",
                 fmt_coordinates(&targets)
             );
         }

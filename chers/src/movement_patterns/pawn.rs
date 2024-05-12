@@ -87,14 +87,14 @@ fn capture_moves(forward: Coordinate) -> Vec<Coordinate> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{fen, Game};
+    use crate::{fen, Cell, Game};
 
     use super::*;
 
     #[test]
     fn pawns_can_move_forward_once_and_twice_at_the_beginning() {
         let state = Game {}.start();
-        let from = Coordinate::algebraic("a2").unwrap();
+        let from = Cell::A2;
         let targets = moves(
             &state.board,
             from,
@@ -103,8 +103,8 @@ mod tests {
         );
 
         println!("{:?}", targets);
-        assert!(targets.contains(&Coordinate::algebraic("a3").unwrap()));
-        assert!(targets.contains(&Coordinate::algebraic("a4").unwrap()));
+        assert!(targets.contains(&Cell::A3));
+        assert!(targets.contains(&Cell::A4));
     }
 
     #[test]
@@ -115,7 +115,7 @@ mod tests {
         // 1
         //      a
         let state = fen::parse_state("8/8/8/8/p7/8/P7/8 w - - 0 1").unwrap();
-        let from = Coordinate::algebraic("a2").unwrap();
+        let from = Cell::A2;
         let targets = moves(
             &state.board,
             from,
@@ -125,8 +125,8 @@ mod tests {
 
         println!("{:?}", targets);
         assert_eq!(1, targets.len());
-        assert!(targets.contains(&Coordinate::algebraic("a3").unwrap()));
-        assert!(!targets.contains(&Coordinate::algebraic("a4").unwrap()));
+        assert!(targets.contains(&Cell::A3));
+        assert!(!targets.contains(&Cell::A4));
 
         // 4
         // 3    ♟
@@ -134,7 +134,7 @@ mod tests {
         // 1
         //      a
         let state = fen::parse_state("8/8/8/8/8/p7/P7/8 w - - 0 1").unwrap();
-        let from = Coordinate::algebraic("a2").unwrap();
+        let from = Cell::A2;
         let targets = moves(
             &state.board,
             from,
@@ -143,8 +143,8 @@ mod tests {
         );
 
         println!("{:?}", targets);
-        assert!(!targets.contains(&Coordinate::algebraic("a3").unwrap()));
-        assert!(!targets.contains(&Coordinate::algebraic("a4").unwrap()));
+        assert!(!targets.contains(&Cell::A3));
+        assert!(!targets.contains(&Cell::A4));
     }
 
     #[test]
@@ -155,7 +155,7 @@ mod tests {
         //
         //      a    b                   a    b
         let state = fen::parse_state("7k/8/8/pP6/8/8/8/7K w - a6 0 2").unwrap();
-        let from = Coordinate::algebraic("b5").unwrap();
+        let from = Cell::B5;
         let targets = moves(
             &state.board,
             from,
@@ -164,7 +164,7 @@ mod tests {
         );
 
         println!("{:?}", targets);
-        assert!(targets.contains(&Coordinate::algebraic("a6").unwrap()));
-        assert!(targets.contains(&Coordinate::algebraic("b6").unwrap()));
+        assert!(targets.contains(&Cell::A6));
+        assert!(targets.contains(&Cell::B6));
     }
 }

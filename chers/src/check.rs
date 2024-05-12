@@ -73,7 +73,7 @@ fn find_king_of(board: &Board, player: Player) -> Coordinate {
 
 #[cfg(test)]
 mod tests {
-    use crate::{fen::parse_state, Game};
+    use crate::{fen::parse_state, Cell, Game};
 
     use super::*;
 
@@ -81,14 +81,8 @@ mod tests {
     fn it_finds_the_king() {
         let initial_state = Game::new().start();
 
-        assert_eq!(
-            Coordinate::algebraic("e1").unwrap(),
-            find_king_of(&initial_state.board, Player::White),
-        );
-        assert_eq!(
-            Coordinate::algebraic("e8").unwrap(),
-            find_king_of(&initial_state.board, Player::Black),
-        );
+        assert_eq!(Cell::E1, find_king_of(&initial_state.board, Player::White),);
+        assert_eq!(Cell::E8, find_king_of(&initial_state.board, Player::Black),);
     }
 
     #[test]

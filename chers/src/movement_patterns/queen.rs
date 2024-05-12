@@ -23,7 +23,7 @@ pub fn moves(board: &Board, from: Coordinate, piece: Piece) -> Vec<Coordinate> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{fen, fmt_coordinates, piece_at};
+    use crate::{fen, fmt_coordinates, piece_at, Cell};
 
     use super::*;
 
@@ -39,7 +39,7 @@ mod tests {
         // 1                ♟
         //      a   b   c   d   e   f   g   h
         let state = fen::parse_state("8/P7/8/4p3/3Q2p1/8/8/3p4 w - - 0 1").unwrap();
-        let from = Coordinate::algebraic("d4").unwrap();
+        let from = Cell::D4;
         let targets = moves(&state.board, from, piece_at(from, &state.board).unwrap());
 
         let expected = [
@@ -73,12 +73,11 @@ mod tests {
         let state =
             fen::parse_state("rnbqkbnr/ppp2ppp/3p4/4p3/3P4/3Q4/PPP1PPPP/RNB1KBNR w KQkq - 0 1")
                 .unwrap();
-        let from = Coordinate::algebraic("d3").unwrap();
+        let from = Cell::D3;
         let targets = moves(&state.board, from, piece_at(from, &state.board).unwrap());
 
-        let coordinate = &Coordinate::algebraic("b5").unwrap();
         assert!(
-            targets.contains(coordinate),
+            targets.contains(&Cell::B5),
             "The queen should be able to move to b5, but it is missing in {:?}",
             fmt_coordinates(&targets)
         );

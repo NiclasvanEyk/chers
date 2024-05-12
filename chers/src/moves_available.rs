@@ -56,7 +56,7 @@ fn without_checks(state: &State, from: Coordinate, targets: Vec<Coordinate>) -> 
 
 #[cfg(test)]
 mod tests {
-    use crate::{fen::parse_state, fmt_coordinates};
+    use crate::{fen::parse_state, fmt_coordinates, Cell};
 
     use super::*;
 
@@ -65,31 +65,31 @@ mod tests {
         let notation = "rnbqkbnr/pppp3p/5pp1/4P3/3Q4/8/PPP1PPPP/RNB1KBNR w KQkq - 0 4";
         let state = parse_state(notation).unwrap();
 
-        let moves = autocomplete_to(&state, Coordinate::algebraic("d4").unwrap());
+        let moves = autocomplete_to(&state, Cell::D4);
 
         for expected in [
             // Up/Down
-            Coordinate::algebraic("d1").unwrap(),
-            Coordinate::algebraic("d2").unwrap(),
-            Coordinate::algebraic("d3").unwrap(),
-            Coordinate::algebraic("d5").unwrap(),
-            Coordinate::algebraic("d6").unwrap(),
-            Coordinate::algebraic("d7").unwrap(), // This one would even capture the pawn!
+            Cell::D1,
+            Cell::D2,
+            Cell::D3,
+            Cell::D5,
+            Cell::D6,
+            Cell::D7, // This one would even capture the pawn!
             // Left/Right
-            Coordinate::algebraic("a4").unwrap(),
-            Coordinate::algebraic("b4").unwrap(),
-            Coordinate::algebraic("c4").unwrap(),
-            Coordinate::algebraic("e4").unwrap(),
-            Coordinate::algebraic("f4").unwrap(),
-            Coordinate::algebraic("g4").unwrap(),
-            Coordinate::algebraic("h4").unwrap(),
+            Cell::A4,
+            Cell::B4,
+            Cell::C4,
+            Cell::E4,
+            Cell::F4,
+            Cell::G4,
+            Cell::H4,
             // Upleft/Downright
-            Coordinate::algebraic("a7").unwrap(), // This one would even capture the pawn!
-            Coordinate::algebraic("b6").unwrap(),
-            Coordinate::algebraic("c5").unwrap(),
-            Coordinate::algebraic("e3").unwrap(),
+            Cell::A7, // This one would even capture the pawn!
+            Cell::B6,
+            Cell::C5,
+            Cell::E3,
             // Upright/Downleft
-            Coordinate::algebraic("c3").unwrap(),
+            Cell::C3,
         ] {
             assert!(
                 moves.contains(&expected),
@@ -102,11 +102,30 @@ mod tests {
         assert_eq!(18, moves.len());
     }
 
+    #[test]
+    fn pawn_can_promote() {
+        let notation = "rnbqkbnr/pP1ppppp/8/8/8/8/1pPPPPPP/RNBQKBNR w KQkq - 0 5";
+        let state = parse_state(notation).unwrap();
+
+        let moves = autocomplete_to(&state, Cell::B7);
+
+        for expected in [Cell::A8, Cell::C8] {
+            assert!(
+                moves.contains(&expected),
+                "{} not in {}",
+                expected,
+                fmt_coordinates(&moves)
+            );
+        }
+
+        assert_eq!(2, moves.len());
+    }
+
     // #[test]
     // fn king_cant_move_if_result_still_checks() {
     //     let notation = "rnb1kbnr/pppp1ppp/8/4P3/7q/8/PPPPP1PP/RNBQKBNR w KQkq - 0 1";
     //     let state = parse_state(notation).unwrap();
-    //     let available_moves = autocomplete_to(&state, Coordinate::algebraic("e1").unwrap());
+    //     let available_moves = autocomplete_to(&state, Cell::e1);
     //
     //     assert!(
     //         !is_checked_by_opponent(&state).is_empty(),

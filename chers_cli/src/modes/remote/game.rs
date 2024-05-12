@@ -1,4 +1,4 @@
-use chers::{moves::transport::Coordinator, Coordinate, Game, Move, State};
+use chers::{moves::transport::Transport, Coordinate, Game, Move, State};
 
 use crate::{
     rendering::TerminalRenderer,
@@ -12,22 +12,28 @@ enum InputState {
     WaitingForOtherPartyToMove,
 }
 
-pub struct RemoteChersMatch {
+pub struct RemoteChersMatch<T>
+where
+    T: Transport,
+{
     engine: Game,
     renderer: TerminalRenderer,
-    coordinator: Coordinator,
+    transport: T,
     game_state: State,
     input_state: InputState,
 }
 
-impl RemoteChersMatch {
-    pub fn new(engine: Game, coordinator: Coordinator) -> Self {
+impl<T> RemoteChersMatch<T>
+where
+    T: Transport,
+{
+    pub fn new(engine: Game, transport: T) -> Self {
         let initial_state = engine.start();
 
         Self {
             engine,
             renderer: TerminalRenderer {},
-            coordinator,
+            transport,
             game_state: initial_state,
             input_state: InputState::PromptingFrom,
         }
@@ -95,7 +101,7 @@ impl RemoteChersMatch {
                                 }
                             }
 
-                            match self.coordinator.send(&the_move).await {
+                            match self.transport.send(&the_move).await {
                                 Ok(()) => {
                                     println!("Waiting for other player to make a move...");
                                 }
@@ -115,5 +121,24 @@ impl RemoteChersMatch {
                 }
             };
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use chers::moves::transport::InMemoryTransport;
+    use tokio::net::{TcpListener, TcpStream};
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_remote_games_can_be_run() {
+        println!("Connection successful!");
+
+        // let game_server = Game::new();
+        // let converter_server = Box::new(SimpleMoveConverter::new());
+        // let coordinator_server = Coordinator::new(socket_server, converter_server);
+        //
+        // let game_client = Game::new();
     }
 }

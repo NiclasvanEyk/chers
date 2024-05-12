@@ -104,7 +104,7 @@ pub async fn try_connecting_to_other_client(
 async fn other_confirms_connection(stream: &mut TcpStream) -> bool {
     loop {
         // Wait for the socket to be readable
-        stream.readable().await;
+        stream.readable().await.unwrap();
 
         // Creating the buffer **after** the `await` prevents it from
         // being stored in the async task.

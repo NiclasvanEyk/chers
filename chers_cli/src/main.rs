@@ -1,9 +1,9 @@
 use std::process::exit;
 
+use chers::moves::transport::TcpTransport;
 use clap::Parser;
 
 use chers::moves::serialization::SimpleMoveConverter;
-use chers::moves::transport::Coordinator;
 use chers::Game;
 
 use chers_cli::modes::local::TerminalChersMatch;
@@ -62,7 +62,7 @@ async fn main() {
     println!("Successfully connected to {other}!");
 
     let engine = Game::new();
-    let coordinator = Coordinator::new(stream, Box::new(SimpleMoveConverter::new()));
+    let coordinator = TcpTransport::new(stream, Box::new(SimpleMoveConverter::new()));
     let mut ui = RemoteChersMatch::new(engine, coordinator);
 
     ui.run().await;

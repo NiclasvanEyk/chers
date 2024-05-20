@@ -1,12 +1,16 @@
 use crate::{
-    check::checking_pieces_of_opponent, force_move_piece, movement_patterns, piece_at, Move, Player,
+    check::checking_pieces_of_opponent, force_move_piece, movement_patterns, piece_at, Move,
+    Player, PromotedFigure,
 };
 
 use super::{Coordinate, State};
 
 /// Returns all *legal* moves.
 pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
-    without_checks(state, from, possible_moves(state, from))
+    let possible = dbg!(possible_moves(state, from));
+    let without_chk = dbg!(without_checks(state, from, possible));
+
+    without_chk
 }
 
 /// Returns all possible moves, also including ones that are not legal, e.g.
@@ -39,19 +43,54 @@ fn without_checks(state: &State, from: Coordinate, targets: Vec<Coordinate>) -> 
             promotion: None,
         };
 
-        let Ok((resulting_state, _)) = force_move_piece(state, the_move) else {
-            continue;
+        let could_lead_to_check = match force_move_piece(state, the_move) {
+            Ok((resulting_state, _)) => would_check_opponent(resulting_state),
+            Err(err) => match err {
+                crate::CantMovePiece::RequiresPromotion => {
+                    would_check_opponent_after_promotion(state, the_move)
+                }
+                // Uninteresting cases we want to skip. Most of these should
+                // not happen anyways and we could (or even should) even panic.
+                // E.g. when we have no piece to move, something is definitely
+                // wrong here!
+                crate::CantMovePiece::NoPieceToMove => false,
+                crate::CantMovePiece::ItBelongsToOtherPlayer => false,
+                crate::CantMovePiece::IllegalMove { .. } => false,
+            },
         };
 
-        // only allow moves, that do not lead into a self-check
-        if !checking_pieces_of_opponent(&resulting_state.reversed()).is_empty() {
+        if could_lead_to_check {
             continue;
         }
 
-        valid_targets.push(target)
+        valid_targets.push(target);
     }
 
     valid_targets
+}
+
+fn would_check_opponent(state: State) -> bool {
+    let next_turn_state = state.reversed();
+    let has_checking_pieces = checking_pieces_of_opponent(&next_turn_state).is_empty();
+    !has_checking_pieces
+}
+
+fn would_check_opponent_after_promotion(previous_state: &State, the_move: Move) -> bool {
+    // While we could check all cases, promoting to queen does also check for
+    // all moves of a bishop and rook, so we skip those. So queen and knight
+    // should be sufficient if there are no edge cases that I overlook here.
+    for figure in [PromotedFigure::Queen, PromotedFigure::Knight] {
+        let the_actual_move = the_move.with_promotion_to(figure);
+        let Ok((resulting_state, _)) = force_move_piece(previous_state, the_actual_move) else {
+            continue;
+        };
+
+        if would_check_opponent(resulting_state) {
+            return true;
+        }
+    }
+
+    false
 }
 
 #[cfg(test)]

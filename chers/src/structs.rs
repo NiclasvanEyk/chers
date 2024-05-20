@@ -120,6 +120,14 @@ impl Move {
             promotion: None,
         }
     }
+
+    pub fn with_promotion_to(&self, figure: PromotedFigure) -> Self {
+        Self {
+            from: self.from,
+            to: self.to,
+            promotion: Some(figure),
+        }
+    }
 }
 
 #[wasm_bindgen]

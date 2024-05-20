@@ -40,16 +40,21 @@ mod tests {
         let targets = moves(&state.board, from, piece_at(from, &state.board).unwrap());
 
         let expected = [
+            // Top Left
             Cell::C5,
-            Cell::B6, // Top Left
+            Cell::B6,
+            // Top Right
             Cell::E5,
             Cell::F6,
-            Cell::G7, // Top Right
+            Cell::G7,
+            // Bottom Left
+            Cell::C3,
             Cell::E3,
             Cell::F2,
-            Cell::G1, // Bottom Left Cell::C3,
+            Cell::G1,
+            // Bottom Right
             Cell::B2,
-            Cell::A1, // Bottom Right
+            Cell::A1,
         ];
 
         for cell in expected.iter() {

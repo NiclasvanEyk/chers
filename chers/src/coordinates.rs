@@ -22,70 +22,70 @@ pub struct Coordinate {
 pub struct Cell {}
 
 impl Cell {
-    pub const A1: Coordinate = Coordinate { x: 0, y: 0 };
-    pub const A2: Coordinate = Coordinate { x: 0, y: 1 };
-    pub const A3: Coordinate = Coordinate { x: 0, y: 2 };
-    pub const A4: Coordinate = Coordinate { x: 0, y: 3 };
-    pub const A5: Coordinate = Coordinate { x: 0, y: 4 };
-    pub const A6: Coordinate = Coordinate { x: 0, y: 5 };
-    pub const A7: Coordinate = Coordinate { x: 0, y: 6 };
-    pub const A8: Coordinate = Coordinate { x: 0, y: 7 };
-    pub const B1: Coordinate = Coordinate { x: 1, y: 0 };
-    pub const B2: Coordinate = Coordinate { x: 1, y: 1 };
-    pub const B3: Coordinate = Coordinate { x: 1, y: 2 };
-    pub const B4: Coordinate = Coordinate { x: 1, y: 3 };
-    pub const B5: Coordinate = Coordinate { x: 1, y: 4 };
-    pub const B6: Coordinate = Coordinate { x: 1, y: 5 };
-    pub const B7: Coordinate = Coordinate { x: 1, y: 6 };
-    pub const B8: Coordinate = Coordinate { x: 1, y: 7 };
-    pub const C1: Coordinate = Coordinate { x: 2, y: 0 };
-    pub const C2: Coordinate = Coordinate { x: 2, y: 1 };
-    pub const C3: Coordinate = Coordinate { x: 2, y: 2 };
-    pub const C4: Coordinate = Coordinate { x: 2, y: 3 };
-    pub const C5: Coordinate = Coordinate { x: 2, y: 4 };
-    pub const C6: Coordinate = Coordinate { x: 2, y: 5 };
-    pub const C7: Coordinate = Coordinate { x: 2, y: 6 };
-    pub const C8: Coordinate = Coordinate { x: 2, y: 7 };
-    pub const D1: Coordinate = Coordinate { x: 3, y: 0 };
-    pub const D2: Coordinate = Coordinate { x: 3, y: 1 };
-    pub const D3: Coordinate = Coordinate { x: 3, y: 2 };
-    pub const D4: Coordinate = Coordinate { x: 3, y: 3 };
-    pub const D5: Coordinate = Coordinate { x: 3, y: 4 };
-    pub const D6: Coordinate = Coordinate { x: 3, y: 5 };
-    pub const D7: Coordinate = Coordinate { x: 3, y: 6 };
-    pub const D8: Coordinate = Coordinate { x: 3, y: 7 };
-    pub const E1: Coordinate = Coordinate { x: 4, y: 0 };
-    pub const E2: Coordinate = Coordinate { x: 4, y: 1 };
-    pub const E3: Coordinate = Coordinate { x: 4, y: 2 };
-    pub const E4: Coordinate = Coordinate { x: 4, y: 3 };
-    pub const E5: Coordinate = Coordinate { x: 4, y: 4 };
-    pub const E6: Coordinate = Coordinate { x: 4, y: 5 };
-    pub const E7: Coordinate = Coordinate { x: 4, y: 6 };
-    pub const E8: Coordinate = Coordinate { x: 4, y: 7 };
-    pub const F1: Coordinate = Coordinate { x: 5, y: 0 };
-    pub const F2: Coordinate = Coordinate { x: 5, y: 1 };
-    pub const F3: Coordinate = Coordinate { x: 5, y: 2 };
-    pub const F4: Coordinate = Coordinate { x: 5, y: 3 };
-    pub const F5: Coordinate = Coordinate { x: 5, y: 4 };
-    pub const F6: Coordinate = Coordinate { x: 5, y: 5 };
-    pub const F7: Coordinate = Coordinate { x: 5, y: 6 };
-    pub const F8: Coordinate = Coordinate { x: 5, y: 7 };
-    pub const G1: Coordinate = Coordinate { x: 6, y: 0 };
-    pub const G2: Coordinate = Coordinate { x: 6, y: 1 };
-    pub const G3: Coordinate = Coordinate { x: 6, y: 2 };
-    pub const G4: Coordinate = Coordinate { x: 6, y: 3 };
-    pub const G5: Coordinate = Coordinate { x: 6, y: 4 };
-    pub const G6: Coordinate = Coordinate { x: 6, y: 5 };
-    pub const G7: Coordinate = Coordinate { x: 6, y: 6 };
-    pub const G8: Coordinate = Coordinate { x: 6, y: 7 };
-    pub const H1: Coordinate = Coordinate { x: 7, y: 0 };
-    pub const H2: Coordinate = Coordinate { x: 7, y: 1 };
-    pub const H3: Coordinate = Coordinate { x: 7, y: 2 };
-    pub const H4: Coordinate = Coordinate { x: 7, y: 3 };
-    pub const H5: Coordinate = Coordinate { x: 7, y: 4 };
-    pub const H6: Coordinate = Coordinate { x: 7, y: 5 };
-    pub const H7: Coordinate = Coordinate { x: 7, y: 6 };
-    pub const H8: Coordinate = Coordinate { x: 7, y: 7 };
+    pub const A1: Coordinate = Coordinate { x: 0, y: 7 };
+    pub const A2: Coordinate = Coordinate { x: 0, y: 6 };
+    pub const A3: Coordinate = Coordinate { x: 0, y: 5 };
+    pub const A4: Coordinate = Coordinate { x: 0, y: 4 };
+    pub const A5: Coordinate = Coordinate { x: 0, y: 3 };
+    pub const A6: Coordinate = Coordinate { x: 0, y: 2 };
+    pub const A7: Coordinate = Coordinate { x: 0, y: 1 };
+    pub const A8: Coordinate = Coordinate { x: 0, y: 0 };
+    pub const B1: Coordinate = Coordinate { x: 1, y: 7 };
+    pub const B2: Coordinate = Coordinate { x: 1, y: 6 };
+    pub const B3: Coordinate = Coordinate { x: 1, y: 5 };
+    pub const B4: Coordinate = Coordinate { x: 1, y: 4 };
+    pub const B5: Coordinate = Coordinate { x: 1, y: 3 };
+    pub const B6: Coordinate = Coordinate { x: 1, y: 2 };
+    pub const B7: Coordinate = Coordinate { x: 1, y: 1 };
+    pub const B8: Coordinate = Coordinate { x: 1, y: 0 };
+    pub const C1: Coordinate = Coordinate { x: 2, y: 7 };
+    pub const C2: Coordinate = Coordinate { x: 2, y: 6 };
+    pub const C3: Coordinate = Coordinate { x: 2, y: 5 };
+    pub const C4: Coordinate = Coordinate { x: 2, y: 4 };
+    pub const C5: Coordinate = Coordinate { x: 2, y: 3 };
+    pub const C6: Coordinate = Coordinate { x: 2, y: 2 };
+    pub const C7: Coordinate = Coordinate { x: 2, y: 1 };
+    pub const C8: Coordinate = Coordinate { x: 2, y: 0 };
+    pub const D1: Coordinate = Coordinate { x: 3, y: 7 };
+    pub const D2: Coordinate = Coordinate { x: 3, y: 6 };
+    pub const D3: Coordinate = Coordinate { x: 3, y: 5 };
+    pub const D4: Coordinate = Coordinate { x: 3, y: 4 };
+    pub const D5: Coordinate = Coordinate { x: 3, y: 3 };
+    pub const D6: Coordinate = Coordinate { x: 3, y: 2 };
+    pub const D7: Coordinate = Coordinate { x: 3, y: 1 };
+    pub const D8: Coordinate = Coordinate { x: 3, y: 0 };
+    pub const E1: Coordinate = Coordinate { x: 4, y: 7 };
+    pub const E2: Coordinate = Coordinate { x: 4, y: 6 };
+    pub const E3: Coordinate = Coordinate { x: 4, y: 5 };
+    pub const E4: Coordinate = Coordinate { x: 4, y: 4 };
+    pub const E5: Coordinate = Coordinate { x: 4, y: 3 };
+    pub const E6: Coordinate = Coordinate { x: 4, y: 2 };
+    pub const E7: Coordinate = Coordinate { x: 4, y: 1 };
+    pub const E8: Coordinate = Coordinate { x: 4, y: 0 };
+    pub const F1: Coordinate = Coordinate { x: 5, y: 7 };
+    pub const F2: Coordinate = Coordinate { x: 5, y: 6 };
+    pub const F3: Coordinate = Coordinate { x: 5, y: 5 };
+    pub const F4: Coordinate = Coordinate { x: 5, y: 4 };
+    pub const F5: Coordinate = Coordinate { x: 5, y: 3 };
+    pub const F6: Coordinate = Coordinate { x: 5, y: 2 };
+    pub const F7: Coordinate = Coordinate { x: 5, y: 1 };
+    pub const F8: Coordinate = Coordinate { x: 5, y: 0 };
+    pub const G1: Coordinate = Coordinate { x: 6, y: 7 };
+    pub const G2: Coordinate = Coordinate { x: 6, y: 6 };
+    pub const G3: Coordinate = Coordinate { x: 6, y: 5 };
+    pub const G4: Coordinate = Coordinate { x: 6, y: 4 };
+    pub const G5: Coordinate = Coordinate { x: 6, y: 3 };
+    pub const G6: Coordinate = Coordinate { x: 6, y: 2 };
+    pub const G7: Coordinate = Coordinate { x: 6, y: 1 };
+    pub const G8: Coordinate = Coordinate { x: 6, y: 0 };
+    pub const H1: Coordinate = Coordinate { x: 7, y: 7 };
+    pub const H2: Coordinate = Coordinate { x: 7, y: 6 };
+    pub const H3: Coordinate = Coordinate { x: 7, y: 5 };
+    pub const H4: Coordinate = Coordinate { x: 7, y: 4 };
+    pub const H5: Coordinate = Coordinate { x: 7, y: 3 };
+    pub const H6: Coordinate = Coordinate { x: 7, y: 2 };
+    pub const H7: Coordinate = Coordinate { x: 7, y: 1 };
+    pub const H8: Coordinate = Coordinate { x: 7, y: 0 };
 }
 
 impl Display for Coordinate {
@@ -181,9 +181,7 @@ impl Coordinate {
     }
 
     pub fn horizontal(&self, amount: isize) -> Option<Coordinate> {
-        let Some(x) = self.x.checked_add_signed(amount) else {
-            return None;
-        };
+        let x = self.x.checked_add_signed(amount)?;
 
         if x >= BOARD_SIZE {
             return None;
@@ -193,9 +191,7 @@ impl Coordinate {
     }
 
     pub fn vertical(&self, amount: isize) -> Option<Coordinate> {
-        let Some(y) = self.y.checked_add_signed(amount) else {
-            return None;
-        };
+        let y = self.y.checked_add_signed(amount)?;
 
         if y >= BOARD_SIZE {
             return None;
@@ -205,9 +201,7 @@ impl Coordinate {
     }
 
     pub fn diagonal(&self, horizontal: isize, vertical: isize) -> Option<Coordinate> {
-        let Some(first) = self.horizontal(horizontal) else {
-            return None;
-        };
+        let first = self.horizontal(horizontal)?;
 
         first.vertical(vertical)
     }

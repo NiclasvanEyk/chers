@@ -3,9 +3,7 @@ use chers::{Coordinate, PromotedFigure};
 use crate::cli::prompt;
 
 pub fn parse_promotion(input: String) -> Option<PromotedFigure> {
-    let Some(promotion) = input.chars().nth(2) else {
-        return None;
-    };
+    let promotion = input.chars().nth(2)?;
 
     match promotion {
         'q' => Some(PromotedFigure::Queen),

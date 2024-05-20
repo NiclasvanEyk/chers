@@ -81,8 +81,8 @@ mod tests {
     fn it_finds_the_king() {
         let initial_state = Game::new().start();
 
-        assert_eq!(Cell::E1, find_king_of(&initial_state.board, Player::White),);
-        assert_eq!(Cell::E8, find_king_of(&initial_state.board, Player::Black),);
+        assert_eq!(Cell::E1, find_king_of(&initial_state.board, Player::White));
+        assert_eq!(Cell::E8, find_king_of(&initial_state.board, Player::Black));
     }
 
     #[test]

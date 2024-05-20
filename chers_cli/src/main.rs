@@ -1,4 +1,4 @@
-use std::{process::exit};
+use std::process::exit;
 
 use chers::Game;
 use clap::Parser;
@@ -51,9 +51,10 @@ fn main() {
             exit(1);
         }
     };
-    let Some(stream) = maybe_stream else { println!("That did not work. Maybe try again?");
-            exit(1);
-        };
+    let Some(stream) = maybe_stream else {
+        println!("That did not work. Maybe try again?");
+        exit(1);
+    };
 
     let other = stream.peer_addr().unwrap().to_string();
     println!("Successfully connected to {other}!");

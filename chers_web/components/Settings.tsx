@@ -1,14 +1,27 @@
 import { useAdjustableSettings } from "@/lib/settings";
 import { ReactNode, useEffect, useId, useRef } from "react";
 
-export function SettingsTrigger(props: any) {
-	const { className, ...rest } = props;
+export interface TriggerProps {
+	color: "White" | "Black";
+	className?: string;
+	onClick: () => unknown;
+}
+
+export function SettingsTrigger(props: TriggerProps) {
+	const { className, color, ...rest } = props;
+
+	let colorClasses =
+		color === "Black"
+			? "bg-chess-brown/60 hover:bg-chess-brown/50 dark:border-chess-beige/50 border-yellow-900"
+			: "bg-chess-beige/60 hover:bg-chess-beige/50 dark:border-chess-beige border-chess-brown";
 
 	return (
 		<button
-			className={`h-4 w-4 rounded-full bg-black/50 hover:bg-black/60 dark:bg-white/30 dark:hover:bg-white/20 transition-colors border-2 border-black dark:border-white border-dashed ${
-				className ?? ""
-			}`}
+			className={[
+				"h-4 w-4 transition-colors hover:bg-transparent border-2 rounded-full border-dashed shadow-md",
+				className ?? "",
+				colorClasses,
+			].join(" ")}
 			title="Open Settings"
 			{...rest}
 		/>
@@ -31,7 +44,7 @@ export function Settings(props: { open: boolean; onClose: () => void }) {
 		<dialog
 			ref={dialog}
 			onClose={props.onClose}
-			className="absolute backdrop-blur-xl bg-white/70 text-black dark:bg-black/80 dark:text-white rounded shadow p-9 inset-0 z-20 backdrop:bg-transparent"
+			className="fixed backdrop-blur-xl bg-white/70 text-black dark:bg-black/80 dark:text-white rounded shadow p-9 inset-0 z-20 backdrop:bg-transparent"
 		>
 			<button
 				onClick={props.onClose}

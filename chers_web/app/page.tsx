@@ -5,35 +5,35 @@ import { ReactNode, useEffect, useState } from "react";
 import init from "@/generated/chers/chers";
 
 export function LoadingIndicator(props: any) {
-	return <img src="/images/pieces/White_Unicorn.svg" {...props} />;
+  return <img src="/images/pieces/White_Unicorn.svg" {...props} />;
 }
 
 function Container(props: { children: ReactNode }) {
-	return (
-		<main className="flex min-h-screen flex-col items-center justify-center">
-			{props.children}
-		</main>
-	);
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center">
+      {props.children}
+    </main>
+  );
 }
 
 export default function Home() {
-	const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		init().then(() => setLoading(false));
-	}, []);
+  useEffect(() => {
+    init().then(() => setLoading(false));
+  }, []);
 
-	if (loading) {
-		return (
-			<Container>
-				<LoadingIndicator className="h-10 w-10 animate-spin" />
-			</Container>
-		);
-	}
+  if (loading) {
+    return (
+      <Container>
+        <LoadingIndicator />
+      </Container>
+    );
+  }
 
-	return (
-		<Container>
-			<Chers />
-		</Container>
-	);
+  return (
+    <Container>
+      <Chers />
+    </Container>
+  );
 }

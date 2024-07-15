@@ -1,3 +1,5 @@
 target
 chers/bindings
 chers/pkg
+chers_server_api/bindings
+chers_server_api/pkg

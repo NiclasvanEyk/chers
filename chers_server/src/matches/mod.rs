@@ -7,10 +7,7 @@ pub mod repository;
 /// Everything before the game starts and how two players find each other.
 pub mod negotiation;
 
-use std::{
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 use chers::{Game, Player};
 
@@ -33,7 +30,7 @@ impl ConnectionMetadata {
     }
 
     pub fn duration_since_last_heartbeat(self) -> Duration {
-        return Instant::now().duration_since(self.last_heartbeat_at);
+        Instant::now().duration_since(self.last_heartbeat_at)
     }
 }
 
@@ -44,10 +41,10 @@ pub struct Match {
 
 impl Match {
     pub fn new(id: MatchId) -> Match {
-        return Match {
+        Match {
             id,
             state: MatchState::Pending(),
-        };
+        }
     }
 }
 

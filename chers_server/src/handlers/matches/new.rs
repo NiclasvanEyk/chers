@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use axum::extract::{Json, State};
 
-use crate::app::AppState;
+use crate::AppState;
 
 #[derive(serde::Serialize)]
 pub struct NewMatchResponse {
@@ -12,5 +12,5 @@ pub struct NewMatchResponse {
 pub async fn create_new_match(State(state): State<Arc<AppState>>) -> Json<NewMatchResponse> {
     let mut matches = state.matches.lock().await;
     let game = matches.start();
-    return Json(NewMatchResponse { id: game.id });
+    Json(NewMatchResponse { id: game.id })
 }

@@ -1,0 +1,13 @@
+[package]
+name = "chers_server_api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+chers = { path = "../chers" }
+serde = { version = "1", features = ["derive"] }
+ts-rs = "9"
+wasm-bindgen = "0.2"
+
+[lib]
+crate-type = ["cdylib", "rlib"]

@@ -10,6 +10,7 @@ use super::serialization::Converter;
 pub trait Transport {
     /// Send [`a_move`] to the other party
     fn send(&mut self, a_move: &Move) -> Result<(), Box<dyn Error>>;
+
     /// Wait and block, until the other party has made their move.
     fn receive(&mut self) -> Result<Move, Box<dyn Error>>;
 }

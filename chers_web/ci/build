@@ -15,6 +15,7 @@ echo "Creating symlinks..."
 cd ../chers_web
 ln -s ../../chers/pkg/ ./generated/chers
 ln -s ../../chers/bindings/ ./generated/chers-serde
+ln -s ../../chers_server_api/bindings/ ./generated/chers-server
 
 echo "Building chers_web..."
 bun run build

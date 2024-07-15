@@ -1,15 +1,20 @@
-use std::{net::SocketAddr, sync::Arc};
+use std::sync::Arc;
 
 use axum::{
     extract::{
         ws::{Message, WebSocket},
-        ConnectInfo, Path, State, WebSocketUpgrade,
+        Path, State, WebSocketUpgrade,
     },
     response::IntoResponse,
 };
 use serde::Deserialize;
 
-use crate::app::AppState;
+use crate::{
+    matches::{communication::Commands, Match},
+    AppState,
+};
+
+use chers_server_api::PendingGameMessages;
 
 #[derive(Deserialize)]
 pub struct PlayPathParams {
@@ -20,30 +25,43 @@ pub async fn websocket_handler(
     ws: WebSocketUpgrade,
     State(state): State<Arc<AppState>>,
     Path(path): Path<PlayPathParams>,
-    // ConnectInfo(addr): ConnectInfo<SocketAddr>,
 ) -> impl IntoResponse {
+    let matches = state.matches.lock().await;
+    let found = matches.find(path.id);
+
     tracing::info!("`addr connected to play match {}.", path.id);
-    ws.on_upgrade(move |socket| play(socket, path.id, state))
+    ws.on_upgrade(move |socket| play(socket, found))
 }
 
 // This function deals with a single websocket connection, i.e., a single
 // connected client / user, for which we will spawn two independent tasks (for
 // receiving / sending chat messages).
-async fn play(mut socket: WebSocket, match_id: u32, state: Arc<AppState>) {
+async fn play(mut socket: WebSocket, context: Option<Arc<Match>>) {
+    // VALIDATION PHASE
+    // ========================================================================
+    // This is where we check if the game even exists, etc.
+    let mut commands = Commands::new(&mut socket);
+    let Some(match_context) = context else {
+        let _ = commands
+            .send(PendingGameMessages::GameDoesNotExist {})
+            .await;
+        return;
+    };
+
     // LOBBY PHASE
-    // =========================================================================
+    // ========================================================================
     // Wait in the lobby, until there are two players, who both indicated that
     // they are ready to start the match.
 
     // GAME PHASE
-    // =========================================================================
+    // ========================================================================
     // The two players take turns and mutate the board state. We somehow need to
     // find a nice way to "merge" the two websocket connections, have them take
     // turns (e.g. do not accept "move" messages from white while its blacks
     // turn) and support reconnections.
 
     // POST-GAME PHASE
-    // =========================================================================
+    // ========================================================================
     // Do whatever here. I just think that the players should not be kicked out
     // right away after one wins.
 
@@ -57,6 +75,7 @@ async fn play(mut socket: WebSocket, match_id: u32, state: Arc<AppState>) {
         return;
     }
 
+    let match_id = match_context.id;
     while let Some(msg) = socket.recv().await {
         let msg = if let Ok(msg) = msg {
             msg

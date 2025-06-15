@@ -39,7 +39,7 @@ export function Board({ state, dispatch }: BoardProps) {
 									? ""
 									: "2px 0 #fff, -2px 0 #fff, 0 2px #fff, 0 -2px #fff, 1px 1px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff",
 						}}
-						className="p-5 flex flex-col gap-5 bg-transparent drop-shadow"
+						className="p-5 flex flex-col gap-5 bg-transparent drop-shadow-sm"
 					>
 						<p className="text-3xl font-extrabold leading-tight">
 							{state.winner} won

@@ -1,6 +1,17 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@theme {
+  --animate-scale-in-bouncy: scale-in-bouncy 0.15s ease-in;
+
+  --background-image-gradient-radial: radial-gradient(var(--tw-gradient-stops));
+  --background-image-gradient-conic: conic-gradient(
+    from 180deg at 50% 50%,
+    var(--tw-gradient-stops)
+  );
+
+  --color-chess-beige: #edd6b0;
+  --color-chess-brown: #b88662;
+}
 
 :root {
   --foreground-rgb: 0, 0, 0;

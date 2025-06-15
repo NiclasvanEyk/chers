@@ -44,7 +44,7 @@ export function Settings(props: { open: boolean; onClose: () => void }) {
 		<dialog
 			ref={dialog}
 			onClose={props.onClose}
-			className="fixed backdrop-blur-xl bg-white/70 text-black dark:bg-black/80 dark:text-white rounded shadow p-9 inset-0 z-20 backdrop:bg-transparent"
+			className="fixed backdrop-blur-xl bg-white/70 text-black dark:bg-black/80 dark:text-white rounded-sm shadow-sm p-9 inset-0 z-20 backdrop:bg-transparent"
 		>
 			<button
 				onClick={props.onClose}

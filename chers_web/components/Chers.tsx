@@ -18,7 +18,11 @@ export default function Chers() {
       <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       <div className="relative touch-manipulation">
-        <Board state={state} dispatch={dispatch} />
+        {
+            state.type === "ERROR"
+                ? <span className="text-red-500 font-bold text-2xl">{state.error}</span>
+                : <Board state={state} dispatch={dispatch} />
+        }
       </div>
     </ChersSettingsProvider>
   );

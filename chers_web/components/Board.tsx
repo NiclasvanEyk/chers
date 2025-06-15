@@ -15,12 +15,6 @@ export interface BoardProps {
 }
 
 export function Board({ state, dispatch }: BoardProps) {
-	if (state.type === "ERROR") {
-		return (
-			<span className="text-red-500 font-bold text-2xl">{state.error}</span>
-		);
-	}
-
 	const { board, player } = state.game;
 	const { registerCellRef } = useFocusManagement(state, dispatch);
 

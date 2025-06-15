@@ -12,5 +12,7 @@ pub struct NewMatchResponse {
 pub async fn create_new_match(State(state): State<Arc<AppState>>) -> Json<NewMatchResponse> {
     let mut matches = state.matches.lock().await;
     let game = matches.start();
-    Json(NewMatchResponse { id: game.id })
+    let id = { game.read().unwrap().id };
+
+    Json(NewMatchResponse { id })
 }

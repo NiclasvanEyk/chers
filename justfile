@@ -1,6 +1,6 @@
 wasm:
     wasm-pack build --target web chers
-    cargo -p chers_server_api test
+    cargo test -p chers_server_api
 
 play:
     cargo run --bin=chers_cli

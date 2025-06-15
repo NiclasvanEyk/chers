@@ -2,13 +2,13 @@
 
 import { ChessFigureLoadingIndicator } from "@/components/ChessFigureLoadingIndicator";
 import { play } from "@/lib/multiplayer";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import { PendingGameMessages } from "@/generated/chers-server/PendingGameMessages";
 
 interface Props {
-	params: {
+	params: Promise<{
 		id: number;
-	};
+	}>;
 }
 
 type MatchState =
@@ -68,11 +68,17 @@ function useMatch(
 	return { state };
 }
 
-export default function MatchPage({ params: { id } }: Props) {
-	const [exists, setExists] = useState(true);
-	const [messages, setMessages] = useState<string[]>([]);
+export default function MatchPage(props: Props) {
+    const params = use(props.params);
 
-	const { state } = useMatch(id, (message) => {
+    const {
+        id
+    } = params;
+
+    const [exists, setExists] = useState(true);
+    const [messages, setMessages] = useState<string[]>([]);
+
+    const { state } = useMatch(id, (message) => {
 		switch (message.kind) {
 			case "GameDoesNotExist":
 				setExists(false);
@@ -94,11 +100,11 @@ export default function MatchPage({ params: { id } }: Props) {
 		return false;
 	});
 
-	if (!exists) {
+    if (!exists) {
 		<div>This game does not exist.</div>;
 	}
 
-	return (
+    return (
 		<ChessFigureLoadingIndicator fullscreen message={loadingMessage(state)} />
 	);
 }

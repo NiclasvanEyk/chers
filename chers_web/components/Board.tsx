@@ -28,7 +28,7 @@ export function Board({ state, dispatch }: BoardProps) {
 
 	if (state.type === "GAME_OVER") {
 		components.push(
-			<div className="fixed inset-0 z-20">
+			<div className="fixed inset-0 z-20" key="game-over">
 				<div className="flex flex-col h-screen w-screen bg-black/75 place-content-center text-center">
 					<dialog
 						open
@@ -59,6 +59,7 @@ export function Board({ state, dispatch }: BoardProps) {
 	if (state.type === "PROMOTING") {
 		components.push(
 			<Promotion
+				key="promotion"
 				color={state.game.player}
 				onChoice={(figure) => dispatch({ type: "PROMOTE", to: figure })}
 			/>,
@@ -69,6 +70,7 @@ export function Board({ state, dispatch }: BoardProps) {
 		<div
 			// @ts-ignore-next-line
 			inert={state.type === "PROMOTING" ? true : null}
+			key="board"
 			className="w-full h-full grid grid-cols-8 grid-rows-8"
 		>
 			{board.flatMap((row, y) =>
@@ -102,8 +104,10 @@ export function Board({ state, dispatch }: BoardProps) {
 					};
 
 					return (
-						<Cell
-							ref={(ref) => registerCellRef(x, y, ref)}
+                        <Cell
+							ref={ref => {
+                                registerCellRef(x, y, ref);
+                            }}
 							x={x}
 							y={y}
 							key={`${x},${y}`}
@@ -112,7 +116,7 @@ export function Board({ state, dispatch }: BoardProps) {
 							{...{ moveable, pickable, touched, captures }}
 							contents={contents}
 						/>
-					);
+                    );
 				}),
 			)}
 		</div>,

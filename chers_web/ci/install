@@ -14,4 +14,4 @@ echo "Installing wasm-pack..."
 curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh -s -- -y
 
 echo "Installing NPM Dependencies..."
-bun install
+npm install

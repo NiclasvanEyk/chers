@@ -2,12 +2,11 @@ use std::fmt::Debug;
 
 use chers::Color;
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
+use tsify::Tsify;
 
 /// All messages sent before the game starts.
-#[derive(Debug, Serialize, Deserialize, TS)]
+#[derive(Debug, Serialize, Deserialize, Tsify)]
 #[serde(tag = "kind")]
-#[ts(export)]
 pub enum PendingGameMessages {
     GameDoesNotExist {},
 
@@ -23,9 +22,8 @@ pub enum PendingGameMessages {
 }
 
 /// All messages sent while the game is in progress.
-#[derive(Debug, Serialize, Deserialize, TS)]
+#[derive(Debug, Serialize, Deserialize, Tsify)]
 #[serde(tag = "kind")]
-#[ts(export)]
 pub enum ProgressingGameMessages {
     /// Broadcasted when a legal move was made. Contains the updated board
     /// state, as well as any events that happened.

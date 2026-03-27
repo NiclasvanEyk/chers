@@ -1,5 +1,5 @@
 wasm:
-    wasm-pack build --target web chers
+    wasm-pack build --target web --out-dir ../chers_web/generated/chers chers
     cargo test -p chers_server_api
 
 play:

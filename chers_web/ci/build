@@ -3,14 +3,10 @@
 set -e
 
 export CARGO_HOME=/vercel/.cargo
-export RUSTUP_HOME=/vercel/.rustup
-source "$CARGO_HOME/env"
 
-echo "Building chers..."
-cd ../..
-wasm-pack build --release --target web --out-dir chers_web/generated/chers chers
-cargo test -p chers
+# Vercel runs from chers_web/, need to go up to project root for workspace
+cd ..
 
-echo "Building chers_web..."
+just wasm-release
 cd chers_web
-bun run build
+npm run build

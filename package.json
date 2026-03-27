@@ -1,0 +1,12 @@
+{
+  "name": "chers",
+  "private": true,
+  "scripts": {
+    "dev": "just web-dev",
+    "build": "just web-release",
+    "start": "pnpm --filter chers_web start"
+  },
+  "devDependencies": {
+    "rust-just": "^1"
+  }
+}

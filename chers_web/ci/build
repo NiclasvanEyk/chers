@@ -7,15 +7,10 @@ export RUSTUP_HOME=/vercel/.rustup
 source "$CARGO_HOME/env"
 
 echo "Building chers..."
-cd ../chers
-cargo test
-wasm-pack build --release --target web
-
-echo "Creating symlinks..."
-cd ../chers_web
-ln -s ../../chers/pkg/ ./generated/chers
-ln -s ../../chers/bindings/ ./generated/chers-serde
-ln -s ../../chers_server_api/bindings/ ./generated/chers-server
+cd ../..
+wasm-pack build --release --target web --out-dir chers_web/generated/chers chers
+cargo test -p chers
 
 echo "Building chers_web..."
+cd chers_web
 bun run build

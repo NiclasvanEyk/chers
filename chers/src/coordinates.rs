@@ -1,8 +1,7 @@
 use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
-use wasm_bindgen::prelude::*;
+use tsify::Tsify;
 
 use crate::Player;
 
@@ -11,9 +10,7 @@ use super::{Board, Color, Piece, BOARD_SIZE};
 // An offset relative to the top left (0,0) from white's view
 //
 // Due to the [`Board`] being layed out as an array
-#[wasm_bindgen]
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TS)]
-#[ts(export)]
+#[derive(Tsify, Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Coordinate {
     pub x: usize,
     pub y: usize,
@@ -164,7 +161,6 @@ impl Coordinate {
 }
 
 #[derive(Debug)]
-#[wasm_bindgen]
 pub enum CoordinateParserError {
     Empty,
     MissingColumn,
@@ -173,9 +169,7 @@ pub enum CoordinateParserError {
     InvalidRow,
 }
 
-#[wasm_bindgen]
 impl Coordinate {
-    #[wasm_bindgen(constructor)]
     pub fn new(x: usize, y: usize) -> Coordinate {
         Coordinate { x, y }
     }

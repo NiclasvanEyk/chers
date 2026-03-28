@@ -2,16 +2,28 @@
 
 set -e
 
-export CARGO_HOME=/vercel/.cargo
-export RUSTUP_HOME=/vercel/.rustup
+# Use Vercel's pre-installed Rust if available, otherwise install via rustup
+if command -v cargo &> /dev/null; then
+    echo "Rust is already installed:"
+    cargo --version
+    rustc --version
+else
+    echo "Installing Rust..."
+    export CARGO_HOME=/vercel/.cargo
+    export RUSTUP_HOME=/vercel/.rustup
+    # Fix home directory mismatch on Vercel
+    export HOME=/vercel
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+    source "$CARGO_HOME/env"
+    cargo --version
+fi
 
-echo "Installing Rust..."
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-source "$CARGO_HOME/env"
-cargo --version
-
-echo "Installing wasm-pack..."
-curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh -s -- -y
+echo "Installing clis..."
+export BINSTALL_DISABLE_TELEMETRY=true
+curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+cargo binstall --no-confirm wasm-bindgen-cli just
 
 echo "Installing NPM Dependencies..."
-bun install
+# Vercel runs from chers_web/, need to go up to project root for workspace
+cd ..
+pnpm install

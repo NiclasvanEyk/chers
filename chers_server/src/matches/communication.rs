@@ -16,7 +16,7 @@ impl<'s> Commands<'s> {
     #[tracing::instrument]
     pub async fn send(&mut self, command: impl Serialize + Debug) -> Result<(), axum::Error> {
         let serialized = serde_json::to_string(&command).unwrap();
-        let message = Message::Text(serialized);
+        let message = Message::Text(serialized.into());
         self.socket.send(message).await
     }
 }

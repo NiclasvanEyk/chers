@@ -1,14 +1,11 @@
 use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
-use wasm_bindgen::prelude::*;
+use tsify::Tsify;
 
 use super::Coordinate;
 
-#[wasm_bindgen]
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize, TS)]
-#[ts(export)]
+#[derive(Tsify, Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum Color {
     White,
     Black,
@@ -33,9 +30,7 @@ impl Color {
 
 pub type Player = Color;
 
-#[wasm_bindgen]
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize, TS)]
-#[ts(export)]
+#[derive(Tsify, Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum Figure {
     King,
     Queen,
@@ -45,9 +40,7 @@ pub enum Figure {
     Pawn,
 }
 
-#[wasm_bindgen]
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize, TS)]
-#[ts(export)]
+#[derive(Tsify, Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum PromotedFigure {
     Queen,
     Rook,
@@ -93,18 +86,14 @@ impl Display for PromotedFigure {
     }
 }
 
-#[wasm_bindgen]
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, TS)]
-#[ts(export)]
+#[derive(Tsify, Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct Move {
     pub from: Coordinate,
     pub to: Coordinate,
     pub promotion: Option<PromotedFigure>,
 }
 
-#[wasm_bindgen]
 impl Move {
-    #[wasm_bindgen(constructor)]
     pub fn new(from: Coordinate, to: Coordinate, promotion: Option<PromotedFigure>) -> Move {
         Self {
             from,
@@ -130,9 +119,7 @@ impl Move {
     }
 }
 
-#[wasm_bindgen]
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, TS)]
-#[ts(export)]
+#[derive(Tsify, Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Piece {
     pub color: Color,
     pub figure: Figure,
@@ -184,8 +171,7 @@ pub const fn empty_board() -> Board {
     ]
 }
 
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize, TS)]
-#[ts(export)]
+#[derive(Tsify, Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub struct CastlingRights {
     white: CastleDirections,
     black: CastleDirections,
@@ -200,8 +186,7 @@ impl CastlingRights {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize, TS)]
-#[ts(export)]
+#[derive(Tsify, Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub struct CastleDirections {
     queen_side: bool,
     king_side: bool,
@@ -216,11 +201,10 @@ impl CastleDirections {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export)]
+#[derive(Tsify, Debug, Clone, Serialize, Deserialize)]
 pub struct State {
     pub player: Player,
-    #[ts(skip)] // This gets rendered as `Array`, which is not valid TS
+    #[tsify(type = "(Piece | null)[][]")]
     pub board: Board,
     pub castling_rights: CastlingRights,
     /// The cell that a pawn could move to, in order to capture the passing

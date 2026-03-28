@@ -66,7 +66,11 @@ async fn play(mut socket: WebSocket, context: Option<Arc<Match>>) {
     // right away after one wins.
 
     // send a ping (unsupported by some browsers) just to kick things off and get a response
-    if socket.send(Message::Text("FOOO".to_string())).await.is_ok() {
+    if socket
+        .send(Message::Text("FOOO".to_string().into()))
+        .await
+        .is_ok()
+    {
         tracing::info!("Pinged who...");
     } else {
         tracing::error!("Could not send ping who!");

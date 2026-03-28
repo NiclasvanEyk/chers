@@ -1,2 +1,2 @@
-pub mod matches;
 pub mod health;
+pub mod matches;

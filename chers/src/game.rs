@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use ts_rs::TS;
+use tsify::Tsify;
 
 use crate::{
     move_execution::{move_piece, CantMovePiece},
@@ -11,8 +11,7 @@ use super::{
     INITIAL_BOARD,
 };
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, TS)]
-#[ts(export)]
+#[derive(Tsify, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Event {
     Move {
         piece: Piece,

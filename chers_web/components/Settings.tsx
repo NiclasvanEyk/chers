@@ -1,4 +1,8 @@
+"use client";
+
 import { useAdjustableSettings } from "@/lib/settings";
+import { startNewMatch } from "@/lib/multiplayer";
+import { useRouter } from "next/navigation";
 import { ReactNode, useEffect, useId, useRef } from "react";
 
 export interface TriggerProps {
@@ -90,6 +94,8 @@ export function Settings(props: { open: boolean; onClose: () => void }) {
 						Skip non-selectable cells when tabbing.
 					</Toggle>
 				</Section>
+
+				<MultiplayerSection onClose={props.onClose} />
 			</div>
 		</dialog>
 	);
@@ -131,5 +137,29 @@ function Toggle(props: {
 			/>
 			{props.children} {placeholder ? "-- todo" : null}
 		</label>
+	);
+}
+
+function MultiplayerSection(props: { onClose: () => void }) {
+	const router = useRouter();
+
+	const handleStartMultiplayer = async () => {
+		props.onClose();
+		const matchId = await startNewMatch();
+		router.push(`/multiplayer/${matchId}`);
+	};
+
+	return (
+		<Section heading="Multiplayer">
+			<button
+				onClick={handleStartMultiplayer}
+				className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors"
+			>
+				Start New Multiplayer Game
+			</button>
+			<p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+				Play chess online with a friend. You&apos;ll get a link to share.
+			</p>
+		</Section>
 	);
 }

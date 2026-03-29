@@ -140,6 +140,18 @@ impl TestClient {
             .expect("Failed to send authenticate");
     }
 
+    pub async fn ready(&mut self, ready: bool) {
+        use chers_server_api::ClientMessage;
+
+        let msg = ClientMessage::Ready { ready };
+
+        let json = serde_json::to_string(&msg).unwrap();
+        self.ws
+            .send(tokio_tungstenite::tungstenite::Message::Text(json))
+            .await
+            .expect("Failed to send ready");
+    }
+
     pub async fn make_move(&mut self, from: &str, to: &str) {
         use chers_server_api::ClientMessage;
 

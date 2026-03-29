@@ -73,7 +73,8 @@ impl Match {
 
     /// Start the game when both players are connected.
     /// Randomly assigns White/Black to player1/player2.
-    pub fn start_game(&mut self) -> Result<ActiveGame, StartError> {
+    /// Returns (ActiveGame, player1_is_white) where player1_is_white indicates if slot 1 is White.
+    pub fn start_game(&mut self) -> Result<(ActiveGame, bool), StartError> {
         let lobby = match &self.state {
             MatchState::Lobby(lobby) if lobby.ready_to_start() => lobby,
             _ => return Err(StartError::NotReady),
@@ -131,7 +132,7 @@ impl Match {
 
         self.state = MatchState::InProgress(game.clone());
 
-        Ok(game)
+        Ok((game, player1_is_white))
     }
 
     /// Attempt to make a move.
@@ -274,11 +275,36 @@ impl Match {
 
     /// Handle player reconnection
     /// Validates token and restores player connection
+    /// Also handles reconnection to finished games to show game over state
     pub fn handle_reconnection(
         &mut self,
         token: &str,
         _private_tx: broadcast::Sender<PrivateEvent>,
     ) -> Result<ReconnectionResult, ReconnectError> {
+        // Check if game is finished first
+        if let MatchState::Finished(result, _) = &self.state {
+            // For finished games, we need to determine the player's color
+            // For now, we default to White but this should be improved by storing tokens in Finished state
+            let player_color = self
+                .get_player_color_in_finished_game(token)
+                .unwrap_or(Color::White);
+
+            return Ok(ReconnectionResult {
+                player: player_color,
+                game_resumed: false,
+                state: self
+                    .get_final_state()
+                    .unwrap_or_else(|| chers::Game::new().start()),
+                move_history: Vec::new(),   // Could store this if needed
+                current_turn: player_color, // Doesn't matter for finished game
+                white_connected: true,      // Mark both as connected
+                black_connected: true,
+                game_result: Some(result.clone()),
+                white_name: "White".to_string(), // TODO: Store names in Finished state
+                black_name: "Black".to_string(), // TODO: Store names in Finished state
+            });
+        }
+
         let active = match &mut self.state {
             MatchState::InProgress(active) => active,
             _ => return Err(ReconnectError::GameNotInProgress),
@@ -331,7 +357,29 @@ impl Match {
             current_turn: active.state.player,
             white_connected: active.white.connected,
             black_connected: active.black.connected,
+            game_result: None,
+            white_name: active.white.name.clone(),
+            black_name: active.black.name.clone(),
         })
+    }
+
+    /// Get player color from a finished game
+    fn get_player_color_in_finished_game(&self, token: &str) -> Option<Color> {
+        if let MatchState::Finished(_, _) = &self.state {
+            // We need to access the player info from the last InProgress state
+            // This requires storing player info in Finished state
+            // For now, return White as default (should be improved)
+            // TODO: Store player tokens in Finished state
+            return Some(Color::White);
+        }
+        None
+    }
+
+    /// Get the final game state if available
+    fn get_final_state(&self) -> Option<chers::State> {
+        // This would need to store the final state in Finished
+        // For now return None and let frontend handle it
+        None
     }
 
     /// End the game with a result
@@ -357,6 +405,90 @@ impl Match {
                 existing.abort();
             }
             active.disconnection_timer = Some(timer);
+        }
+    }
+
+    /// Update a player's name (only allowed in lobby).
+    ///
+    /// Returns the player's color if successful, or an error message if:
+    /// - The game has already started
+    /// - The token is invalid
+    /// - The name is empty or too long (>25 chars)
+    pub fn update_player_name(&mut self, token: &str, new_name: String) -> Result<Color, String> {
+        // Validate name length
+        if new_name.is_empty() {
+            return Err("Name cannot be empty".to_string());
+        }
+        if new_name.len() > 25 {
+            return Err("Name must be 25 characters or less".to_string());
+        }
+
+        // Only allow name changes in lobby
+        match &mut self.state {
+            MatchState::Lobby(lobby) => {
+                // Find player by token and update name
+                if let Some(slot) = &mut lobby.player1 {
+                    if slot.token == token {
+                        slot.name = new_name;
+                        return Ok(Color::White);
+                    }
+                }
+                if let Some(slot) = &mut lobby.player2 {
+                    if slot.token == token {
+                        slot.name = new_name;
+                        return Ok(Color::Black);
+                    }
+                }
+                Err("Player not found".to_string())
+            }
+            _ => Err("Cannot change name after game has started".to_string()),
+        }
+    }
+
+    /// Toggle ready status for a player (lobby only).
+    ///
+    /// Returns (player_color, new_ready_status, both_ready) if successful.
+    /// Returns error if game has already started or player not found.
+    pub fn toggle_ready(
+        &mut self,
+        token: &str,
+        ready: bool,
+    ) -> Result<(Color, bool, bool), String> {
+        match &mut self.state {
+            MatchState::Lobby(lobby) => {
+                let result = lobby.toggle_ready(token, ready)?;
+                let both_ready = lobby.ready_to_start();
+                Ok((result.0, result.1, both_ready))
+            }
+            _ => Err("Cannot toggle ready status after game has started".to_string()),
+        }
+    }
+
+    /// Remove a player from the lobby immediately when they disconnect.
+    ///
+    /// Returns the slot number (1 or 2) if a player was removed, None otherwise.
+    pub fn remove_player_from_lobby(&mut self, token: &str) -> Option<u8> {
+        match &mut self.state {
+            MatchState::Lobby(lobby) => {
+                // Check player1
+                if let Some(ref p1) = lobby.player1 {
+                    if p1.token == token {
+                        lobby.player1 = None;
+                        lobby.player1_ready = false;
+                        return Some(1);
+                    }
+                }
+                // Check player2
+                if let Some(ref p2) = lobby.player2 {
+                    if p2.token == token {
+                        lobby.player2 = None;
+                        lobby.player2_ready = false;
+                        return Some(2);
+                    }
+                }
+                None
+            }
+            _ => None,
         }
     }
 
@@ -426,6 +558,9 @@ pub enum MatchState {
 pub struct LobbyState {
     pub player1: Option<PlayerSlot>,
     pub player2: Option<PlayerSlot>,
+    pub player1_ready: bool,
+    pub player2_ready: bool,
+    pub countdown_task: Option<tokio::task::JoinHandle<()>>,
 }
 
 impl Default for LobbyState {
@@ -433,16 +568,45 @@ impl Default for LobbyState {
         Self {
             player1: None,
             player2: None,
+            player1_ready: false,
+            player2_ready: false,
+            countdown_task: None,
         }
     }
 }
 
 impl LobbyState {
-    /// True when both slots are filled and both players are connected
+    /// True when both slots are filled and both players are ready
     pub fn ready_to_start(&self) -> bool {
         matches!(
             (&self.player1, &self.player2),
-            (Some(p1), Some(p2)) if p1.connected && p2.connected
+            (Some(_), Some(_)) if self.player1_ready && self.player2_ready
+        )
+    }
+
+    /// Toggle ready status for a player by token
+    /// Returns the player color (White/Black) and new ready status if successful
+    pub fn toggle_ready(&mut self, token: &str, ready: bool) -> Result<(Color, bool), String> {
+        if let Some(slot) = &self.player1 {
+            if slot.token == token {
+                self.player1_ready = ready;
+                return Ok((Color::White, ready));
+            }
+        }
+        if let Some(slot) = &self.player2 {
+            if slot.token == token {
+                self.player2_ready = ready;
+                return Ok((Color::Black, ready));
+            }
+        }
+        Err("Player not found in lobby".to_string())
+    }
+
+    /// Get current ready status for both players
+    pub fn get_ready_status(&self) -> (Option<bool>, Option<bool>) {
+        (
+            self.player1.as_ref().map(|_| self.player1_ready),
+            self.player2.as_ref().map(|_| self.player2_ready),
         )
     }
 
@@ -556,6 +720,11 @@ pub struct ReconnectionResult {
     pub current_turn: Color,
     pub white_connected: bool,
     pub black_connected: bool,
+    /// Game result if the game has ended
+    pub game_result: Option<GameResult>,
+    /// Player names for state sync
+    pub white_name: String,
+    pub black_name: String,
 }
 
 pub enum ReconnectError {
@@ -569,6 +738,45 @@ pub enum GameResult {
     WhiteWins(GameEndReason),
     BlackWins(GameEndReason),
     Draw(GameEndReason),
+}
+
+impl GameResult {
+    /// Convert to API types for serialization
+    pub fn to_api(
+        &self,
+    ) -> (
+        chers_server_api::server::GameResult,
+        chers_server_api::server::GameEndReason,
+    ) {
+        use chers_server_api::server::{GameEndReason as ApiReason, GameResult as ApiResult};
+
+        match self {
+            GameResult::WhiteWins(reason) => {
+                let api_reason = match reason {
+                    GameEndReason::Checkmate => ApiReason::Checkmate,
+                    GameEndReason::Abandoned => ApiReason::Abandoned,
+                    _ => ApiReason::Abandoned,
+                };
+                (ApiResult::WhiteWins, api_reason)
+            }
+            GameResult::BlackWins(reason) => {
+                let api_reason = match reason {
+                    GameEndReason::Checkmate => ApiReason::Checkmate,
+                    GameEndReason::Abandoned => ApiReason::Abandoned,
+                    _ => ApiReason::Abandoned,
+                };
+                (ApiResult::BlackWins, api_reason)
+            }
+            GameResult::Draw(reason) => {
+                let api_reason = match reason {
+                    GameEndReason::Stalemate => ApiReason::Stalemate,
+                    GameEndReason::Abandoned => ApiReason::Abandoned,
+                    _ => ApiReason::Abandoned,
+                };
+                (ApiResult::Draw, api_reason)
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -595,6 +803,7 @@ pub enum AuthError {
     AlreadyConnected,
 }
 
+#[derive(Debug)]
 pub enum StartError {
     NotReady,
 }

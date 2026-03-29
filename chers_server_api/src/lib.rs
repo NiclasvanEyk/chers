@@ -95,6 +95,28 @@ pub mod client {
             name: String,
         },
 
+        /// Update player name (only allowed in lobby).
+        ///
+        /// Sent when the player wants to change their display name before the game starts.
+        /// The server validates the name (1-25 chars) and broadcasts the change to all players.
+        ///
+        /// Returns `PublicEvent::NameChanged` on success, or an error if the game has already started.
+        UpdateName {
+            /// New player name (1-25 characters).
+            name: String,
+        },
+
+        /// Toggle ready status (only allowed in lobby).
+        ///
+        /// Sent when the player clicks the "Ready" or "Not Ready" button.
+        /// Can be toggled on/off until both players are ready.
+        /// When both players are ready, a 5-second countdown begins.
+        /// If a player un-readies during countdown, the countdown is cancelled.
+        Ready {
+            /// Whether the player is ready (true) or not ready (false).
+            ready: bool,
+        },
+
         /// Make a chess move using structured coordinates.
         ///
         /// The server validates that:
@@ -229,7 +251,57 @@ pub mod server {
             status: PlayerConnectionStatus,
         },
 
-        /// A player offered a draw.
+        /// A player's name was changed.
+        ///
+        /// Sent when a player updates their display name in the lobby.
+        /// Only allowed before the game starts. Once the game begins, names are locked.
+        NameChanged {
+            /// Which player's name changed (White or Black - assigned when game starts).
+            #[ts(type = "Color")]
+            player: Color,
+            /// Player slot (1 or 2) - use this to identify if it's you or opponent.
+            slot: u8,
+            /// The new display name.
+            name: String,
+        },
+
+        /// A player's ready status changed.
+        ///
+        /// Sent when a player toggles their ready status in the lobby.
+        /// Shows whether a player is ready to start the game.
+        PlayerReady {
+            /// Which player's status changed (White or Black - assigned when game starts).
+            #[ts(type = "Color")]
+            player: Color,
+            /// Player slot (1 or 2) - use this to identify if it's you or opponent.
+            slot: u8,
+            /// Whether the player is now ready (true) or not ready (false).
+            ready: bool,
+        },
+
+        /// Countdown tick before game starts.
+        ///
+        /// Sent every second during the 5-second countdown after both players are ready.
+        /// The frontend should display this number prominently.
+        Countdown {
+            /// Seconds remaining (5, 4, 3, 2, or 1).
+            seconds: u8,
+        },
+
+        /// Game is about to start.
+        ///
+        /// Sent at the end of the countdown, just before the game actually begins.
+        /// The frontend should prepare to transition to the game board.
+        GameStarting,
+
+        /// A player left the lobby.
+        ///
+        /// Sent immediately when a player disconnects from the lobby.
+        /// The remaining player should clear the opponent info and reset ready status.
+        PlayerLeftLobby {
+            /// Player slot (1 or 2) that left.
+            slot: u8,
+        },
         ///
         /// Broadcast so spectators can see that a draw was offered
         /// (though only the opponent can accept).
@@ -253,11 +325,30 @@ pub mod server {
     #[serde(tag = "kind")]
     #[ts(export)]
     pub enum PrivateEvent {
-        /// Authentication was successful.
+        /// Player has joined the lobby and is waiting for opponent.
         ///
-        /// Sent after a client sends `ClientMessage::Authenticate`.
-        /// Contains the player assignment and token for reconnection.
-        Authenticated {
+        /// Sent when a player successfully authenticates and is assigned to a slot
+        /// in the lobby. The game has not started yet, so no color is assigned.
+        /// Contains current lobby state including opponent info if already present.
+        LobbyJoined {
+            /// Player slot number (1 or 2).
+            /// Use this to identify yourself in subsequent events like NameChanged.
+            slot: u8,
+            /// Player 1 info (if present).
+            player1: Option<PlayerInfo>,
+            /// Player 2 info (if present).
+            player2: Option<PlayerInfo>,
+            /// Ready status for player 1.
+            player1_ready: bool,
+            /// Ready status for player 2.
+            player2_ready: bool,
+        },
+
+        /// Colors have been assigned and the game is starting.
+        ///
+        /// Sent to both players when the game starts, containing their assigned color.
+        /// This is the signal to transition from waiting to playing.
+        ColorsAssigned {
             /// Whether this client is playing as White or Black.
             #[ts(type = "Color")]
             player: Color,
@@ -307,6 +398,15 @@ pub mod server {
             draw_offered_by: Option<Color>,
             /// Number of moves made so far.
             move_count: u32,
+            /// The color this player is playing as.
+            #[ts(type = "Color")]
+            your_color: Color,
+            /// Game result if the game has ended, null if still in progress.
+            #[ts(type = "GameResult | null")]
+            game_result: Option<GameResult>,
+            /// Reason the game ended, if it has ended.
+            #[ts(type = "GameEndReason | null")]
+            game_end_reason: Option<GameEndReason>,
         },
 
         /// Your opponent offered a draw.

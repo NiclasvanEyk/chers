@@ -1,104 +1,206 @@
 "use client";
 
+import { use, useEffect, useState } from "react";
+import { useMatch } from "@/lib/multiplayer/useMatch";
+import { Lobby } from "./components/Lobby";
+import { MultiplayerGame } from "./components/MultiplayerGame";
+import { GameOver } from "./components/GameOver";
+import { ReconnectingOverlay } from "./components/ReconnectingOverlay";
 import { ChessFigureLoadingIndicator } from "@/components/ChessFigureLoadingIndicator";
-import { play } from "@/lib/multiplayer";
-import { useEffect, useState } from "react";
-import { PendingGameMessages } from "@/generated/chers-server/PendingGameMessages";
+import Link from "next/link";
+import init from "@/generated/chers/chers";
 
 interface Props {
-	params: {
-		id: number;
-	};
+  params: Promise<{
+    id: string;
+  }>;
 }
 
-type MatchState =
-	| { kind: "initial" }
-	| { kind: "connecting" }
-	| { kind: "error"; message: string }
-	| { kind: "connected" };
+export default function MatchPage({ params }: Props) {
+  const { id } = use(params);
+  const [wasmReady, setWasmReady] = useState(false);
+  const { state, myName, sendMove, sendUpdateName, sendReady } = useMatch(id);
 
-function loadingMessage(state: MatchState) {
-	switch (state.kind) {
-		case "initial":
-			return "setting everything up...";
-		case "error":
-			return `Something went wrong: ${state.message}`;
-		case "connecting":
-			return "Connecting to the server...";
-		case "connected":
-			return "Connected! Waiting for other players to join...";
-	}
-}
+  // Initialize WASM
+  useEffect(() => {
+    init().then(() => setWasmReady(true));
+  }, []);
 
-function useMatch(
-	id: number,
-	onMessage: (command: PendingGameMessages) => unknown,
-) {
-	const [state, setState] = useState<MatchState>({ kind: "initial" });
+  // Wait for WASM to be ready
+  if (!wasmReady) {
+    return (
+      <ChessFigureLoadingIndicator fullscreen message="Loading game engine..." />
+    );
+  }
 
-	useEffect(() => {
-		setState({ kind: "connecting" });
-		const socket = play(id);
+  // Loading state
+  if (state.phase.kind === "loading") {
+    return (
+      <ChessFigureLoadingIndicator fullscreen message="Loading match..." />
+    );
+  }
 
-		console.log("Opening socket...");
-		socket.onmessage = (message) => {
-			console.log(message);
-			const { data } = message;
-			const parsed = JSON.parse(data);
-			onMessage(parsed);
-			console.log(parsed);
-		};
+  // Connecting state
+  if (state.phase.kind === "connecting" || state.phase.kind === "authenticating") {
+    return (
+      <ChessFigureLoadingIndicator fullscreen message="Connecting to server..." />
+    );
+  }
 
-		socket.onerror = (error) => {
-			console.error(error);
-			setState({ kind: "error", message: String(error) });
-		};
+  // Game starting - waiting for color assignment
+  if (state.phase.kind === "game_starting") {
+    return (
+      <ChessFigureLoadingIndicator fullscreen message="Game starting... assigning colors" />
+    );
+  }
 
-		socket.onopen = () => {
-			console.log(`Successfully connected to match ${id}!`);
-			setState({ kind: "connected" });
-		};
+  // Reconnecting state
+  if (state.phase.kind === "reconnecting") {
+    return (
+      <>
+        <ReconnectingOverlay
+          attempt={state.phase.attempt}
+          secondsRemaining={state.phase.secondsRemaining}
+        />
+        {/* Show game behind overlay if we have game state */}
+        {state.phase.secondsRemaining < 110 && (
+          <div className="blur-sm">
+            <ChessFigureLoadingIndicator fullscreen message="Attempting to reconnect..." />
+          </div>
+        )}
+      </>
+    );
+  }
 
-		return () => {
-			console.log("Closing socket...");
-			socket.close();
-		};
-	}, [id]);
+  // Match not found error
+  if (state.phase.kind === "match_not_found") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="text-center max-w-md">
+          <h1 className="text-3xl font-bold mb-4 text-red-600">Match Not Found</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            This match doesn&apos;t exist or has already ended.
+          </p>
+          <Link
+            href="/multiplayer"
+            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition-colors"
+          >
+            Create New Game
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
-	return { state };
-}
+  // Authentication error
+  if (state.phase.kind === "auth_error") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="text-center max-w-md">
+          <h1 className="text-3xl font-bold mb-4 text-red-600">Connection Failed</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {state.phase.reason === "MatchFull"
+              ? "This match already has two players."
+              : state.phase.reason === "MatchNotFound"
+              ? "This match doesn't exist."
+              : "Authentication failed."}
+          </p>
+          <Link
+            href="/multiplayer"
+            className="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded transition-colors"
+          >
+            Create New Game
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
-export default function MatchPage({ params: { id } }: Props) {
-	const [exists, setExists] = useState(true);
-	const [messages, setMessages] = useState<string[]>([]);
+  // Error state
+  if (state.phase.kind === "error") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="text-center max-w-md">
+          <h1 className="text-3xl font-bold mb-4 text-red-600">Error</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {state.phase.message}
+          </p>
+          <Link
+            href="/"
+            className="inline-block px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded transition-colors"
+          >
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
-	const { state } = useMatch(id, (message) => {
-		switch (message.kind) {
-			case "GameDoesNotExist":
-				setExists(false);
-				return true;
+  // Waiting for opponent
+  if (state.phase.kind === "waiting") {
+    return (
+      <Lobby
+        inviteUrl={state.phase.inviteUrl}
+        myName={myName}
+        onUpdateName={sendUpdateName}
+        isReady={state.phase.isReady}
+        opponentName={state.phase.opponentName || undefined}
+        opponentReady={state.phase.opponentReady}
+        onToggleReady={sendReady}
+        countdown={state.phase.countdown}
+      />
+    );
+  }
 
-			case "PlayerJoined":
-				setMessages((prev) => [...prev, "A player joined!"]);
-				return true;
+  // Game over
+  if (state.phase.kind === "game_over") {
+    if (!state.myColor) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <GameOver
+            result={state.phase.result}
+            reason={state.phase.reason}
+            myColor="White"
+          />
+        </div>
+      );
+    }
+    
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <GameOver
+          result={state.phase.result}
+          reason={state.phase.reason}
+          myColor={state.myColor}
+        />
+      </div>
+    );
+  }
 
-			case "PlayerIdentified":
-				setMessages((prev) => [...prev, "The player got a name!"]);
-				return true;
+  // Playing
+  if (state.phase.kind === "playing") {
+    if (!state.myColor) {
+      return (
+        <ChessFigureLoadingIndicator fullscreen message="Loading game state..." />
+      );
+    }
+    
+    return (
+      <MultiplayerGame
+        game={state.phase.game}
+        myColor={state.myColor}
+        myTurn={state.phase.myTurn}
+        myName={myName}
+        opponent={state.phase.opponent}
+        onMove={sendMove}
+      />
+    );
+  }
 
-			case "GameStarted":
-				setMessages((prev) => [...prev, "The game starts!"]);
-				return true;
-		}
-
-		return false;
-	});
-
-	if (!exists) {
-		<div>This game does not exist.</div>;
-	}
-
-	return (
-		<ChessFigureLoadingIndicator fullscreen message={loadingMessage(state)} />
-	);
+  // Should never reach here
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <p className="text-red-600">Unknown state: {state.phase.kind}</p>
+    </div>
+  );
 }

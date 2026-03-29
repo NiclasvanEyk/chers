@@ -78,7 +78,7 @@ export const Cell = forwardRef(function Cell(
 			ref={ref}
 			aria-label={cellLabel({ x, y }, captures, contents)}
 			onClick={onClick}
-			className={`focus:outline-none focus-visible:outline-none focus:ring-2 focus-visible:ring-2 focus:z-10 focus-visible:z-10 ring-blue-500 ${bgColor} ${hoverColor} ${cursor} relative h-[min(calc(100vh/8),calc(100vw/8))] w-[min(calc(100vh/8),calc(100vw/8))] md:h-16 md:w-16 flex items-center justify-center select-none font-bold text-xl`}
+			className={`focus:outline-none focus-visible:outline-none focus:ring-2 focus-visible:ring-2 focus:z-10 focus-visible:z-10 ring-blue-500 ${bgColor} ${hoverColor} ${cursor} relative h-14 w-14 sm:h-16 sm:w-16 flex items-center justify-center select-none font-bold text-xl`}
 		>
 			<Piece piece={contents} />
 			{indicator}

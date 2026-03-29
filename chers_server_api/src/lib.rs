@@ -91,6 +91,8 @@ pub mod client {
         Authenticate {
             /// Secret token that identifies this player.
             token: String,
+            /// Display name for this player.
+            name: String,
         },
 
         /// Make a chess move using structured coordinates.
@@ -172,7 +174,7 @@ pub mod server {
         GameStarted {
             /// The initial game state (starting position).
             #[ts(type = "Game")]
-            game_state: Game,
+            game_state: chers::State,
             /// Information about the white player.
             white_player: PlayerInfo,
             /// Information about the black player.
@@ -197,7 +199,7 @@ pub mod server {
             promotion: Option<PromotionPiece>,
             /// The new game state after the move.
             #[ts(type = "Game")]
-            new_state: Game,
+            new_state: chers::State,
             /// Whether the move puts the opponent in check.
             is_check: bool,
             /// Whether the move results in checkmate.
@@ -292,7 +294,7 @@ pub mod server {
         StateSync {
             /// The current game/board state.
             #[ts(type = "Game")]
-            game_state: Game,
+            game_state: chers::State,
             /// Which player's turn it is.
             #[ts(type = "Color")]
             current_turn: Color,

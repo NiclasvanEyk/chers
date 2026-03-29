@@ -1,28 +1,50 @@
-use crate::matches::{Match, MatchId};
 use std::sync::Arc;
 
-#[derive(Default)]
+use tokio::sync::RwLock;
+
+use crate::matches::{state::Match, MatchId};
+
 pub struct MatchRepository {
-    last_id: u32,
-    matches: Vec<Arc<Match>>,
+    matches: scc::HashMap<MatchId, Arc<RwLock<Match>>>,
+}
+
+impl Default for MatchRepository {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MatchRepository {
-    fn generate_id(&mut self) -> MatchId {
-        let id = self.last_id.wrapping_add(1);
-        self.last_id = id;
-
-        id
+    pub fn new() -> Self {
+        Self {
+            matches: scc::HashMap::new(),
+        }
     }
 
-    pub fn start(&mut self) -> Arc<Match> {
-        let m = Arc::new(Match::new(self.generate_id()));
-        self.matches.push(m.clone());
+    /// Create a new match in Lobby state
+    /// Uses scc's lock-free insert - no global lock on the map
+    pub fn create(&self) -> Arc<RwLock<Match>> {
+        let id = MatchId::new_v4();
+        let match_state = Match::new(id);
+        let arc = Arc::new(RwLock::new(match_state));
 
-        m
+        // scc::HashMap::insert_sync is lock-free and thread-safe
+        // Each entry is independently locked
+        let _ = self.matches.insert_sync(id, arc.clone());
+
+        arc
     }
 
-    pub fn find(&self, id: MatchId) -> Option<Arc<Match>> {
-        self.matches.iter().find(|m| m.id == id).cloned()
+    /// Find a match by ID - returns Arc for shared ownership across handlers
+    /// Uses scc::HashMap::read_sync which allows concurrent reads to different keys
+    pub fn get(&self, id: MatchId) -> Option<Arc<RwLock<Match>>> {
+        // scc::HashMap::read_sync takes a closure that receives (&K, &V)
+        // and returns a value. We clone the Arc to increment ref count.
+        self.matches.read_sync(&id, |_, v| v.clone())
+    }
+
+    /// Remove a match (for cleanup/GC later)
+    pub fn remove(&self, id: MatchId) -> Option<Arc<RwLock<Match>>> {
+        self.matches.remove_sync(&id).map(|(_, v)| v)
     }
 }

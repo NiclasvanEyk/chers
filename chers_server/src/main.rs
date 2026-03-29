@@ -5,13 +5,12 @@ use crate::matches::repository::MatchRepository;
 use axum::routing::{get, post};
 use axum::Router;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 
 pub struct AppState {
-    pub matches: Mutex<MatchRepository>,
+    pub matches: MatchRepository,
 }
 
 #[shuttle_runtime::main]
@@ -32,7 +31,7 @@ async fn main() -> shuttle_axum::ShuttleAxum {
         )
         .layer(CorsLayer::new().allow_origin(Any))
         .with_state(Arc::new(AppState {
-            matches: Mutex::new(MatchRepository::default()),
+            matches: MatchRepository::default(),
         }));
 
     Ok(app.into())

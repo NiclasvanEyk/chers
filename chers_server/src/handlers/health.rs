@@ -1,7 +1,5 @@
-use std::net::SocketAddr;
+use axum::response::Html;
 
-use axum::{extract::ConnectInfo, response::Html};
-
-pub async fn check(ConnectInfo(addr): ConnectInfo<SocketAddr>) -> Html<String> {
-    Html(format!("Perfectly fine, thanks for asking {}", addr))
+pub async fn check() -> Html<String> {
+    Html("Perfectly fine, thanks for asking".to_string())
 }

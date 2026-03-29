@@ -6,8 +6,7 @@ edition = "2021"
 [dependencies]
 chers = { path = "../chers" }
 serde = { version = "1", features = ["derive"] }
-tsify = "0.5"
-wasm-bindgen = "0.2"
+ts-rs = { version = "10", features = ["serde-compat"] }
 
 [lib]
 crate-type = ["cdylib", "rlib"]

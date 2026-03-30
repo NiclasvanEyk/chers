@@ -5,7 +5,7 @@ function parseBoolean(value: unknown) {
 }
 
 const SERVER_HOST =
-  process.env.NEXT_PUBLIC_CHERS_SERVER_HOST ?? "server.chers.niclasve.me";
+  process.env.NEXT_PUBLIC_CHERS_SERVER_HOST ?? "chers-server.fly.dev";
 const USE_SSL = parseBoolean(process.env.NEXT_PUBLIC_CHERS_USE_SSL) ?? true;
 const SERVER_URL = `${USE_SSL ? "https" : "http"}://${SERVER_HOST}`;
 const WEBSOCKET_URL = `${USE_SSL ? "wss" : "ws"}://${SERVER_HOST}`;

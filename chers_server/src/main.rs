@@ -9,15 +9,22 @@ use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 use tracing::info;
+use tracing_subscriber::EnvFilter;
 
 pub struct AppState {
     pub matches: MatchRepository,
 }
 
-#[shuttle_runtime::main]
-async fn main() -> shuttle_axum::ShuttleAxum {
-    // Don't initialize tracing_subscriber - shuttle does this automatically
-    
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize tracing subscriber with env filter
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| EnvFilter::new("info")),
+        )
+        .init();
+
     let app = Router::new()
         .route("/health", get(handlers::health::check))
         .route(
@@ -37,6 +44,10 @@ async fn main() -> shuttle_axum::ShuttleAxum {
             matches: MatchRepository::default(),
         }));
 
-    info!("🚀 Chers server starting up...");
-    Ok(app.into())
+    let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
+
+    info!("🚀 Chers server starting on port {}", port);
+    axum::serve(listener, app).await?;
+    Ok(())
 }

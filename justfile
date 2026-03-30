@@ -6,11 +6,15 @@ wasm-release:
     cargo build --package=chers --target=wasm32-unknown-unknown --release
     wasm-bindgen target/wasm32-unknown-unknown/release/chers.wasm --target=web --out-dir=chers_web/generated/chers
 
-chers-server-ts:
+server-ts:
     rm -rf chers_web/generated/chers_server_api
     mkdir -p chers_web/generated/chers_server_api
     # ts-rs exports relative to crate root, so use absolute path
     TS_RS_EXPORT_DIR={{justfile_directory()}}/chers_web/generated/chers_server_api cargo test --package=chers_server_api
+
+# Start backend server with debug logging on port 8000
+server-dev:
+    cd chers_server && PORT=8000 RUST_LOG=chers_server=debug,axum=debug,tower_http=debug cargo run
 
 play:
     cargo run --bin=chers_cli
@@ -18,10 +22,10 @@ play:
 watch-rust-tests:
     cargo watch --clear --quiet --exec 'nextest run --success-output=never --status-level=fail --hide-progress-bar'
 
-web-dev: wasm-dev chers-server-ts
+web-dev: wasm-dev server-ts
     pnpm install && pnpm --filter chers_web run dev
 
-web-release: wasm-release chers-server-ts
+web-release: wasm-release server-ts
     pnpm install && pnpm --filter chers_web run build
 
 clean:

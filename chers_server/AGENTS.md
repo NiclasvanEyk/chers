@@ -2,13 +2,12 @@
 
 ## Overview
 
-The Chers server provides WebSocket-based multiplayer chess functionality. It's built with Rust using Axum and runs on Shuttle for deployment.
+The Chers server provides WebSocket-based multiplayer chess functionality. It's built with Rust using Axum.
 
 ## Key Technologies
 
 - **Axum 0.8** - Web framework with WebSocket support
 - **Tokio** - Async runtime
-- **Shuttle** - Serverless deployment platform
 - **scc** - Scalable concurrent containers (for match state storage)
 - **UUID** - Match ID generation
 - **Tracing** - Structured logging
@@ -166,18 +165,6 @@ cargo test
 cargo test --test e2e_tests
 ```
 
-## Deployment
-
-The server uses Shuttle for deployment:
-
-```bash
-# Install shuttle CLI
-cargo install cargo-shuttle
-
-# Deploy
-cargo shuttle deploy
-```
-
 ## Logging
 
 Structured logging with tracing:
@@ -187,7 +174,18 @@ tracing::info!(match_id = %id, player = ?color, "Game started");
 tracing::debug!("Move received: {:?}", message);
 ```
 
-**Important**: Don't initialize `tracing_subscriber` in main() - Shuttle does this automatically.
+Log levels are controlled via the `RUST_LOG` environment variable. By default, the server logs at `info` level. For development, you can enable debug logging:
+
+```bash
+# Debug logging for the server
+RUST_LOG=chers_server=debug cargo run
+
+# Debug logging for everything
+RUST_LOG=debug cargo run
+
+# Trace level (very verbose)
+RUST_LOG=trace cargo run
+```
 
 ## Common Issues
 
@@ -203,15 +201,6 @@ In Axum 0.8, use `{id}` not `:id`:
 .route("/matches/:id/play", get(...))
 ```
 
-### Shuttle Tracing
-
-Never initialize `tracing_subscriber` - Shuttle panics if you do:
-
-```rust
-// DON'T do this
-// tracing_subscriber::fmt::init();
-```
-
 ### WASM Types in API
 
 Some types (Coordinate, Color, Game) come from the chers WASM crate and don't implement `ts_rs::TS`. Use `#[ts(type = "TypeName")]` in the API crate.
@@ -220,14 +209,20 @@ Some types (Coordinate, Color, Game) come from the chers WASM crate and don't im
 
 | Command | Description |
 |---------|-------------|
-| `cargo run` | Run server locally |
+| `cargo run` | Run server locally (port 3000) |
+| `PORT=8000 cargo run` | Run server on custom port |
 | `cargo test` | Run unit tests |
 | `cargo test --test e2e_tests` | Run E2E tests |
-| `cargo shuttle deploy` | Deploy to Shuttle |
 
 ## Environment Variables
 
-None required for local development. Shuttle handles production config.
+- `PORT` - Server port (default: 3000)
+- `RUST_LOG` - Log level filter (default: info)
+
+Example:
+```bash
+PORT=8000 RUST_LOG=debug cargo run
+```
 
 ## API Documentation
 

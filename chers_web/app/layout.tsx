@@ -1,6 +1,7 @@
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import type { Metadata } from "next";
+import { AppProviders } from "./providers";
 
 export const metadata: Metadata = {
 	title: "Chers",
@@ -26,9 +27,11 @@ export default function RootLayout({
 	return (
 		<html lang="en" className={overScrollBehaviors}>
 			<body>
-				<main className="flex min-h-screen flex-col items-center justify-center">
-					{children}
-				</main>
+				<AppProviders>
+					<main className="flex min-h-screen flex-col items-center justify-center">
+						{children}
+					</main>
+				</AppProviders>
 			</body>
 			<Analytics />
 		</html>

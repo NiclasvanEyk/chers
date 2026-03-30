@@ -28,7 +28,7 @@ export function Board({ state, dispatch }: BoardProps) {
 
 	if (state.type === "GAME_OVER") {
 		components.push(
-			<div className="fixed inset-0 z-20">
+			<div key="game-over" className="fixed inset-0 z-20">
 				<div className="flex flex-col h-screen w-screen bg-black/75 place-content-center text-center">
 					<dialog
 						open
@@ -59,6 +59,7 @@ export function Board({ state, dispatch }: BoardProps) {
 	if (state.type === "PROMOTING") {
 		components.push(
 			<Promotion
+				key="promotion"
 				color={state.game.player}
 				onChoice={(figure) => dispatch({ type: "PROMOTE", to: figure })}
 			/>,
@@ -67,6 +68,7 @@ export function Board({ state, dispatch }: BoardProps) {
 
 	components.push(
 		<div
+			key="board"
 			// @ts-ignore-next-line
 			inert={state.type === "PROMOTING" ? true : null}
 			className="w-full h-full grid grid-cols-8 grid-rows-8"

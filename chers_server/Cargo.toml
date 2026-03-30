@@ -15,8 +15,24 @@ tokio = { version = "1", features = ["full"] }
 tower = { version = "0.4", features = ["util"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-shuttle-runtime = "0.57.0"
-shuttle-axum = "0.57.0"
+jiff = "0.2.23"
+rand = "0.8"
+scc = "3.6.12"
+sentry = { version = "0.47.0", features = ["tower-axum-matched-path", "tracing", "logs"] }
+# OpenTelemetry
+opentelemetry = { version = "0.29.1", features = ["trace"] }
+opentelemetry_sdk = { version = "0.29.0", features = ["trace", "rt-tokio"] }
+opentelemetry-otlp = { version = "0.29.0", features = ["trace", "grpc-tonic"] }
+opentelemetry-semantic-conventions = "0.29.0"
+sentry-opentelemetry = "0.47.0"
+tracing-opentelemetry = "0.30"
+dotenvy = "0.15"
+tonic = { version = "0.12", optional = true }
+uuid = { version = "1.23.0", features = ["v4", "rng"] }
+
+[dev-dependencies]
+tokio-tungstenite = "0.24"
+reqwest = { version = "0.12", features = ["json"] }
 
 [[bin]]
 name = "chers_server"

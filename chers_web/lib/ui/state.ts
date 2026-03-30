@@ -130,7 +130,7 @@ export function buildChersReducer(adapter: Adapter) {
 export type Dispatcher = Dispatch<Command>;
 
 export function canPickUp(cellContents: Cell, player: Color): boolean {
-	if (cellContents === undefined) {
+	if (cellContents === undefined || cellContents === null) {
 		return false;
 	}
 

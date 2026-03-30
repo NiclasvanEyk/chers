@@ -1,0 +1,53 @@
+services:
+  aspire-dashboard:
+    image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
+    container_name: aspire-dashboard
+    ports:
+      - "18888:18888"  # Aspire Dashboard UI
+      - "18889:18889"  # OTLP/gRPC (same port as container)
+      - "18890:18890"  # OTLP/HTTP (same port as container)
+    environment:
+      - ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
+    networks:
+      - chers-network
+
+  chers-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chers-server
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://aspire-dashboard:18889
+      - OTEL_SERVICE_NAME=chers-server
+      - OTEL_TRACES_SAMPLER_ARG=1.0
+      - RUST_LOG=info
+    depends_on:
+      - aspire-dashboard
+    networks:
+      - chers-network
+
+  chers-web:
+    image: node:25-alpine
+    container_name: chers-web
+    working_dir: /app
+    command: sh -c "npm install -g pnpm && pnpm install && pnpm dev"
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_CHERS_SERVER_HOST=chers-server:8000
+      - NEXT_PUBLIC_CHERS_USE_SSL=false
+    volumes:
+      - ./chers_web:/app:cached
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - chers-server
+    networks:
+      - chers-network
+
+networks:
+  chers-network:
+    driver: bridge

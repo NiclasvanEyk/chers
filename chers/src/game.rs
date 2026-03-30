@@ -32,7 +32,7 @@ pub enum Event {
     Mate,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Game {}
 
 impl Game {

@@ -12,7 +12,7 @@ use chers::{Color, Coordinate, PromotedFigure};
 use chers_server_api::{ClientMessage, PrivateEvent, PromotionPiece, PublicEvent, ServerMessage};
 use futures::sink::SinkExt;
 use serde::Deserialize;
-use tracing::{debug, error, info, instrument, warn};
+use tracing::{debug, error, info, info_span, instrument, warn, Instrument};
 
 use crate::{
     matches::{
@@ -90,19 +90,54 @@ async fn handle_connection(
         reconnecting
     };
 
-    let (context, mut private_rx, mut public_rx) = if is_reconnection {
+    // Create authentication span
+    let _auth_span = info_span!(
+        "authenticate",
+        player.token = %token,
+        connection.type = if is_reconnection { "reconnect" } else { "new" },
+    );
+
+    let (context, mut private_rx, mut public_rx, player_span) = if is_reconnection {
         // Handle reconnection
-        match handle_reconnection(&mut socket, &match_arc, &match_id, token, name).await {
-            Some(data) => data,
+        match handle_reconnection(&mut socket, &match_arc, &match_id, token.clone(), name.clone()).await {
+            Some((ctx, rx1, rx2)) => {
+                // Get the player's span from the match state
+                let span = {
+                    let match_guard = match_arc.read().await;
+                    match_guard.get_player_span(&token)
+                };
+                (ctx, rx1, rx2, span)
+            }
             None => return,
         }
     } else {
         // Handle new connection
-        match authenticate_player(&mut socket, &match_arc, &match_id, token, name).await {
-            Some(data) => data,
+        match authenticate_player(&mut socket, &match_arc, &match_id, token.clone(), name.clone()).await {
+            Some((ctx, rx1, rx2)) => {
+                // Get the player's span from the match state
+                let span = {
+                    let match_guard = match_arc.read().await;
+                    match_guard.get_player_span(&token)
+                };
+                (ctx, rx1, rx2, span)
+            }
             None => return,
         }
     };
+
+    // Get the player span - will be used by child spans
+    let player_span_for_events = player_span.clone();
+    
+    // Emit connection event in the player span context
+    if let Some(ref span) = player_span_for_events {
+        let _entered = span.enter();
+        info!(
+            connection.type = if is_reconnection { "reconnect" } else { "new" },
+            player.token = %token,
+            player.name = %context.name,
+            "player_connected",
+        );
+    }
 
     info!(
         "🎮 Player {} ({:?}) ready in match {}. Starting game loop.",
@@ -110,17 +145,34 @@ async fn handle_connection(
     );
 
     // 4. Start game loop with player context
-    game_loop(
+    // Instrument the game loop with the player span so all events are attributed to it
+    let game_loop_future = game_loop(
         &mut socket,
         &match_arc,
         &match_id,
         &context,
         &mut private_rx,
         &mut public_rx,
-    )
-    .await;
+    );
+    
+    // Use instrument to maintain span context across await points
+    if let Some(span) = player_span_for_events.clone() {
+        game_loop_future.instrument(span).await;
+    } else {
+        game_loop_future.await;
+    }
 
     // 5. Handle disconnection after game loop ends
+    // Emit disconnection event in the player span context
+    if let Some(ref span) = player_span_for_events {
+        let _entered = span.enter();
+        info!(
+            player.token = %context.token,
+            player.name = %context.name,
+            "player_disconnected",
+        );
+    }
+    
     info!("👋 Player {} disconnecting from match {}", context.name, match_id);
     handle_disconnection(&match_arc, &match_id, &context).await;
 }
@@ -443,6 +495,15 @@ async fn broadcast_game_started(
     let _ = match_guard.channels.public_tx.send(event);
 }
 
+#[instrument(
+    skip(socket, match_arc, private_rx, public_rx, context),
+    fields(
+        match.id = %match_id,
+        player.name = %context.name,
+        player.color = %format!("{:?}", context.color),
+        player.slot = %context.slot,
+    )
+)]
 async fn game_loop(
     socket: &mut WebSocket,
     match_arc: &Arc<tokio::sync::RwLock<Match>>,
@@ -643,6 +704,13 @@ enum MessageHandlingResult {
     Error,
 }
 
+#[instrument(
+    skip(socket, match_arc, text, context),
+    fields(
+        player.name = %context.name,
+        player.color = %format!("{:?}", context.color),
+    )
+)]
 async fn handle_client_message(
     socket: &mut WebSocket,
     match_arc: &Arc<tokio::sync::RwLock<Match>>,
@@ -697,6 +765,15 @@ fn format_coords(coord: Coordinate) -> String {
     format!("{}{}", file, rank)
 }
 
+#[instrument(
+    skip(socket, match_arc, context),
+    fields(
+        player.name = %context.name,
+        player.color = %format!("{:?}", context.color),
+        move.from = ?from,
+        move.to = ?to,
+    )
+)]
 async fn handle_make_move(
     socket: &mut WebSocket,
     match_arc: &Arc<tokio::sync::RwLock<Match>>,

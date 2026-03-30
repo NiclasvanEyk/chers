@@ -1,0 +1,6 @@
+fly.toml
+.git/
+target/
+chers_web/
+node_modules/
+.next/

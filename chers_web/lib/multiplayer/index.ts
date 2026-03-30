@@ -1,4 +1,4 @@
-export { getOrCreateCredentials, clearCredentials, hasExistingCredentials } from "./token";
+export { getOrCreateCredentials, clearCredentials, hasExistingCredentials, initializeCredentialCleanup } from "./token";
 export type { MatchCredentials } from "./token";
 
 export { MatchConnection } from "./connection";

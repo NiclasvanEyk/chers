@@ -4,6 +4,7 @@ use chers::{Color, Coordinate, Game, PromotedFigure, State};
 use jiff::Timestamp;
 use tokio::sync::broadcast;
 use tokio::task::JoinHandle;
+use tracing::info_span;
 
 use chers_server_api::PrivateEvent;
 
@@ -18,16 +19,24 @@ pub struct Match {
     pub state: MatchState,
     pub channels: MatchChannels,
     pub move_count: u32,
+    pub span: tracing::Span, // Root span for the match, parent of all player spans
 }
 
 impl Match {
     pub fn new(id: MatchId) -> Self {
+        let span = info_span!(
+            "match",
+            match.id = %id,
+            match.created_at = %Timestamp::now(),
+        );
+
         Self {
             id,
             created_at: Timestamp::now(),
             state: MatchState::Lobby(LobbyState::default()),
             channels: MatchChannels::new(),
             move_count: 0,
+            span,
         }
     }
 
@@ -49,12 +58,23 @@ impl Match {
             return Err(JoinError::DuplicateToken);
         }
 
+        // Create player span as child of match span
+        let player_span = info_span!(
+            parent: self.span.clone(),
+            "player_connection",
+            player.token = %token,
+            player.name = %name,
+            player.slot = tracing::field::Empty,
+            player.color = tracing::field::Empty,
+        );
+
         let slot = PlayerSlot {
             name,
-            token,
+            token: token.clone(),
             connected: true,
             last_seen_at: Timestamp::now(),
             tx: Some(private_tx),
+            span: Some(player_span),
         };
 
         // Assign to player1 or player2
@@ -87,34 +107,59 @@ impl Match {
         // Random assignment: true = player1 is White, false = player2 is White
         let player1_is_white = rand::random::<bool>();
 
+        // Preserve spans from PlayerSlot and update with color
         let (white, black) = if player1_is_white {
+            // Update p1's span with color and slot
+            if let Some(span) = &p1.span {
+                span.record("player.color", "White");
+                span.record("player.slot", 1);
+            }
+            // Update p2's span with color and slot
+            if let Some(span) = &p2.span {
+                span.record("player.color", "Black");
+                span.record("player.slot", 2);
+            }
             (
                 PlayerInfo {
                     name: p1.name.clone(),
                     connected: true,
                     token: p1.token.clone(),
                     disconnected_at: None,
+                    span: p1.span.clone(),
                 },
                 PlayerInfo {
                     name: p2.name.clone(),
                     connected: true,
                     token: p2.token.clone(),
                     disconnected_at: None,
+                    span: p2.span.clone(),
                 },
             )
         } else {
+            // Update p2's span with color (White) and slot
+            if let Some(span) = &p2.span {
+                span.record("player.color", "White");
+                span.record("player.slot", 2);
+            }
+            // Update p1's span with color (Black) and slot
+            if let Some(span) = &p1.span {
+                span.record("player.color", "Black");
+                span.record("player.slot", 1);
+            }
             (
                 PlayerInfo {
                     name: p2.name.clone(),
                     connected: true,
                     token: p2.token.clone(),
                     disconnected_at: None,
+                    span: p2.span.clone(),
                 },
                 PlayerInfo {
                     name: p1.name.clone(),
                     connected: true,
                     token: p1.token.clone(),
                     disconnected_at: None,
+                    span: p1.span.clone(),
                 },
             )
         };
@@ -144,6 +189,14 @@ impl Match {
         to: Coordinate,
         promotion: Option<PromotedFigure>,
     ) -> Result<MoveResult, MoveError> {
+        let _span = info_span!(
+            "make_move",
+            move.from = ?from,
+            move.to = ?to,
+            move.number = self.move_count + 1,
+            move.promotion = ?promotion,
+        );
+
         let active = match &mut self.state {
             MatchState::InProgress(active) => active,
             _ => return Err(MoveError::GameNotInProgress),
@@ -389,6 +442,19 @@ impl Match {
             _ => return,
         };
 
+        let _span = info_span!(
+            "finish_game",
+            game.result = ?result,
+            game.winner = match &result {
+                GameResult::WhiteWins(_) => "White",
+                GameResult::BlackWins(_) => "Black",
+                GameResult::Draw(_) => "Draw",
+            },
+            game.reason = match &result {
+                GameResult::WhiteWins(r) | GameResult::BlackWins(r) | GameResult::Draw(r) => format!("{:?}", r),
+            },
+        );
+
         // Cancel any pending timer
         if let Some(timer) = &active.disconnection_timer {
             timer.abort();
@@ -546,6 +612,27 @@ impl Match {
         }
 
         disconnected
+    }
+
+    /// Get a player's span by token
+    pub fn get_player_span(&self, token: &str) -> Option<tracing::Span> {
+        // Check in-progress game first
+        if let MatchState::InProgress(active) = &self.state {
+            if active.white.token == token {
+                return active.white.span.clone();
+            } else if active.black.token == token {
+                return active.black.span.clone();
+            }
+        }
+
+        // Check lobby
+        if let MatchState::Lobby(lobby) = &self.state {
+            if let Some(slot) = lobby.find_player(token) {
+                return slot.span.clone();
+            }
+        }
+
+        None
     }
 }
 

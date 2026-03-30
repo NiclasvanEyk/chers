@@ -61,3 +61,18 @@ export function generatePlayerName(): string {
   }
   return result;
 }
+
+// Re-exports from the multiplayer module
+export {
+  getOrCreateCredentials,
+  clearCredentials,
+  hasExistingCredentials,
+  initializeCredentialCleanup,
+} from "./multiplayer/token";
+export type { MatchCredentials } from "./multiplayer/token";
+
+export { MatchConnection } from "./multiplayer/connection";
+export type { ConnectionState, ConnectionCallbacks } from "./multiplayer/connection";
+
+export { useMatch } from "./multiplayer/useMatch";
+export type { MatchState, MatchPhase, MatchAction } from "./multiplayer/useMatch";

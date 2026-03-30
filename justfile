@@ -14,7 +14,17 @@ server-ts:
 
 # Start backend server with debug logging on port 8000
 server-dev:
-    cd chers_server && PORT=8000 RUST_LOG=chers_server=debug,axum=debug,tower_http=debug cargo run
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    cd chers_server
+    export PORT=8000
+    export RUST_LOG=chers_server=debug,axum=info,tower_http=info
+    export OTEL_EXPORTER_OTLP_ENDPOINT="${OTEL_EXPORTER_OTLP_ENDPOINT:-http://127.0.0.1:18889}"
+    export OTEL_TRACES_SAMPLER_ARG="${OTEL_TRACES_SAMPLER_ARG:-1.0}"
+    export OTEL_SERVICE_NAME="${OTEL_SERVICE_NAME:-chers-server}"
+    export SENTRY_ENVIRONMENT="${SENTRY_ENVIRONMENT:-}"
+    export SENTRY_TRACES_SAMPLE_RATE="${SENTRY_TRACES_SAMPLE_RATE:-1.0}"
+    cargo run
 
 play:
     cargo run --bin=chers_cli

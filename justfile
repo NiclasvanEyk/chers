@@ -38,6 +38,15 @@ web-dev: wasm-dev server-ts
 web-release: wasm-release server-ts
     pnpm install && pnpm --filter chers_web run build
 
+# Build production binary with embedded frontend
+build-bundled: wasm-release server-ts
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    pnpm install
+    BUILD_STATIC=true pnpm --filter chers_web run build
+    cargo build --package=chers_server --release --features bundle-frontend
+    @echo "✓ Built: target/release/chers_server"
+
 clean:
     cargo clean
     rm -rf node_modules chers_web/generated/chers*

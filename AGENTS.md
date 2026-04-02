@@ -39,11 +39,13 @@ chers_cli/                  # Terminal chess client
 ## Architecture Overview
 
 ### Single Player (Local)
+
 ```
 User -> Next.js (React) -> WASM Engine -> Browser
 ```
 
 ### Multiplayer
+
 ```
 Player A (Web)                Player B (Web)
     |                             |
@@ -64,18 +66,21 @@ Next.js + WASM              Next.js + WASM
 ### Running Locally
 
 **Terminal 1** - Start the server:
+
 ```bash
 cd chers_server
 cargo shuttle run
 ```
 
 **Terminal 2** - Start the frontend:
+
 ```bash
 cd chers_web
 bun dev
 ```
 
 **Terminal 3** - (Optional) CLI client:
+
 ```bash
 cd chers_cli
 cargo run
@@ -93,12 +98,14 @@ cargo test  # Generates TypeScript to chers_web/generated/
 ### Build for Production
 
 **Frontend:**
+
 ```bash
 cd chers_web
 bun run build
 ```
 
 **Server:**
+
 ```bash
 cd chers_server
 cargo shuttle deploy
@@ -106,14 +113,14 @@ cargo shuttle deploy
 
 ## Technology Stack
 
-| Component | Technology |
-|-----------|-----------|
-| Chess Engine | Rust → WASM |
-| Frontend | Next.js 16, React 19, TypeScript 5, Tailwind 4 |
-| Server | Axum 0.8, Tokio, Shuttle |
-| Protocol | WebSocket + JSON |
-| Package Manager | Bun (frontend), Cargo (Rust) |
-| Deployment | Vercel (frontend), Shuttle (server) |
+| Component       | Technology                                     |
+| --------------- | ---------------------------------------------- |
+| Chess Engine    | Rust → WASM                                    |
+| Frontend        | Next.js 16, React 19, TypeScript 5, Tailwind 4 |
+| Server          | Axum 0.8, Tokio, Shuttle                       |
+| Protocol        | WebSocket + JSON                               |
+| Package Manager | Bun (frontend), Cargo (Rust)                   |
+| Deployment      | Vercel (frontend), Shuttle (server)            |
 
 ## Key Features
 
@@ -125,15 +132,15 @@ cargo shuttle deploy
 
 ## Development Commands Reference
 
-| Task | Command | Location |
-|------|---------|----------|
-| Dev frontend | `bun dev` | `chers_web/` |
-| Dev server | `cargo shuttle run` | `chers_server/` |
-| Test frontend | `bun test` | `chers_web/` |
-| Test server | `cargo test` | `chers_server/` |
-| Lint frontend | `bun run lint` | `chers_web/` |
-| Generate types | `cargo test` | `chers_server_api/` |
-| Deploy server | `cargo shuttle deploy` | `chers_server/` |
+| Task           | Command                | Location            |
+| -------------- | ---------------------- | ------------------- |
+| Dev frontend   | `bun dev`              | `chers_web/`        |
+| Dev server     | `cargo shuttle run`    | `chers_server/`     |
+| Test frontend  | `bun test`             | `chers_web/`        |
+| Test server    | `cargo test`           | `chers_server/`     |
+| Lint frontend  | `bun run lint`         | `chers_web/`        |
+| Generate types | `cargo test`           | `chers_server_api/` |
+| Deploy server  | `cargo shuttle deploy` | `chers_server/`     |
 
 ## Common Tasks
 
@@ -177,6 +184,7 @@ Each crate/package has detailed documentation:
 ### Environment Variables
 
 **Frontend** (`chers_web/.env.local`):
+
 ```env
 NEXT_PUBLIC_SERVER_URL=http://localhost:3001  # Local dev
 ```
@@ -190,4 +198,4 @@ NEXT_PUBLIC_SERVER_URL=http://localhost:3001  # Local dev
 
 ---
 
-*This is a living document. Update when adding new components or major features.*
+_This is a living document. Update when adding new components or major features._

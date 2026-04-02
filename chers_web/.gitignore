@@ -7,12 +7,12 @@
 # testing
 /coverage
 
-# next.js
-/.next/
-/out/
+# tanstack start
+/.output/
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
@@ -31,4 +31,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
+
+# route tree generation
+routeTree.gen.ts

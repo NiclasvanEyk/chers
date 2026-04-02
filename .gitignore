@@ -1,3 +1,4 @@
 target
 node_modules
 chers_server_api/pkg
+.DS_STORE

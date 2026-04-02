@@ -73,6 +73,7 @@ See [../chers_server/AGENTS.md](../chers_server/AGENTS.md) for the server archit
 ### useMatch Hook (`lib/multiplayer/useMatch.ts`)
 
 The main state management for multiplayer games. Handles:
+
 - Connection lifecycle (connecting → connected → reconnecting)
 - Message processing from server
 - Game state synchronization
@@ -85,6 +86,7 @@ const { matchState, sendMove, isConnected } = useMatch(matchId);
 ### MatchConnection (`lib/multiplayer/connection.ts`)
 
 WebSocket wrapper with exponential backoff reconnection:
+
 - 1s → 2s → 4s → 8s → 16s → 30s backoff
 - Max reconnection window: 2 minutes (conservative approach)
 - Heartbeat/ping-pong every 30 seconds
@@ -92,6 +94,7 @@ WebSocket wrapper with exponential backoff reconnection:
 ### Token Management (`lib/multiplayer/token.ts`)
 
 Stores player credentials in sessionStorage:
+
 - `token` - Unique player identifier
 - `matchId` - Match the player is in
 - `playerName` - Generated player name
@@ -105,8 +108,8 @@ The `Chers` component supports both local and multiplayer modes:
 <Chers />
 
 // Multiplayer mode
-<Chers 
-  multiplayerState={matchState.game} 
+<Chers
+  multiplayerState={matchState.game}
   onMove={sendMove}
   disabled={matchState.phase !== 'playing'}
 />
@@ -164,7 +167,7 @@ Or from the repo root using pnpm workspace filtering:
 # Run dev server
 pnpm web dev
 
-# Build for production  
+# Build for production
 pnpm web build
 
 # Run linter
@@ -197,7 +200,7 @@ In development, React Strict Mode causes components to mount/unmount/remount. Th
 Always initialize WASM before rendering the chess board:
 
 ```typescript
-import { init } from 'chers';
+import { init } from "chers";
 ```
 
 ### Next.js 15 Params
@@ -205,26 +208,26 @@ import { init } from 'chers';
 In Next.js 15, `params` is a Promise and must be unwrapped:
 
 ```typescript
-const { id } = React.use(params);  // Not: const { id } = params;
+const { id } = React.use(params); // Not: const { id } = params;
 ```
 
 ## Build Commands
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start dev server with hot reload |
-| `pnpm run build` | Production build |
-| `pnpm run lint` | Run ESLint |
-| `bun test` | Run test suite (requires Bun) |
+| Command          | Description                      |
+| ---------------- | -------------------------------- |
+| `pnpm dev`       | Start dev server with hot reload |
+| `pnpm run build` | Production build                 |
+| `pnpm run lint`  | Run ESLint                       |
+| `bun test`       | Run test suite (requires Bun)    |
 
 From repo root using `pnpm web <command>`:
 
-| Command | Description |
-|---------|-------------|
-| `pnpm web dev` | Start dev server with hot reload |
-| `pnpm web build` | Production build |
-| `pnpm web lint` | Run ESLint |
-| `pnpm web test` | Run test suite |
+| Command          | Description                      |
+| ---------------- | -------------------------------- |
+| `pnpm web dev`   | Start dev server with hot reload |
+| `pnpm web build` | Production build                 |
+| `pnpm web lint`  | Run ESLint                       |
+| `pnpm web test`  | Run test suite                   |
 
 ## Related Documentation
 

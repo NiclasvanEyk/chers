@@ -3,6 +3,10 @@ name = "chers_server"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+bundle-frontend = ["rust-embed", "mime_guess"]
+
 [dependencies]
 chers = { path = "../chers" }
 chers_server_api = { path = "../chers_server_api" }
@@ -29,6 +33,8 @@ tracing-opentelemetry = "0.30"
 dotenvy = "0.15"
 tonic = { version = "0.12", optional = true }
 uuid = { version = "1.23.0", features = ["v4", "rng"] }
+rust-embed = { version = "8", features = ["include-exclude"], optional = true }
+mime_guess = { version = "2", optional = true }
 
 [dev-dependencies]
 tokio-tungstenite = "0.24"

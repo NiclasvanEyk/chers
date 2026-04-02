@@ -207,12 +207,12 @@ Some types (Coordinate, Color, Game) come from the chers WASM crate and don't im
 
 ## Build Commands
 
-| Command | Description |
-|---------|-------------|
-| `cargo run` | Run server locally (port 3000) |
-| `PORT=8000 cargo run` | Run server on custom port |
-| `cargo test` | Run unit tests |
-| `cargo test --test e2e_tests` | Run E2E tests |
+| Command                       | Description                    |
+| ----------------------------- | ------------------------------ |
+| `cargo run`                   | Run server locally (port 3000) |
+| `PORT=8000 cargo run`         | Run server on custom port      |
+| `cargo test`                  | Run unit tests                 |
+| `cargo test --test e2e_tests` | Run E2E tests                  |
 
 ## Environment Variables
 
@@ -220,6 +220,7 @@ Some types (Coordinate, Color, Game) come from the chers WASM crate and don't im
 - `RUST_LOG` - Log level filter (default: info)
 
 Example:
+
 ```bash
 PORT=8000 RUST_LOG=debug cargo run
 ```
@@ -227,6 +228,7 @@ PORT=8000 RUST_LOG=debug cargo run
 ## API Documentation
 
 For message protocol details, see:
+
 - [Server API Types](../chers_server_api/AGENTS.md) - Message definitions and protocol
 - [Frontend](../chers_web/AGENTS.md) - Client-side WebSocket handling
 

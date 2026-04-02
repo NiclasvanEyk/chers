@@ -30,4 +30,3 @@ to get up and running in the terminal (requires Rust to be installed locally) or
 - [ ] Checkmate
 - [ ] Mate
 - [ ] Remove this list once all items are finished
-

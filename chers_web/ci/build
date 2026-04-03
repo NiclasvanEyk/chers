@@ -7,6 +7,4 @@ export CARGO_HOME=/vercel/.cargo
 # Vercel runs from chers_web/, need to go up to project root for workspace
 cd ..
 
-just wasm-release
-cd chers_web
-npm run build
+just web-release

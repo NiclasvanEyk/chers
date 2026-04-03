@@ -3,9 +3,9 @@ services:
     image: mcr.microsoft.com/dotnet/aspire-dashboard:latest
     container_name: aspire-dashboard
     ports:
-      - "18888:18888"  # Aspire Dashboard UI
-      - "18889:18889"  # OTLP/gRPC (same port as container)
-      - "18890:18890"  # OTLP/HTTP (same port as container)
+      - "18888:18888" # Aspire Dashboard UI
+      - "18889:18889" # OTLP/gRPC (same port as container)
+      - "18890:18890" # OTLP/HTTP (same port as container)
     environment:
       - ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS=true
     networks:
@@ -37,8 +37,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_CHERS_SERVER_HOST=chers-server:8000
-      - NEXT_PUBLIC_CHERS_USE_SSL=false
+      - VITE_CHERS_SERVER_HOST=chers-server:8000
+      - VITE_CHERS_USE_SSL=false
     volumes:
       - ./chers_web:/app:cached
       - /app/node_modules

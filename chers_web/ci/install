@@ -18,7 +18,7 @@ else
     cargo --version
 fi
 
-echo "Installing clis..."
+echo "Installing CLIs..."
 export BINSTALL_DISABLE_TELEMETRY=true
 curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
 cargo binstall --no-confirm wasm-bindgen-cli just

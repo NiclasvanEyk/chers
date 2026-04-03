@@ -1,6 +1,6 @@
 # Chers - Agent Documentation
 
-This is a multiplayer chess application with a Rust/WASM engine, Next.js frontend, and Axum server.
+This is a multiplayer chess application with a Rust/WASM engine, TanStack Start frontend, and Axum server.
 
 ## Project Structure
 
@@ -9,7 +9,7 @@ chers/                      # Core chess engine (Rust/WASM)
 ├── src/                    # Chess rules, move validation, game state
 └── AGENTS.md               # See chers/AGENTS.md
 
-chers_web/                  # Next.js web frontend
+chers_web/                  # TanStack Start web frontend (Vite)
 ├── app/                    # App router pages and components
 ├── components/             # React components
 ├── lib/                    # Utilities, multiplayer logic, WASM bindings
@@ -31,7 +31,8 @@ chers_cli/                  # Terminal chess client
 
 ## Quick Links
 
-- **[Frontend Development](chers_web/AGENTS.md)** - Next.js, React, WebSocket client, WASM integration
+- **[Deployment Guide](DEPLOYMENT.md)** - How to deploy Chers in different configurations (single binary, split deployment, environment variables)
+- **[Frontend Development](chers_web/AGENTS.md)** - TanStack Start, React, WebSocket client, WASM integration
 - **[Server Development](chers_server/AGENTS.md)** - Axum, WebSocket handlers, match state machine, deployment
 - **[Server API](chers_server_api/AGENTS.md)** - Message protocol, TypeScript generation, API types
 - **[Chess Engine](chers/AGENTS.md)** - Core chess logic (if/when documented)
@@ -39,16 +40,18 @@ chers_cli/                  # Terminal chess client
 ## Architecture Overview
 
 ### Single Player (Local)
+
 ```
-User -> Next.js (React) -> WASM Engine -> Browser
+User -> TanStack Start (React) -> WASM Engine -> Browser
 ```
 
 ### Multiplayer
+
 ```
 Player A (Web)                Player B (Web)
     |                             |
     v                             v
-Next.js + WASM              Next.js + WASM
+TanStack Start + WASM       TanStack Start + WASM
     |                             |
     +------------->+--------------+
                    |
@@ -56,7 +59,7 @@ Next.js + WASM              Next.js + WASM
                    |
              Axum Server (Shuttle)
                    |
-            Match State (scc::HashMap)
+             Match State (scc::HashMap)
 ```
 
 ## Development Workflow
@@ -64,18 +67,21 @@ Next.js + WASM              Next.js + WASM
 ### Running Locally
 
 **Terminal 1** - Start the server:
+
 ```bash
 cd chers_server
 cargo shuttle run
 ```
 
 **Terminal 2** - Start the frontend:
+
 ```bash
 cd chers_web
 bun dev
 ```
 
 **Terminal 3** - (Optional) CLI client:
+
 ```bash
 cd chers_cli
 cargo run
@@ -92,28 +98,43 @@ cargo test  # Generates TypeScript to chers_web/generated/
 
 ### Build for Production
 
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment options including:
+- Single binary with embedded frontend
+- Split deployment (frontend on CDN/Vercel, backend on separate host)
+- Environment variables and configuration
+
+**Quick builds:**
+
 **Frontend:**
+
 ```bash
 cd chers_web
 bun run build
 ```
 
 **Server:**
+
 ```bash
 cd chers_server
 cargo shuttle deploy
 ```
 
+**Single binary (static build with embedded frontend):**
+
+```bash
+just chers-static
+```
+
 ## Technology Stack
 
-| Component | Technology |
-|-----------|-----------|
-| Chess Engine | Rust → WASM |
-| Frontend | Next.js 16, React 19, TypeScript 5, Tailwind 4 |
-| Server | Axum 0.8, Tokio, Shuttle |
-| Protocol | WebSocket + JSON |
-| Package Manager | Bun (frontend), Cargo (Rust) |
-| Deployment | Vercel (frontend), Shuttle (server) |
+| Component       | Technology                                     |
+| --------------- | ---------------------------------------------- |
+| Chess Engine    | Rust → WASM                                    |
+| Frontend        | TanStack Start, React 19, TypeScript 5, Tailwind 4, Vite |
+| Server          | Axum 0.8, Tokio, Shuttle                       |
+| Protocol        | WebSocket + JSON                               |
+| Package Manager | Bun (frontend), Cargo (Rust)                   |
+| Deployment      | Vercel (frontend), Shuttle (server)            |
 
 ## Key Features
 
@@ -125,15 +146,15 @@ cargo shuttle deploy
 
 ## Development Commands Reference
 
-| Task | Command | Location |
-|------|---------|----------|
-| Dev frontend | `bun dev` | `chers_web/` |
-| Dev server | `cargo shuttle run` | `chers_server/` |
-| Test frontend | `bun test` | `chers_web/` |
-| Test server | `cargo test` | `chers_server/` |
-| Lint frontend | `bun run lint` | `chers_web/` |
-| Generate types | `cargo test` | `chers_server_api/` |
-| Deploy server | `cargo shuttle deploy` | `chers_server/` |
+| Task           | Command                | Location            |
+| -------------- | ---------------------- | ------------------- |
+| Dev frontend   | `bun dev`              | `chers_web/`        |
+| Dev server     | `cargo shuttle run`    | `chers_server/`     |
+| Test frontend  | `bun test`             | `chers_web/`        |
+| Test server    | `cargo test`           | `chers_server/`     |
+| Lint frontend  | `bun run lint`         | `chers_web/`        |
+| Generate types | `cargo test`           | `chers_server_api/` |
+| Deploy server  | `cargo shuttle deploy` | `chers_server/`     |
 
 ## Common Tasks
 
@@ -177,8 +198,10 @@ Each crate/package has detailed documentation:
 ### Environment Variables
 
 **Frontend** (`chers_web/.env.local`):
+
 ```env
-NEXT_PUBLIC_SERVER_URL=http://localhost:3001  # Local dev
+VITE_CHERS_SERVER_HOST=localhost:8000  # Local backend server
+VITE_CHERS_USE_SSL=false                # Disable SSL for local dev
 ```
 
 **Server** - None required locally (Shuttle handles production config)
@@ -190,4 +213,4 @@ NEXT_PUBLIC_SERVER_URL=http://localhost:3001  # Local dev
 
 ---
 
-*This is a living document. Update when adding new components or major features.*
+_This is a living document. Update when adding new components or major features._

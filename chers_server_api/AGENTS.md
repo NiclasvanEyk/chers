@@ -70,24 +70,27 @@ This generates TypeScript that references `Coordinate` from the WASM package rat
 Types are exported to `chers_web/generated/chers_server_api/`:
 
 **Recommended way (from repo root):**
+
 ```bash
 just chers-server-ts
 ```
 
 **Manual way (from chers_server_api directory):**
+
 ```bash
 # From chers_server_api directory
 cargo test  # Generates TypeScript files
 ```
 
 The `just chers-server-ts` command will:
+
 1. Clean the old generated files
 2. Create the output directory
 3. Run `cargo test` with the correct export directory configured
 4. Generate TypeScript bindings to `chers_web/generated/chers_server_api/`
 
 ```typescript
-import { ServerMessage, ClientMessage } from '@/generated/chers_server_api';
+import { ServerMessage, ClientMessage } from "@/generated/chers_server_api";
 ```
 
 See [../chers_web/AGENTS.md](../chers_web/AGENTS.md) for frontend usage.
@@ -236,12 +239,12 @@ let event = PublicEvent::MoveMade {
 
 ## Build Commands
 
-| Command | Description |
-|---------|-------------|
+| Command                | Description                                |
+| ---------------------- | ------------------------------------------ |
 | `just chers-server-ts` | Generate TypeScript bindings (recommended) |
-| `cargo build` | Build the crate |
-| `cargo test` | Run tests and generate TypeScript |
-| `cargo doc --open` | View documentation |
+| `cargo build`          | Build the crate                            |
+| `cargo test`           | Run tests and generate TypeScript          |
+| `cargo doc --open`     | View documentation                         |
 
 ## Dependencies
 
@@ -261,6 +264,7 @@ ts-rs = { version = "10", features = ["serde-compat"] }
 ## Protocol Versioning
 
 Currently no explicit versioning. Changes are coordinated between:
+
 1. Update this crate
 2. Regenerate TypeScript
 3. Update server to handle new messages

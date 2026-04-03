@@ -26,6 +26,6 @@ export default defineConfig(({ mode }) => ({
     tailwindcss(),
     tanstackStart({ spa: { enabled: true } }),
     viteReact(),
-    // nitro({ preset: 'static' }),
+    process.env.VERCEL ? nitro() : undefined,
   ],
 }));

@@ -4,10 +4,17 @@ function parseBoolean(value: unknown) {
   return undefined;
 }
 
-const SERVER_HOST = process.env.NEXT_PUBLIC_CHERS_SERVER_HOST ?? "chers-server.fly.dev";
-const USE_SSL = parseBoolean(process.env.NEXT_PUBLIC_CHERS_USE_SSL) ?? true;
-const SERVER_URL = `${USE_SSL ? "https" : "http"}://${SERVER_HOST}`;
-const WEBSOCKET_URL = `${USE_SSL ? "wss" : "ws"}://${SERVER_HOST}`;
+const SERVER_HOST = import.meta.env.VITE_CHERS_SERVER_HOST;
+const USE_SSL = parseBoolean(import.meta.env.VITE_CHERS_USE_SSL) ?? true;
+
+// If SERVER_HOST is set, construct absolute URLs for split deployment
+// If SERVER_HOST is empty/unset, use relative URLs for single-binary deployment
+const SERVER_URL = SERVER_HOST
+  ? `${USE_SSL ? "https" : "http"}://${SERVER_HOST}`
+  : "";
+const WEBSOCKET_URL = SERVER_HOST
+  ? `${USE_SSL ? "wss" : "ws"}://${SERVER_HOST}`
+  : "";
 
 /**
  * Requests the server to start a new game.
@@ -30,7 +37,17 @@ export async function startNewMatch(): Promise<string> {
  * The matchId should be a UUID string.
  */
 export function play(matchId: string): WebSocket {
-  return new WebSocket(`${WEBSOCKET_URL}/matches/${matchId}/play`);
+  // If WEBSOCKET_URL is set, use it (split deployment)
+  // Otherwise construct from current location (single-binary deployment)
+  const wsUrl = WEBSOCKET_URL
+    ? `${WEBSOCKET_URL}/matches/${matchId}/play`
+    : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/matches/${matchId}/play`;
+  
+  console.log("🔌 Connecting to WebSocket:", wsUrl);
+  console.log("📍 Current location:", window.location.protocol, window.location.host);
+  console.log("🔧 WEBSOCKET_URL config:", WEBSOCKET_URL || "(empty - using relative URL)");
+  
+  return new WebSocket(wsUrl);
 }
 
 /**

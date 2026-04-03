@@ -1,5 +1,6 @@
 import { Outlet, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Analytics } from "@vercel/analytics/react";
+import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import appCss from "../globals.css?url";
 import { AppProviders } from "../providers";
 
@@ -51,6 +52,7 @@ function RootLayout() {
         </AppProviders>
         <Analytics />
         <Scripts />
+        <TanStackRouterDevtools />
       </body>
     </html>
   );

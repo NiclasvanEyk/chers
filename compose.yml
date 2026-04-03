@@ -37,8 +37,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_CHERS_SERVER_HOST=chers-server:8000
-      - NEXT_PUBLIC_CHERS_USE_SSL=false
+      - VITE_CHERS_SERVER_HOST=chers-server:8000
+      - VITE_CHERS_USE_SSL=false
     volumes:
       - ./chers_web:/app:cached
       - /app/node_modules

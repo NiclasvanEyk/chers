@@ -6,6 +6,6 @@ function MatchPage() {
   return <MatchClient id={id} />;
 }
 
-export const Route = createFileRoute("/multiplayer/$id")({
+export const Route = createFileRoute("/multiplayer_/$id")({
   component: MatchPage,
 });

@@ -214,6 +214,57 @@ Some types (Coordinate, Color, Game) come from the chers WASM crate and don't im
 | `cargo test`                  | Run unit tests                 |
 | `cargo test --test e2e_tests` | Run E2E tests                  |
 
+## Static Frontend Bundle (Single Binary)
+
+The server supports embedding the frontend directly into the binary for easy deployment. This is enabled via the `bundle-frontend` feature flag.
+
+### How it works
+
+When the `bundle-frontend` feature is enabled:
+
+1. **Build-time embedding**: The Rust compiler embeds all files from `chers_web/dist/client/` directly into the binary using `rust-embed`
+2. **Runtime serving**: The server serves these embedded files via the `/*path` catch-all route
+3. **SPA routing**: All non-API routes serve `_shell.html` (TanStack Start's SPA shell), allowing client-side routing to work
+
+### Building a static binary
+
+From the repo root:
+
+```bash
+just chers-static
+```
+
+This will:
+1. Build the WASM chess engine
+2. Generate TypeScript types from the server API
+3. Build the frontend (Vite + TanStack Start)
+4. Compile the server with frontend files embedded
+
+### Verification at startup
+
+When `bundle-frontend` is enabled, the server verifies at startup that the embedded files exist. If the frontend wasn't built, you'll see:
+
+```
+Static frontend files not found!
+The 'bundle-frontend' feature is enabled but chers_web/dist/client/ appears to be empty.
+Please build the frontend first: just chers-static
+```
+
+### Deployment
+
+With a static binary, deployment is simple - just the single executable:
+
+```bash
+# Build
+just chers-static
+
+# Deploy (example)
+scp target/release/chers_server user@server:/opt/chers/
+ssh user@server "cd /opt/chers && ./chers_server"
+```
+
+No separate frontend server or CDN required - everything is self-contained.
+
 ## Environment Variables
 
 - `PORT` - Server port (default: 3000)

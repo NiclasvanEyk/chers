@@ -1,17 +1,30 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { ChessFigureLoadingIndicator } from "@/components/ChessFigureLoadingIndicator";
 import { startNewMatch } from "@/lib/multiplayer";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 function MultiplayerPage() {
-  const navigate = useNavigate();
-  useEffect(() => {
-    startNewMatch().then((id) => {
-      navigate({ to: `/multiplayer/${id}` });
-    });
-  }, [navigate]);
+  const [matchId, setMatchId] = useState<string | null>(null);
 
-  return <ChessFigureLoadingIndicator fullscreen message="Request a new game" />;
+  useEffect(() => {
+    startNewMatch()
+      .then((id) => setMatchId(id))
+      .catch((err) => console.error("Failed to create match:", err));
+  }, []);
+
+  if (matchId) {
+    return (
+      <Navigate
+        to="/multiplayer/$id"
+        params={{ id: matchId }}
+        replace={true}
+      />
+    );
+  }
+
+  return (
+    <ChessFigureLoadingIndicator fullscreen message="Creating a new game..." />
+  );
 }
 
 export const Route = createFileRoute("/multiplayer")({

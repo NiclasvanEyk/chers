@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is the Next.js web frontend for the Chers chess application. It provides:
+This is the TanStack Start web frontend for the Chers chess application. It provides:
 
 - **Local single-player chess** - The default mode, played against yourself
 - **Multiplayer chess** - Real-time WebSocket-based multiplayer games
@@ -10,10 +10,11 @@ This is the Next.js web frontend for the Chers chess application. It provides:
 
 ## Key Technologies
 
-- **Next.js 16** with App Router
+- **TanStack Start** with SPA mode
 - **React 19** and React Server Components
 - **TypeScript 5**
 - **Tailwind CSS 4** for styling
+- **Vite** for building and dev server
 - **pnpm** for package management
 - **Bun** for testing (via `bun test`)
 - **chers** (WASM) - The Rust chess engine
@@ -181,8 +182,9 @@ The dev server runs on http://localhost:3000.
 Create `.env.local`:
 
 ```env
-# API server for multiplayer (default: localhost:3001)
-NEXT_PUBLIC_SERVER_URL=http://localhost:3001
+# Backend server for multiplayer (default: chers-server.fly.dev)
+VITE_CHERS_SERVER_HOST=localhost:8000
+VITE_CHERS_USE_SSL=false
 ```
 
 ## Type Generation

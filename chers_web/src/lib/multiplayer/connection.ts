@@ -37,11 +37,14 @@ export class MatchConnection {
   connect(): void {
     this.intentionallyClosed = false;
     this.callbacks.onStateChange({ status: "connecting" });
+    console.log("🔌 MatchConnection.connect() called for match:", this.matchId);
 
     try {
       this.socket = play(this.matchId);
+      console.log("🔌 WebSocket object created, readyState:", this.socket.readyState);
 
       this.socket.onopen = () => {
+        console.log("✅ WebSocket opened successfully");
         this.reconnectAttempt = 0;
         this.callbacks.onStateChange({ status: "open" });
         this.flushMessageQueue();

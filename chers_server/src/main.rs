@@ -2,6 +2,9 @@ mod handlers;
 mod matches;
 mod telemetry;
 
+#[cfg(feature = "bundle-frontend")]
+mod static_files;
+
 use crate::matches::repository::MatchRepository;
 use axum::routing::{get, post};
 use axum::Router;
@@ -33,6 +36,8 @@ fn main() -> io::Result<()> {
     // Load telemetry config (initialization happens inside async block where Tokio runtime exists)
     let config = telemetry::TelemetryConfig::from_env();
     let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
+    let listen_address = std::env::var("CHERS_LISTEN_ADDRESS").unwrap_or_else(|_| "0.0.0.0".to_string());
+    let host = std::env::var("CHERS_HOST").unwrap_or_else(|_| "localhost".to_string());
 
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -42,9 +47,13 @@ fn main() -> io::Result<()> {
             let guards = telemetry::init(config);
 
             // Initialize tracing subscriber with appropriate layers based on telemetry mode
+            // Default to INFO level if RUST_LOG is not set
+            let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info"));
+            
             let subscriber = tracing_subscriber::registry()
                 .with(tracing_subscriber::fmt::layer())
-                .with(tracing_subscriber::EnvFilter::from_default_env());
+                .with(env_filter);
 
             match guards.mode {
                 telemetry::TelemetryMode::None => {
@@ -71,6 +80,13 @@ fn main() -> io::Result<()> {
             }
 
             info!(mode = ?guards.mode, "Telemetry initialized");
+
+            // Verify embedded frontend files when bundle-frontend feature is enabled
+            #[cfg(feature = "bundle-frontend")]
+            {
+                static_files::verify_embedded_files();
+                info!("Frontend files verified and embedded");
+            }
 
             // Build router with Sentry middleware only if Sentry is enabled
             let mut app = Router::new()
@@ -99,10 +115,35 @@ fn main() -> io::Result<()> {
                     .layer(SentryHttpLayer::new().enable_transaction());
             }
 
-            let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port))
+            // Add static file routes when bundle-frontend feature is enabled
+            // These must be added last as they include a catch-all route
+            #[cfg(feature = "bundle-frontend")]
+            {
+                app = app
+                    .route("/", get(static_files::serve_shell))
+                    .route("/_shell.html", get(static_files::serve_shell))
+                    .route("/{*path}", get(static_files::handler));
+            }
+
+            let listener = tokio::net::TcpListener::bind(format!("{}:{}", listen_address, port))
                 .await
                 .unwrap();
-            info!("🚀 Chers server starting on port {}", port);
+            
+            // Helper to check if address is a wildcard (binds to all interfaces)
+            let is_wildcard = |addr: &str| -> bool {
+                matches!(addr, "0.0.0.0" | "::" | "[::]" | "*")
+            };
+            
+            info!("🚀 Chers server ready");
+            
+            // Always show the clickable local URL
+            let local_url = format!("http://{}:{}/", host, port);
+            info!("   Local:   {}", local_url);
+            
+            // Only show "Network" line if listening on all interfaces
+            if is_wildcard(&listen_address) {
+                info!("   Network: http://{}:{}/ (all interfaces)", listen_address, port);
+            }
             axum::serve(listener, app.into_make_service())
                 .await
                 .unwrap();

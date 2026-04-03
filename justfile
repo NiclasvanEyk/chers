@@ -1,16 +1,16 @@
 wasm-dev:
     cargo build --package=chers --target=wasm32-unknown-unknown
-    wasm-bindgen target/wasm32-unknown-unknown/debug/chers.wasm --target=web --debug --out-dir=chers_web/generated/chers
+    wasm-bindgen target/wasm32-unknown-unknown/debug/chers.wasm --target=web --debug --out-dir=chers_web/src/generated/chers
 
 wasm-release:
     cargo build --package=chers --target=wasm32-unknown-unknown --release
-    wasm-bindgen target/wasm32-unknown-unknown/release/chers.wasm --target=web --out-dir=chers_web/generated/chers
+    wasm-bindgen target/wasm32-unknown-unknown/release/chers.wasm --target=web --out-dir=chers_web/src/generated/chers
 
 server-ts:
-    rm -rf chers_web/generated/chers_server_api
-    mkdir -p chers_web/generated/chers_server_api
+    rm -rf chers_web/src/generated/chers_server_api
+    mkdir -p chers_web/src/generated/chers_server_api
     # ts-rs exports relative to crate root, so use absolute path
-    TS_RS_EXPORT_DIR={{justfile_directory()}}/chers_web/generated/chers_server_api cargo test --package=chers_server_api
+    TS_RS_EXPORT_DIR={{justfile_directory()}}/chers_web/src/generated/chers_server_api cargo test --package=chers_server_api
 
 # Start backend server with debug logging on port 8000
 server-dev:
@@ -38,15 +38,40 @@ web-dev: wasm-dev server-ts
 web-release: wasm-release server-ts
     pnpm install && pnpm --filter chers_web run build
 
-# Build production binary with embedded frontend
-build-bundled: wasm-release server-ts
+# Build production binary with embedded frontend (uses relative URLs for same-origin)
+chers-static: wasm-release server-ts
     #!/usr/bin/env bash
     set -euxo pipefail
     pnpm install
-    BUILD_STATIC=true pnpm --filter chers_web run build
+    # Build frontend without SERVER_HOST to use relative URLs (same origin as backend)
+    VITE_CHERS_SERVER_HOST="" \
+        pnpm --filter chers_web run build
     cargo build --package=chers_server --release --features bundle-frontend
-    @echo "✓ Built: target/release/chers_server"
+    echo "✓ Built: target/release/chers_server"
+
+# Build debug binary with embedded frontend (for troubleshooting)
+# Uses debug WASM, unminified frontend build, and debug Rust build
+chers-static-dev: wasm-dev server-ts
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    pnpm install
+    # Build frontend in development mode (source maps, no minification)
+    # but still output to dist/ for embedding
+    VITE_CHERS_SERVER_HOST="" \
+    NODE_ENV=development \
+        pnpm --filter chers_web exec vp build --mode development
+    cargo build --package=chers_server --features bundle-frontend
+    echo "✓ Built: target/debug/chers_server (debug mode)"
+    echo "Run with: RUST_LOG=debug ./target/debug/chers_server"
 
 clean:
     cargo clean
-    rm -rf node_modules chers_web/generated/chers*
+    rm -rf \
+        node_modules \
+        chers_web/node_modules \
+        chers_web/dist \
+        chers_web/.output \
+        chers_web/.tanstack \
+        chers_web/.pnpm-store \
+        chers_web/generated \
+        chers_web/src/generated/chers*

@@ -1,19 +1,39 @@
 use std::collections::HashMap;
 
+pub use chers_server_api::v2::types::RoomId;
+
 use crate::auth::{User, UserId};
 
 pub mod storage;
-
-pub type RoomId = String;
 
 /// Phase-independent container for players, spectators, etc.
 ///
 /// Basically everything exists in the context of a [Room].
 #[derive(Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum Phase {
-    Lobby { ready_players: Vec<UserId> },
-    Game,
-    PostGame { winner: UserId },
+    Lobby {
+        ready_players: Vec<UserId>,
+    },
+    Game {
+        /// The current board state.
+        ///
+        /// This contains all the information needed to reconstruct the game:
+        /// - Board position (8x8 grid of pieces)
+        /// - Current player (whose turn it is)
+        /// - Castling rights
+        /// - En passant target square (if any)
+        /// - Halfmove clock (for 50-move rule)
+        /// - Fullmove number
+        state: chers::State,
+        /// The player ID controlling the white pieces.
+        white_player_id: UserId,
+        /// The player ID controlling the black pieces.
+        black_player_id: UserId,
+    },
+    PostGame {
+        winner: Option<UserId>,
+        reason: Option<chers_server_api::v2::events::GameEndReason>,
+    },
 }
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]

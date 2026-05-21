@@ -1,29 +1,65 @@
 use crate::auth::User;
 use crate::communication::command::{Command, CommandResponse, CommandResult, LobbyCommand};
-use crate::communication::event::{Event, GameEvent, LobbyEvent};
+use crate::communication::event::{Event, GameEvent, LobbyEvent, SystemEvent};
 use crate::room::{MAX_PLAYERS, Phase, Room};
 
 pub fn handle_lobby_command(cmd: Command, room: &mut Room) -> CommandResult {
     match cmd {
-        Command::Lobby(LobbyCommand::Join { secret, name }) => {
+        Command::Lobby(LobbyCommand::Join {
+            secret,
+            name,
+            connection_id,
+        }) => {
             let entry = match room.auth.authenticate(&secret, &name) {
                 Some(e) => e.clone(),
                 None => return CommandResult::rejected("room is full"),
             };
+
             let user = User {
                 id: entry.user_id,
                 name: entry.name,
+                connection_id: connection_id.clone(),
             };
-            if room.players.len() >= MAX_PLAYERS {
+
+            // Room must have capacity
+            if room.players.len() >= MAX_PLAYERS && !room.players.iter().any(|p| p.id == user.id) {
                 return CommandResult::rejected("room is full");
             }
-            if room.players.iter().any(|p| p.id == user.id) {
-                return CommandResult::rejected("already joined");
+
+            // Check if this user is already in the room
+            if let Some(existing) = room.players.iter_mut().find(|p| p.id == user.id) {
+                let old_connection_id = existing.connection_id.clone();
+                existing.connection_id = connection_id.clone();
+
+                let mut events = vec![Event::Lobby(LobbyEvent::PlayerJoined {
+                    user: user.clone(),
+                })];
+
+                if old_connection_id != connection_id {
+                    events.push(Event::System(SystemEvent::ConnectionSuperseded {
+                        user: user.clone(),
+                        old_connection_id,
+                    }));
+                }
+
+                return CommandResult {
+                    response: CommandResponse::Accepted,
+                    events,
+                };
             }
+
             room.players.push(user.clone());
             CommandResult::accepted(Event::Lobby(LobbyEvent::PlayerJoined { user }))
         }
-        Command::Lobby(LobbyCommand::Leave { user }) => {
+        Command::Lobby(LobbyCommand::Leave {
+            user,
+            connection_id,
+        }) => {
+            if let Some(existing) = room.players.iter().find(|p| p.id == user.id) {
+                if existing.connection_id != connection_id {
+                    return CommandResult::rejected("superseded connection");
+                }
+            }
             room.players.retain(|p| p.id != user.id);
             if let Phase::Lobby { ready_players } = &mut room.phase {
                 ready_players.retain(|id| id != &user.id);
@@ -56,9 +92,18 @@ pub fn handle_lobby_command(cmd: Command, room: &mut Room) -> CommandResult {
             };
 
             if should_transition {
-                let white = room.players[0].clone();
-                let black = room.players[1].clone();
-                room.phase = Phase::Game;
+                // Randomly assign colors (50/50 chance)
+                let (white, black) = if rand::random::<bool>() {
+                    (room.players[0].clone(), room.players[1].clone())
+                } else {
+                    (room.players[1].clone(), room.players[0].clone())
+                };
+                let game = chers::Game::new();
+                room.phase = Phase::Game {
+                    state: game.start(),
+                    white_player_id: white.id.clone(),
+                    black_player_id: black.id.clone(),
+                };
                 CommandResult {
                     response: CommandResponse::Accepted,
                     events: vec![
@@ -94,6 +139,7 @@ mod tests {
         User {
             id: "user-a".into(),
             name: "Alice".into(),
+            connection_id: "conn-a".into(),
         }
     }
 
@@ -101,6 +147,7 @@ mod tests {
         User {
             id: "user-b".into(),
             name: "Bob".into(),
+            connection_id: "conn-b".into(),
         }
     }
 
@@ -112,6 +159,7 @@ mod tests {
             Command::Lobby(LobbyCommand::Join {
                 secret: "alice-secret".into(),
                 name: "Alice".into(),
+                connection_id: "conn-1".into(),
             }),
             &mut room,
         );
@@ -123,29 +171,44 @@ mod tests {
         );
         assert_eq!(room.players.len(), 1);
         assert_eq!(room.players[0].id, "user-a");
+        assert_eq!(room.players[0].connection_id, "conn-1");
     }
 
     #[test]
-    fn join_rejects_duplicate() {
+    fn join_updates_connection_id_on_rejoin() {
         let mut room = room_with_auth();
 
+        // First join
         let _ = handle_lobby_command(
             Command::Lobby(LobbyCommand::Join {
                 secret: "alice-secret".into(),
                 name: "Alice".into(),
-            }),
-            &mut room,
-        );
-        let result = handle_lobby_command(
-            Command::Lobby(LobbyCommand::Join {
-                secret: "alice-secret".into(),
-                name: "Alice".into(),
+                connection_id: "conn-1".into(),
             }),
             &mut room,
         );
 
-        assert!(matches!(result.response, CommandResponse::Rejected { .. }));
-        assert!(result.events.is_empty());
+        // Rejoin with new connection_id — should update, not reject
+        let result = handle_lobby_command(
+            Command::Lobby(LobbyCommand::Join {
+                secret: "alice-secret".into(),
+                name: "Alice".into(),
+                connection_id: "conn-2".into(),
+            }),
+            &mut room,
+        );
+
+        assert!(matches!(result.response, CommandResponse::Accepted));
+        // Should have PlayerJoined + ConnectionSuperseded
+        assert_eq!(result.events.len(), 2);
+        assert!(
+            matches!(&result.events[0], Event::Lobby(LobbyEvent::PlayerJoined { .. }))
+        );
+        assert!(
+            matches!(&result.events[1], Event::System(SystemEvent::ConnectionSuperseded { old_connection_id, .. }) if old_connection_id == "conn-1")
+        );
+        assert_eq!(room.players.len(), 1);
+        assert_eq!(room.players[0].connection_id, "conn-2");
     }
 
     #[test]
@@ -156,6 +219,7 @@ mod tests {
             Command::Lobby(LobbyCommand::Join {
                 secret: "alice-secret".into(),
                 name: "Alice".into(),
+                connection_id: "conn-1".into(),
             }),
             &mut room,
         );
@@ -163,6 +227,7 @@ mod tests {
             Command::Lobby(LobbyCommand::Join {
                 secret: "bob-secret".into(),
                 name: "Bob".into(),
+                connection_id: "conn-2".into(),
             }),
             &mut room,
         );
@@ -170,6 +235,7 @@ mod tests {
             Command::Lobby(LobbyCommand::Join {
                 secret: "charlie-secret".into(),
                 name: "Charlie".into(),
+                connection_id: "conn-3".into(),
             }),
             &mut room,
         );
@@ -186,13 +252,17 @@ mod tests {
             Command::Lobby(LobbyCommand::Join {
                 secret: "alice-secret".into(),
                 name: "Alice".into(),
+                connection_id: "conn-a".into(),
             }),
             &mut room,
         );
         assert!(!room.players.is_empty());
 
         let result = handle_lobby_command(
-            Command::Lobby(LobbyCommand::Leave { user: user.clone() }),
+            Command::Lobby(LobbyCommand::Leave {
+                user: user.clone(),
+                connection_id: "conn-a".into(),
+            }),
             &mut room,
         );
 
@@ -213,6 +283,7 @@ mod tests {
             Command::Lobby(LobbyCommand::Join {
                 secret: "alice-secret".into(),
                 name: "Alice".into(),
+                connection_id: "conn-a".into(),
             }),
             &mut room,
         );
@@ -230,7 +301,13 @@ mod tests {
             panic!("expected lobby phase");
         }
 
-        let _ = handle_lobby_command(Command::Lobby(LobbyCommand::Leave { user }), &mut room);
+        let _ = handle_lobby_command(
+            Command::Lobby(LobbyCommand::Leave {
+                user,
+                connection_id: "conn-a".into(),
+            }),
+            &mut room,
+        );
 
         if let Phase::Lobby { ready_players } = &room.phase {
             assert!(ready_players.is_empty());
@@ -248,6 +325,7 @@ mod tests {
             Command::Lobby(LobbyCommand::Join {
                 secret: "alice-secret".into(),
                 name: "Alice".into(),
+                connection_id: "conn-a".into(),
             }),
             &mut room,
         );
@@ -272,6 +350,7 @@ mod tests {
             Command::Lobby(LobbyCommand::Join {
                 secret: "alice-secret".into(),
                 name: "Alice".into(),
+                connection_id: "conn-a".into(),
             }),
             &mut room,
         );
@@ -320,6 +399,7 @@ mod tests {
             Command::Lobby(LobbyCommand::Join {
                 secret: "alice-secret".into(),
                 name: "Alice".into(),
+                connection_id: "conn-a".into(),
             }),
             &mut room,
         );
@@ -348,6 +428,7 @@ mod tests {
             Command::Lobby(LobbyCommand::Join {
                 secret: "alice-secret".into(),
                 name: "Alice".into(),
+                connection_id: "conn-a".into(),
             }),
             &mut room,
         );
@@ -355,6 +436,7 @@ mod tests {
             Command::Lobby(LobbyCommand::Join {
                 secret: "bob-secret".into(),
                 name: "Bob".into(),
+                connection_id: "conn-b".into(),
             }),
             &mut room,
         );
@@ -379,10 +461,19 @@ mod tests {
             &result.events[0],
             Event::Lobby(LobbyEvent::PlayerReadyChanged { .. })
         ));
+        // Verify both players are assigned to different colors (random assignment)
         assert!(
-            matches!(&result.events[1], Event::Game(GameEvent::GameStarted { white, black }) if white.id == "user-a" && black.id == "user-b")
+            matches!(&result.events[1], Event::Game(GameEvent::GameStarted { white, black })
+                if (white.id == "user-a" && black.id == "user-b") || (white.id == "user-b" && black.id == "user-a")
+            ),
+            "expected both players to be assigned to different colors randomly"
         );
-        assert!(matches!(room.phase, Phase::Game));
+        assert!(
+            matches!(room.phase, Phase::Game { state: _, white_player_id, black_player_id }
+                if (&white_player_id == "user-a" && &black_player_id == "user-b")
+                    || (&white_player_id == "user-b" && &black_player_id == "user-a")
+            )
+        );
     }
 
     #[test]
@@ -392,7 +483,10 @@ mod tests {
         let result = handle_lobby_command(
             Command::Game(GameCommand::MakeMove {
                 user: user_a(),
-                turn: "e4".into(),
+                move_: chers::Move::simple(
+                    chers::Coordinate::new(4, 6), // E2
+                    chers::Coordinate::new(4, 4), // E4
+                ),
             }),
             &mut room,
         );

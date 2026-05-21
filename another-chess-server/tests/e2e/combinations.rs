@@ -25,6 +25,24 @@ async fn all_local() {
     .await;
 }
 
+/// Full game test: Fool's mate (shortest checkmate) using all local components
+#[tokio::test]
+async fn fools_mate() {
+    let event_bus = helpers::create_event_bus_local().await;
+    let lease = helpers::create_lease_local().await;
+    let storage = helpers::create_storage_in_memory().await;
+    let command_bus = helpers::create_local_command_bus();
+
+    scenario::fools_mate_test(
+        Arc::new(lease),
+        Arc::new(storage),
+        Arc::new(event_bus),
+        Arc::new(command_bus),
+        "fools-mate",
+    )
+    .await;
+}
+
 /// Combo 4: Distributed command bus over local bus
 #[tokio::test]
 async fn distributed_local_bus() {

@@ -21,15 +21,15 @@ const WEBSOCKET_URL = SERVER_HOST
  * Returns a UUID string that identifies the match.
  */
 export async function startNewMatch(): Promise<string> {
-  const response = await fetch(`${SERVER_URL}/matches/new`, { method: "POST" });
+  const response = await fetch(`${SERVER_URL}/rooms/new`, { method: "POST" });
   const body = await response.json();
-  const id = body.id;
+  const room_id = body.room_id;
 
-  if (typeof id !== "string") {
-    throw new Error(`Server did not respond with a valid match id! Got: ${id}`);
+  if (typeof room_id !== "string") {
+    throw new Error(`Server did not respond with a valid room id! Got: ${room_id}`);
   }
 
-  return id;
+  return room_id;
 }
 
 /**
@@ -37,11 +37,9 @@ export async function startNewMatch(): Promise<string> {
  * The matchId should be a UUID string.
  */
 export function play(matchId: string): WebSocket {
-  // If WEBSOCKET_URL is set, use it (split deployment)
-  // Otherwise construct from current location (single-binary deployment)
   const wsUrl = WEBSOCKET_URL
-    ? `${WEBSOCKET_URL}/matches/${matchId}/play`
-    : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/matches/${matchId}/play`;
+    ? `${WEBSOCKET_URL}/rooms/${matchId}/ws`
+    : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/rooms/${matchId}/ws`;
   
   console.log("🔌 Connecting to WebSocket:", wsUrl);
   console.log("📍 Current location:", window.location.protocol, window.location.host);

@@ -1,16 +1,16 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import type { User } from "@/lib/multiplayer/protocol";
 
 interface LobbyProps {
   inviteUrl: string;
   myName: string;
   onUpdateName: (name: string) => void;
   isReady: boolean;
-  opponentName?: string;
-  opponentReady: boolean;
+  opponent: User | null;
+  opponentIsReady: boolean;
   onToggleReady: (ready: boolean) => void;
-  countdown: number | null;
 }
 
 // State machine for the current player's UI
@@ -24,10 +24,9 @@ export function Lobby({
   myName,
   onUpdateName,
   isReady,
-  opponentName,
-  opponentReady,
+  opponent,
+  opponentIsReady,
   onToggleReady,
-  countdown,
 }: LobbyProps) {
   const [copied, setCopied] = useState(false);
   const [editName, setEditName] = useState(myName);
@@ -130,17 +129,13 @@ export function Lobby({
             <div className="flex gap-2">
               <button
                 onClick={() => setUiState(1)}
-                disabled={countdown !== null}
                 className="px-3 py-2 rounded transition-colors text-sm font-medium bg-stone-500 hover:bg-stone-600 text-white"
               >
                 Change
               </button>
               <button
                 onClick={handleReadyClick}
-                disabled={countdown !== null}
-                className={`px-4 py-2 rounded transition-colors text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white ${
-                  countdown !== null ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className="px-4 py-2 rounded transition-colors text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white"
               >
                 Ready?
               </button>
@@ -152,13 +147,10 @@ export function Lobby({
         return (
           <div className="flex items-center justify-between">
             <span className="font-medium">{displayName}</span>
-            <button
-              onClick={handleAbortClick}
-              disabled={countdown !== null}
-              className={`px-4 py-2 rounded transition-colors text-sm font-medium bg-red-600 hover:bg-red-700 text-white ${
-                countdown !== null ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
+              <button
+                onClick={handleAbortClick}
+                className="px-4 py-2 rounded transition-colors text-sm font-medium bg-red-600 hover:bg-red-700 text-white"
+              >
               Abort
             </button>
           </div>
@@ -199,27 +191,19 @@ export function Lobby({
           </div>
 
           {/* Opponent */}
-          {opponentName ? (
+          {opponent ? (
             <div className="flex items-center justify-between">
-              <span className="font-medium">{opponentName}</span>
+              <span className="font-medium">{opponent.name}</span>
               <span
-                className={`text-sm ${opponentReady ? "text-green-600 font-medium" : "text-stone-400"}`}
+                className={`text-sm ${opponentIsReady ? "text-green-600 font-medium" : "text-stone-400"}`}
               >
-                {opponentReady ? "Ready ✓" : "Not Ready"}
+                {opponentIsReady ? "Ready ✓" : "Not Ready"}
               </span>
             </div>
           ) : (
             <p className="text-sm text-stone-500 text-center">Waiting for opponent to join...</p>
           )}
         </div>
-
-        {/* Countdown */}
-        {countdown !== null && (
-          <div className="text-center">
-            <p className="text-4xl font-bold text-amber-600 animate-pulse">{countdown}</p>
-            <p className="text-sm text-stone-500">Game starting...</p>
-          </div>
-        )}
       </div>
     </div>
   );

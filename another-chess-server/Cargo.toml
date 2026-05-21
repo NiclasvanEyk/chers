@@ -4,12 +4,15 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+chers = { path = "../chers" }
+chers_server_api = { path = "../chers_server_api" }
 async-nats = { version = "0.38", optional = true }
 axum = { version = "0.8", features = ["ws"] }
 bytes = { version = "1", optional = true }
 enum_dispatch = "0.3"
 futures = "0.3"
 parking_lot = "0.12.5"
+rand = "0.8"
 redis = { version = "0.28", features = [
   "connection-manager",
   "tokio-comp",

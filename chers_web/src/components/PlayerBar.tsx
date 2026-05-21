@@ -1,12 +1,12 @@
 "use client";
 
-import type { PlayerInfo } from "@/generated/chers_server_api/PlayerInfo";
 import type { Color } from "@/generated/chers/chers";
+import type { User } from "@/lib/multiplayer/protocol";
 
 interface PlayerBarProps {
   myColor: Color;
   myName: string;
-  opponent: PlayerInfo;
+  opponent: User;
   isMyTurn: boolean;
 }
 
@@ -31,7 +31,7 @@ export function PlayerBar({ myColor, myName, opponent, isMyTurn }: PlayerBarProp
       <PlayerSlot
         name={myColor === "White" ? myName : opponent.name}
         color="White"
-        isConnected={myColor === "White" ? true : opponent.connected}
+        isConnected={true}
         rightAligned={false}
       />
 
@@ -39,7 +39,7 @@ export function PlayerBar({ myColor, myName, opponent, isMyTurn }: PlayerBarProp
       <PlayerSlot
         name={myColor === "Black" ? myName : opponent.name}
         color="Black"
-        isConnected={myColor === "Black" ? true : opponent.connected}
+        isConnected={true}
         rightAligned={true}
       />
     </div>

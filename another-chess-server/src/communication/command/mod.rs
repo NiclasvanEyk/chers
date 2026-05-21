@@ -9,8 +9,14 @@ use tokio_stream::Stream;
 pub use distributed::DistributedCommandBus;
 pub use in_memory::LocalCommandBus;
 
-use crate::auth::User;
-use crate::communication::event::Event;
+// Re-export command types from the shared API crate
+pub use chers_server_api::v2::commands::{
+    Command, CommandResponse, CommandResult, GameCommand, LobbyCommand, PostGameCommand,
+};
+
+// Re-export sync types
+pub use chers_server_api::v2::sync::RoomStateMirror;
+
 use crate::room::RoomId;
 use crate::utils::AnyResult;
 
@@ -68,42 +74,6 @@ impl ResponseChannel {
             Self::Local(tx) => {
                 let _ = tx.send(response);
             }
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Response / result types
-// ---------------------------------------------------------------------------
-
-/// The outcome of a command sent to an actor.
-#[derive(serde::Serialize, serde::Deserialize)]
-pub enum CommandResponse {
-    Accepted,
-    Rejected { reason: String },
-}
-
-/// The combined output of handling a command: a direct response to the sender
-/// plus any events to broadcast.
-pub struct CommandResult {
-    pub response: CommandResponse,
-    pub events: Vec<Event>,
-}
-
-impl CommandResult {
-    pub fn accepted(event: Event) -> Self {
-        Self {
-            response: CommandResponse::Accepted,
-            events: vec![event],
-        }
-    }
-
-    pub fn rejected(reason: impl Into<String>) -> Self {
-        Self {
-            response: CommandResponse::Rejected {
-                reason: reason.into(),
-            },
-            events: vec![],
         }
     }
 }
@@ -194,39 +164,4 @@ impl CommandBus for AnyCommandBus {
             }
         }
     }
-}
-
-// ---------------------------------------------------------------------------
-// Command enum
-// ---------------------------------------------------------------------------
-
-#[derive(serde::Serialize, serde::Deserialize)]
-pub enum Command {
-    Lobby(LobbyCommand),
-    Game(GameCommand),
-    PostGame(PostGameCommand),
-}
-
-#[derive(serde::Serialize, serde::Deserialize)]
-pub enum LobbyCommand {
-    Join { secret: String, name: String },
-    Leave { user: User },
-    ChangeName { user: User, new_name: String },
-    ChangeReady { user: User, is_ready: bool },
-}
-
-#[derive(serde::Serialize, serde::Deserialize)]
-pub enum GameCommand {
-    Reconnect { secret: String },
-    Leave { user: User },
-    MakeMove { user: User, turn: String },
-}
-
-#[derive(serde::Serialize, serde::Deserialize)]
-pub enum PostGameCommand {
-    Reconnect { secret: String },
-    Leave { user: User },
-    OfferRematch { user: User },
-    AcceptRematch { user: User },
-    DeclineRematch { user: User },
 }

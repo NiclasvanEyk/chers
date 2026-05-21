@@ -4,7 +4,8 @@ use axum::Router;
 use axum::extract::ws::WebSocketUpgrade;
 use axum::extract::{Path, State};
 use axum::response::IntoResponse;
-use axum::routing::get;
+use axum::routing::{get, post};
+use serde::Serialize;
 use tower_http::cors::CorsLayer;
 
 use crate::actor::lease::Provider;
@@ -12,12 +13,19 @@ use crate::actor::registry::RoomRegistry;
 use crate::communication::bus::EventBus;
 use crate::communication::command::CommandBus;
 use crate::communication::event::Event;
+use crate::room::RoomId;
 use crate::room::storage::Storage;
 
 pub mod ws;
 
 pub struct AppState<P, S, B, T> {
     pub registry: RoomRegistry<P, S, B, T>,
+}
+
+/// Response for creating a new room.
+#[derive(Serialize)]
+pub struct CreateRoomResponse {
+    pub room_id: RoomId,
 }
 
 pub async fn run<P, S, B, T>(
@@ -33,6 +41,7 @@ where
     let state = Arc::new(AppState { registry });
 
     let app = Router::new()
+        .route("/rooms/new", post(create_room_handler::<P, S, B, T>))
         .route("/rooms/{room_id}/ws", get(ws_handler::<P, S, B, T>))
         .layer(CorsLayer::permissive())
         .with_state(state);
@@ -42,6 +51,27 @@ where
     axum::serve(listener, app).await?;
 
     Ok(())
+}
+
+/// Handler for POST /rooms/new - creates a new room and returns the room ID.
+async fn create_room_handler<P, S, B, T>(
+    _state: State<Arc<AppState<P, S, B, T>>>,
+) -> impl IntoResponse
+where
+    P: Provider + Send + Sync + 'static,
+    S: Storage + 'static,
+    B: EventBus<Item = Event> + Send + Sync + 'static,
+    T: CommandBus<Cmd = crate::communication::command::Command> + 'static,
+{
+    // Generate a new room ID (UUID)
+    let room_id = uuid::Uuid::new_v4().to_string();
+
+    // Optionally, we could pre-create the room in the registry here,
+    // but lazy creation on first WebSocket connection works fine too.
+    // The room will be created when the first client connects via WS.
+
+    let response = CreateRoomResponse { room_id };
+    axum::Json(response)
 }
 
 async fn ws_handler<P, S, B, T>(

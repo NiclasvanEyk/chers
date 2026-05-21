@@ -1,11 +1,5 @@
-/// A match-level unique identifier used by various components in the server.
-pub type UserId = String;
+//! Authentication types.
+//!
+//! Re-exported from the shared API crate for convenience.
 
-#[derive(Clone, serde::Serialize, serde::Deserialize)]
-pub struct User {
-    /// A match-level unique identifier used by various components in the server.
-    pub id: UserId,
-
-    /// A human-readable name chosen by the user.
-    pub name: String,
-}
+pub use chers_server_api::v2::types::{User, UserId};

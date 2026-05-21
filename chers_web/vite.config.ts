@@ -8,6 +8,12 @@ import { nitro } from "nitro/vite";
 export default defineConfig(({ mode }) => ({
   server: {
     port: 3000,
+    proxy: {
+      "/rooms": {
+        target: "http://localhost:8000",
+        ws: true,
+      },
+    },
   },
   resolve: {
     tsconfigPaths: true,

@@ -1,3 +1,9 @@
 [workspace]
 resolver = "2"
-members = ["chers", "chers_cli", "chers_server", "chers_server_api"]
+members = [
+  "another-chess-server",
+  "chers",
+  "chers_cli",
+  "chers_server",
+  "chers_server_api"
+]

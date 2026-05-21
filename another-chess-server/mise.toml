@@ -1,0 +1,13 @@
+[tools]
+tombi = "latest"
+
+[tasks.format]
+description = "Auto-formats files in the codebase"
+run = "cargo fmt && tombi format"
+
+[tasks.test]
+description = "Runs all Rust tests"
+run = "cargo test"
+
+[settings]
+idiomatic_version_file_enable_tools = ["rust"]

@@ -1,0 +1,40 @@
+[package]
+name = "another-chess-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+async-nats = { version = "0.38", optional = true }
+axum = { version = "0.8", features = ["ws"] }
+bytes = { version = "1", optional = true }
+enum_dispatch = "0.3"
+futures = "0.3"
+parking_lot = "0.12.5"
+redis = { version = "0.28", features = [
+  "connection-manager",
+  "tokio-comp",
+], optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_plain = "1.0.2"
+tokio = { version = "1.52.3", features = [
+  "macros",
+  "net",
+  "parking_lot",
+  "rt-multi-thread",
+  "sync",
+  "time"
+] }
+tokio-stream = { version = "0.1.18", features = ["sync"] }
+tower-http = { version = "0.6", features = ["cors"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+testcontainers = "0.23"
+
+[features]
+default = ["nats", "redis"]
+nats = ["dep:async-nats", "dep:bytes"]
+redis = ["dep:redis"]

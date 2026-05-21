@@ -228,15 +228,9 @@ export function MultiplayerGame({
             <Board state={localState as any} dispatch={handleDispatch as any} />
           </div>
 
-          {!myTurn && opponent.connected && (
+          {!myTurn && (
             <div className="mt-4 text-center text-gray-600 dark:text-gray-400">
               Waiting for opponent&apos;s move...
-            </div>
-          )}
-
-          {!opponent.connected && (
-            <div className="mt-4 text-center text-yellow-600 dark:text-yellow-400 font-medium">
-              Opponent disconnected - waiting for reconnection...
             </div>
           )}
         </div>

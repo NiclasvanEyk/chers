@@ -59,6 +59,7 @@ export class MatchConnection {
       this.socket.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data) as ServerMessage;
+          console.debug("[WS] received:", JSON.stringify(message));
           this.callbacks.onMessage(message);
         } catch (err) {
           console.error("Failed to parse WebSocket message:", err, event.data);
@@ -133,6 +134,7 @@ export class MatchConnection {
 
   send(message: object): void {
     const json = JSON.stringify({ type: "command", payload: message });
+    console.debug("[WS] sending:", json);
     if (this.socket?.readyState === WebSocket.OPEN && this.authenticated) {
       this.socket.send(json);
     } else {

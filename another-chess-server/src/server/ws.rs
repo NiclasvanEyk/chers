@@ -45,9 +45,18 @@ enum ServerMessage {
 fn command_with_user(raw: serde_json::Value, user: &User) -> AnyResult<Command> {
     let mut raw = raw;
     if let Some(phase) = raw.as_object_mut().and_then(|m| m.values_mut().next()) {
-        if let Some(variant) = phase.as_object_mut().and_then(|m| m.values_mut().next()) {
-            if let Some(args) = variant.as_object_mut() {
-                args.insert("user".into(), serde_json::to_value(user)?);
+        if let Some(phase_obj) = phase.as_object_mut() {
+            if phase_obj.contains_key("user") {
+                // Flat struct variant (e.g. RequestState { user }) — the phase
+                // object IS the field map. Inject at this level.
+                phase_obj.insert("user".into(), serde_json::to_value(user)?);
+            } else if let Some(variant) = phase_obj.values_mut().next() {
+                // Newtype variant (e.g. Game(MakeMove { user, move_ })) — the
+                // phase wraps a variant tag; descend one more level to find the
+                // actual command fields.
+                if let Some(args) = variant.as_object_mut() {
+                    args.insert("user".into(), serde_json::to_value(user)?);
+                }
             }
         }
     }

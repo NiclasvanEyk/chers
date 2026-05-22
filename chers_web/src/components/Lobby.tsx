@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { User } from "@/lib/multiplayer/protocol";
 
 interface LobbyProps {
@@ -33,6 +33,14 @@ export function Lobby({
   const [displayName, setDisplayName] = useState(myName); // Local display name for immediate updates
   const [nameError, setNameError] = useState<string | null>(null);
   const [uiState, setUiState] = useState<PlayerUIState>(1); // Start in editing mode
+  const readyButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Focus the ready button when entering state 2
+  useEffect(() => {
+    if (uiState === 2) {
+      readyButtonRef.current?.focus();
+    }
+  }, [uiState]);
 
   // Update display name when prop changes (from server)
   useEffect(() => {
@@ -100,7 +108,10 @@ export function Lobby({
     switch (uiState) {
       case 1: // Editing mode
         return (
-          <div className="flex items-center justify-between gap-3">
+          <form
+            onSubmit={(e) => { e.preventDefault(); handleSaveName(); }}
+            className="flex items-center justify-between gap-3"
+          >
             <div className="flex-1">
               <input
                 type="text"
@@ -113,13 +124,13 @@ export function Lobby({
               {nameError && <p className="text-red-500 text-xs mt-1">{nameError}</p>}
             </div>
             <button
-              onClick={handleSaveName}
+              type="submit"
               disabled={!!nameError || editName.length === 0}
-              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-stone-400 disabled:cursor-not-allowed text-white rounded transition-colors text-sm whitespace-nowrap"
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-stone-400 disabled:cursor-not-allowed text-white rounded transition-colors text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
             >
               Save
             </button>
-          </div>
+          </form>
         );
 
       case 2: // Ready mode (not ready yet)
@@ -129,13 +140,14 @@ export function Lobby({
             <div className="flex gap-2">
               <button
                 onClick={() => setUiState(1)}
-                className="px-3 py-2 rounded transition-colors text-sm font-medium bg-stone-500 hover:bg-stone-600 text-white"
+                className="px-3 py-2 rounded transition-colors text-sm font-medium bg-stone-500 hover:bg-stone-600 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
               >
                 Change
               </button>
               <button
+                ref={readyButtonRef}
                 onClick={handleReadyClick}
-                className="px-4 py-2 rounded transition-colors text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white"
+                className="px-4 py-2 rounded transition-colors text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
               >
                 Ready?
               </button>
@@ -149,7 +161,7 @@ export function Lobby({
             <span className="font-medium">{displayName}</span>
               <button
                 onClick={handleAbortClick}
-                className="px-4 py-2 rounded transition-colors text-sm font-medium bg-red-600 hover:bg-red-700 text-white"
+                className="px-4 py-2 rounded transition-colors text-sm font-medium bg-red-600 hover:bg-red-700 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
               >
               Abort
             </button>
@@ -176,7 +188,7 @@ export function Lobby({
             />
             <button
               onClick={handleCopy}
-              className="px-4 py-2 bg-stone-600 hover:bg-stone-700 text-white rounded transition-colors"
+              className="px-4 py-2 bg-stone-600 hover:bg-stone-700 text-white rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
             >
               {copied ? "Copied!" : "Copy"}
             </button>

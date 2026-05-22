@@ -15,6 +15,8 @@ use crate::room::{Phase, Room as RoomState};
 use super::lease;
 use super::proxy::PublisherScope;
 
+use tracing::Instrument;
+
 /// Extract user_id and connection_id from a command for logging purposes.
 fn cmd_identity(cmd: &Command) -> (Option<&str>, Option<&str>) {
     match cmd {
@@ -88,25 +90,80 @@ fn phase_label(phase: &Phase) -> &'static str {
     }
 }
 
-/// Derive a human-readable label for a command, suitable for span attributes.
-fn cmd_label(cmd: &Command) -> &'static str {
+/// Create an info-level span whose name is the human-readable command label.
+fn cmd_span(
+    cmd: &Command,
+    phase: &str,
+    room_id: &str,
+    user_id: Option<&str>,
+    connection_id: Option<&str>,
+) -> tracing::Span {
+    let user_id = user_id.unwrap_or("");
+    let connection_id = connection_id.unwrap_or("");
     match cmd {
-        Command::Lobby(LobbyCommand::Join { .. }) => "Lobby:Join",
-        Command::Lobby(LobbyCommand::Leave { .. }) => "Lobby:Leave",
-        Command::Lobby(LobbyCommand::ChangeName { .. }) => "Lobby:ChangeName",
-        Command::Lobby(LobbyCommand::ChangeReady { .. }) => "Lobby:ChangeReady",
-        Command::Game(GameCommand::Reconnect { .. }) => "Game:Reconnect",
-        Command::Game(GameCommand::Leave { .. }) => "Game:Leave",
-        Command::Game(GameCommand::MakeMove { .. }) => "Game:MakeMove",
-        Command::Game(GameCommand::Resign { .. }) => "Game:Resign",
-        Command::PostGame(PostGameCommand::Reconnect { .. }) => "PostGame:Reconnect",
-        Command::PostGame(PostGameCommand::Leave { .. }) => "PostGame:Leave",
-        Command::PostGame(PostGameCommand::OfferRematch { .. }) => "PostGame:OfferRematch",
-        Command::PostGame(PostGameCommand::AcceptRematch { .. }) => "PostGame:AcceptRematch",
-        Command::PostGame(PostGameCommand::DeclineRematch { .. }) => "PostGame:DeclineRematch",
-        Command::RequestState { .. } => "RequestState",
-        Command::Leave { .. } => "Leave",
+        Command::Lobby(LobbyCommand::Join { .. }) => {
+            tracing::info_span!("Lobby:Join", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::Lobby(LobbyCommand::Leave { .. }) => {
+            tracing::info_span!("Lobby:Leave", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::Lobby(LobbyCommand::ChangeName { .. }) => {
+            tracing::info_span!("Lobby:ChangeName", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::Lobby(LobbyCommand::ChangeReady { .. }) => {
+            tracing::info_span!("Lobby:ChangeReady", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::Game(GameCommand::Reconnect { .. }) => {
+            tracing::info_span!("Game:Reconnect", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::Game(GameCommand::Leave { .. }) => {
+            tracing::info_span!("Game:Leave", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::Game(GameCommand::MakeMove { .. }) => {
+            tracing::info_span!("Game:MakeMove", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::Game(GameCommand::Resign { .. }) => {
+            tracing::info_span!("Game:Resign", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::PostGame(PostGameCommand::Reconnect { .. }) => {
+            tracing::info_span!("PostGame:Reconnect", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::PostGame(PostGameCommand::Leave { .. }) => {
+            tracing::info_span!("PostGame:Leave", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::PostGame(PostGameCommand::OfferRematch { .. }) => {
+            tracing::info_span!("PostGame:OfferRematch", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::PostGame(PostGameCommand::AcceptRematch { .. }) => {
+            tracing::info_span!("PostGame:AcceptRematch", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::PostGame(PostGameCommand::DeclineRematch { .. }) => {
+            tracing::info_span!("PostGame:DeclineRematch", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::RequestState { .. } => {
+            tracing::info_span!("RequestState", %phase, room_id, %user_id, %connection_id)
+        }
+        Command::Leave { .. } => {
+            tracing::info_span!("Leave", %phase, room_id, %user_id, %connection_id)
+        }
     }
+}
+
+/// Log a shutdown message including the OTEL trace ID when available.
+#[cfg(feature = "otel")]
+fn log_actor_shutdown(room_id: &str) {
+    use opentelemetry::trace::TraceContextExt;
+    use tracing_opentelemetry::OpenTelemetrySpanExt;
+
+    let cx = tracing::Span::current().context();
+    let trace_id = cx.span().span_context().trace_id();
+    tracing::info!(room_id, otel_trace_id = %trace_id, "actor shutting down");
+}
+
+/// Log a shutdown message (otel-disabled variant).
+#[cfg(not(feature = "otel"))]
+fn log_actor_shutdown(room_id: &str) {
+    tracing::info!(room_id, "actor shutting down");
 }
 
 /// Main event loop for a single room actor.
@@ -122,7 +179,6 @@ pub async fn run_actor<S, B>(
 {
     let room_id = publisher.room_id().clone();
     let actor_span = tracing::info_span!("actor", actor_id = %actor_id, room_id = %room_id);
-    let _actor_guard = actor_span.enter();
 
     let mut state = match storage.get_by_id(&room_id).await {
         Ok(Some(room)) => room,
@@ -133,60 +189,81 @@ pub async fn run_actor<S, B>(
         }
     };
 
-    loop {
-        let empty = state.players.is_empty();
-        let empty_timeout = state.empty_shutdown_secs;
+    let _ = async {
+        tracing::info!(actor_id = %actor_id, room_id = %room_id, "actor started");
 
-        tokio::select! {
-            incoming = async { cmd_stream.next().await } => {
-                let Some(incoming) = incoming else { break };
+        let mut was_empty = state.players.is_empty();
+        if was_empty {
+            tracing::info!(room_id = %room_id, "starting empty room shutdown timer");
+        }
 
-                let (user_id, conn_id) = cmd_identity(&incoming.command);
-                tracing::debug!(
-                    room_id = %room_id,
-                    user_id,
-                    connection_id = conn_id,
-                    ?incoming.command,
-                    "command received",
-                );
+        loop {
+            let empty = state.players.is_empty();
+            let empty_timeout = state.empty_shutdown_secs;
 
-                let phase = phase_label(&state.phase);
-                let result = tracing::debug_span!("command", cmd_type = %cmd_label(&incoming.command), %phase, room_id = %room_id)
-                    .in_scope(|| handler::handle_command(incoming.command, &mut state));
+            if empty && !was_empty {
+                tracing::info!(room_id = %room_id, "starting empty room shutdown timer");
+            } else if !empty && was_empty {
+                tracing::info!(room_id = %room_id, "cancelling empty room shutdown timer");
+            }
+            was_empty = empty;
 
-                incoming.response_channel.respond(result.response).await;
+            tokio::select! {
+                incoming = async { cmd_stream.next().await } => {
+                    let Some(incoming) = incoming else { break };
 
-                for event in result.events {
-                    log_event(&room_id, &event);
+                    let (user_id, conn_id) = cmd_identity(&incoming.command);
+                    tracing::debug!(
+                        room_id = %room_id,
+                        user_id,
+                        connection_id = conn_id,
+                        ?incoming.command,
+                        "command received",
+                    );
 
-                    if let Err(err) = publisher.publish(event).await {
-                        tracing::warn!("failed to publish event for room {room_id}: {err}");
+                    let phase = phase_label(&state.phase);
+                    let result = cmd_span(&incoming.command, phase, &room_id, user_id, conn_id)
+                        .in_scope(|| handler::handle_command(incoming.command, &mut state));
+
+                    incoming.response_channel.respond(result.response).await;
+
+                    for event in result.events {
+                        log_event(&room_id, &event);
+
+                        if let Err(err) = publisher.publish(event).await {
+                            tracing::warn!("failed to publish event for room {room_id}: {err}");
+                        }
+                    }
+
+                    if let Err(err) = storage.persist(&state).await {
+                        tracing::error!("failed to persist room {room_id}: {err}");
                     }
                 }
-
-                if let Err(err) = storage.persist(&state).await {
-                    tracing::error!("failed to persist room {room_id}: {err}");
+                _ = guard.expired() => {
+                    tracing::warn!("lease expired for room {room_id}");
+                    break;
                 }
-            }
-            _ = guard.expired() => {
-                tracing::warn!("lease expired for room {room_id}");
-                break;
-            }
-            _ = async {
-                match empty_timeout {
-                    Some(secs) => tokio::time::sleep(Duration::from_secs(secs)).await,
-                    None => std::future::pending().await,
+                _ = async {
+                    match empty_timeout {
+                        Some(secs) => tokio::time::sleep(Duration::from_secs(secs)).await,
+                        None => std::future::pending().await,
+                    }
+                }, if empty => {
+                    tracing::info!(room_id = %room_id, "shutting down empty room");
+                    break;
                 }
-            }, if empty => {
-                tracing::info!(room_id = %room_id, "shutting down empty room");
-                break;
             }
         }
-    }
 
-    if let Err(err) = storage.persist(&state).await {
-        tracing::error!("failed final persist for room {room_id}: {err}");
+        if let Err(err) = storage.persist(&state).await {
+            tracing::error!("failed final persist for room {room_id}: {err}");
+        }
+
+        log_actor_shutdown(&room_id);
     }
+    .instrument(actor_span)
+    .await;
+
     publisher.remove().await;
 }
 

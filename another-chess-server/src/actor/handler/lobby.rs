@@ -70,7 +70,16 @@ pub fn handle_lobby_command(cmd: Command, room: &mut Room) -> CommandResult {
             if let Some(player) = room.players.iter_mut().find(|p| p.id == user.id) {
                 player.name = new_name;
             }
-            CommandResult::accepted(Event::Lobby(LobbyEvent::PlayerNameChanged { user }))
+
+            let updated_user = room
+                .players
+                .iter()
+                .find(|p| p.id == user.id)
+                .cloned()
+                .unwrap_or(user);
+            CommandResult::accepted(Event::Lobby(LobbyEvent::PlayerNameChanged {
+                user: updated_user,
+            }))
         }
         Command::Lobby(LobbyCommand::ChangeReady { user, is_ready }) => {
             let should_transition = if let Phase::Lobby { ready_players } = &mut room.phase {

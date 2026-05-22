@@ -1,4 +1,8 @@
 [tools]
+"github:wasm-bindgen/wasm-bindgen" = "latest"
+node = "latest"
+"npm:vite-plus" = "latest"
+pnpm = "latest"
 tombi = "latest"
 
 [tasks.format]

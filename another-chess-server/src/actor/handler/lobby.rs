@@ -201,9 +201,10 @@ mod tests {
         assert!(matches!(result.response, CommandResponse::Accepted));
         // Should have PlayerJoined + ConnectionSuperseded
         assert_eq!(result.events.len(), 2);
-        assert!(
-            matches!(&result.events[0], Event::Lobby(LobbyEvent::PlayerJoined { .. }))
-        );
+        assert!(matches!(
+            &result.events[0],
+            Event::Lobby(LobbyEvent::PlayerJoined { .. })
+        ));
         assert!(
             matches!(&result.events[1], Event::System(SystemEvent::ConnectionSuperseded { old_connection_id, .. }) if old_connection_id == "conn-1")
         );

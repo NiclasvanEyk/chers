@@ -22,20 +22,32 @@ pub fn handle_command(cmd: Command, room: &mut Room) -> CommandResult {
     // Handle universal commands first
     match &cmd {
         Command::RequestState { user } => return build_state_mirror(user.clone(), room),
-        Command::Leave { user, connection_id } => {
+        Command::Leave {
+            user,
+            connection_id,
+        } => {
             let user = user.clone();
             let connection_id = connection_id.clone();
             return match room.phase {
                 Phase::Lobby { .. } => handle_lobby_command(
-                    Command::Lobby(LobbyCommand::Leave { user, connection_id }),
+                    Command::Lobby(LobbyCommand::Leave {
+                        user,
+                        connection_id,
+                    }),
                     room,
                 ),
                 Phase::Game { .. } => handle_game_command(
-                    Command::Game(GameCommand::Leave { user, connection_id }),
+                    Command::Game(GameCommand::Leave {
+                        user,
+                        connection_id,
+                    }),
                     room,
                 ),
                 Phase::PostGame { .. } => handle_post_game_command(
-                    Command::PostGame(PostGameCommand::Leave { user, connection_id }),
+                    Command::PostGame(PostGameCommand::Leave {
+                        user,
+                        connection_id,
+                    }),
                     room,
                 ),
             };
@@ -51,10 +63,23 @@ pub fn handle_command(cmd: Command, room: &mut Room) -> CommandResult {
     }
 }
 
+/// Resolve the current user data from the given player list.
+///
+/// The command carries a stale [`User`] snapshot (the name the client
+/// authenticated with). Always prefer the authoritative data stored in
+/// `room.players` or the per-phase player snapshot.
+fn resolve_user<'a>(players: &'a [User], cmd_user: &'a User) -> &'a User {
+    players
+        .iter()
+        .find(|p| p.id == cmd_user.id)
+        .unwrap_or(cmd_user)
+}
+
 /// Build a personalized state mirror for the requesting user.
 fn build_state_mirror(user: User, room: &Room) -> CommandResult {
     let state_mirror = match &room.phase {
         Phase::Lobby { ready_players } => {
+            let you = resolve_user(&room.players, &user).clone();
             let opponent = room.players.iter().find(|p| p.id != user.id).cloned();
 
             let you_are_ready = ready_players.contains(&user.id);
@@ -64,7 +89,7 @@ fn build_state_mirror(user: User, room: &Room) -> CommandResult {
                 .unwrap_or(false);
 
             RoomStateMirror::Lobby {
-                you: user,
+                you,
                 opponent,
                 you_are_ready,
                 opponent_is_ready,
@@ -76,6 +101,7 @@ fn build_state_mirror(user: User, room: &Room) -> CommandResult {
             white_player_id,
             black_player_id,
         } => {
+            let you = resolve_user(&room.players, &user).clone();
             let (your_color, opponent_color, opponent) = if user.id == *white_player_id {
                 let opponent = room
                     .players
@@ -97,7 +123,7 @@ fn build_state_mirror(user: User, room: &Room) -> CommandResult {
             let is_your_turn = state.player == your_color;
 
             RoomStateMirror::Game {
-                you: user,
+                you,
                 your_color,
                 opponent,
                 opponent_color,
@@ -106,39 +132,31 @@ fn build_state_mirror(user: User, room: &Room) -> CommandResult {
             }
         }
 
-        Phase::PostGame { winner, reason } => {
-            // We need to determine colors from the room's perspective
-            // Since we don't track color history in PostGame, we'll look at the previous
-            // game state from storage. For now, we'll derive from available info.
-
-            // Find the opponent
-            let opponent = room
-                .players
+        Phase::PostGame {
+            winner,
+            reason,
+            players,
+        } => {
+            let you = resolve_user(players, &user).clone();
+            let opponent = players
                 .iter()
                 .find(|p| p.id != user.id)
                 .cloned()
-                .expect("opponent should exist");
+                .expect("opponent should be present in post-game player snapshot");
 
-            // Try to determine colors - we need to know who was white/black
-            // For now, we'll use a placeholder that will be resolved when we
-            // check storage or when we add color tracking to PostGame
-            // For this implementation, we'll default to the user being White
-            // In a real implementation, you'd want to persist color assignments
             let your_color = Color::White;
             let opponent_color = Color::Black;
 
             let you_won = winner.as_ref() == Some(&user.id);
 
-            // Placeholder - in a full implementation, we'd persist the final board
-            // and color assignments when transitioning to PostGame
             let final_board = chers::Game::new().start();
 
             RoomStateMirror::PostGame {
-                you: user,
+                you,
                 your_color,
                 opponent,
                 opponent_color,
-                winner: None, // Would need color of winner
+                winner: None,
                 you_won,
                 reason: reason.clone().unwrap_or(GameEndReason::Checkmate),
                 final_board,

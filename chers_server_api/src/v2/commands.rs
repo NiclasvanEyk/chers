@@ -52,8 +52,14 @@ pub enum LobbyCommand {
         /// The connection ID to validate against the user's active connection.
         connection_id: String,
     },
-    ChangeName { user: User, new_name: String },
-    ChangeReady { user: User, is_ready: bool },
+    ChangeName {
+        user: User,
+        new_name: String,
+    },
+    ChangeReady {
+        user: User,
+        is_ready: bool,
+    },
 }
 
 /// Commands available during active gameplay.
@@ -72,16 +78,11 @@ pub enum GameCommand {
     /// Make a chess move.
     ///
     /// The move contains the from/to coordinates and optional promotion piece.
-    MakeMove {
-        user: User,
-        move_: Move,
-    },
+    MakeMove { user: User, move_: Move },
     /// Resign from the current game.
     ///
     /// The opponent is declared the winner immediately.
-    Resign {
-        user: User,
-    },
+    Resign { user: User },
 }
 
 /// Commands available after the game has ended.
@@ -97,9 +98,15 @@ pub enum PostGameCommand {
         /// The connection ID to validate against the user's active connection.
         connection_id: String,
     },
-    OfferRematch { user: User },
-    AcceptRematch { user: User },
-    DeclineRematch { user: User },
+    OfferRematch {
+        user: User,
+    },
+    AcceptRematch {
+        user: User,
+    },
+    DeclineRematch {
+        user: User,
+    },
 }
 
 /// The outcome of a command sent to an actor.

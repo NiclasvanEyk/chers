@@ -24,7 +24,7 @@ impl MatchRepository {
     /// Create a new match in Lobby state
     /// Uses scc's lock-free insert - no global lock on the map
     pub fn create(&self) -> Arc<RwLock<Match>> {
-        let id = MatchId::new_v4();
+        let id = MatchId::now_v7();
         let match_state = Match::new(id);
         let arc = Arc::new(RwLock::new(match_state));
 

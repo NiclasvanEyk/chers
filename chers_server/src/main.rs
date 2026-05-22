@@ -9,9 +9,9 @@ use crate::matches::repository::MatchRepository;
 use axum::routing::{get, post};
 use axum::Router;
 use axum::{body::Body, http::Request};
-use std::sync::Arc;
-use std::io;
 use sentry::integrations::tower::{NewSentryLayer, SentryHttpLayer};
+use std::io;
+use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::{DefaultMakeSpan, TraceLayer};
 use tracing::info;
@@ -36,7 +36,8 @@ fn main() -> io::Result<()> {
     // Load telemetry config (initialization happens inside async block where Tokio runtime exists)
     let config = telemetry::TelemetryConfig::from_env();
     let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
-    let listen_address = std::env::var("CHERS_LISTEN_ADDRESS").unwrap_or_else(|_| "0.0.0.0".to_string());
+    let listen_address =
+        std::env::var("CHERS_LISTEN_ADDRESS").unwrap_or_else(|_| "0.0.0.0".to_string());
     let host = std::env::var("CHERS_HOST").unwrap_or_else(|_| "localhost".to_string());
 
     tokio::runtime::Builder::new_multi_thread()
@@ -50,7 +51,7 @@ fn main() -> io::Result<()> {
             // Default to INFO level if RUST_LOG is not set
             let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info"));
-            
+
             let subscriber = tracing_subscriber::registry()
                 .with(tracing_subscriber::fmt::layer())
                 .with(env_filter);
@@ -128,29 +129,31 @@ fn main() -> io::Result<()> {
             let listener = tokio::net::TcpListener::bind(format!("{}:{}", listen_address, port))
                 .await
                 .unwrap();
-            
+
             // Helper to check if address is a wildcard (binds to all interfaces)
-            let is_wildcard = |addr: &str| -> bool {
-                matches!(addr, "0.0.0.0" | "::" | "[::]" | "*")
-            };
-            
+            let is_wildcard =
+                |addr: &str| -> bool { matches!(addr, "0.0.0.0" | "::" | "[::]" | "*") };
+
             info!("🚀 Chers server ready");
-            
+
             // Always show the clickable local URL
             let local_url = format!("http://{}:{}/", host, port);
             info!("   Local:   {}", local_url);
-            
+
             // Only show "Network" line if listening on all interfaces
             if is_wildcard(&listen_address) {
-                info!("   Network: http://{}:{}/ (all interfaces)", listen_address, port);
+                info!(
+                    "   Network: http://{}:{}/ (all interfaces)",
+                    listen_address, port
+                );
             }
             axum::serve(listener, app.into_make_service())
                 .await
                 .unwrap();
-            
+
             // Shutdown telemetry gracefully
             telemetry::shutdown(guards);
         });
-    
+
     Ok(())
 }

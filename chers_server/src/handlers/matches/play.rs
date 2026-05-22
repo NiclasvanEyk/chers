@@ -74,18 +74,28 @@ async fn handle_connection(
     // 2. Wait for authentication message
     let (token, name) = wait_for_authentication(&mut socket).await;
     if token.is_empty() {
-        warn!("❌ Authentication failed for match {}: empty token", match_id);
+        warn!(
+            "❌ Authentication failed for match {}: empty token",
+            match_id
+        );
         return;
     }
 
-    info!("🔑 Player '{}' (token: {}) authenticating in match {}", name, token, match_id);
+    info!(
+        "🔑 Player '{}' (token: {}) authenticating in match {}",
+        name, token, match_id
+    );
 
     // 3. Check if this is a reconnection
     let is_reconnection = {
         let match_guard = match_arc.read().await;
-        let reconnecting = match_guard.get_player_color(&token).is_some() && !match_guard.is_player_connected(&token);
+        let reconnecting = match_guard.get_player_color(&token).is_some()
+            && !match_guard.is_player_connected(&token);
         if reconnecting {
-            info!("🔄 Detected reconnection for player {} in match {}", token, match_id);
+            info!(
+                "🔄 Detected reconnection for player {} in match {}",
+                token, match_id
+            );
         }
         reconnecting
     };
@@ -99,7 +109,15 @@ async fn handle_connection(
 
     let (context, mut private_rx, mut public_rx, player_span) = if is_reconnection {
         // Handle reconnection
-        match handle_reconnection(&mut socket, &match_arc, &match_id, token.clone(), name.clone()).await {
+        match handle_reconnection(
+            &mut socket,
+            &match_arc,
+            &match_id,
+            token.clone(),
+            name.clone(),
+        )
+        .await
+        {
             Some((ctx, rx1, rx2)) => {
                 // Get the player's span from the match state
                 let span = {
@@ -112,7 +130,15 @@ async fn handle_connection(
         }
     } else {
         // Handle new connection
-        match authenticate_player(&mut socket, &match_arc, &match_id, token.clone(), name.clone()).await {
+        match authenticate_player(
+            &mut socket,
+            &match_arc,
+            &match_id,
+            token.clone(),
+            name.clone(),
+        )
+        .await
+        {
             Some((ctx, rx1, rx2)) => {
                 // Get the player's span from the match state
                 let span = {
@@ -127,7 +153,7 @@ async fn handle_connection(
 
     // Get the player span - will be used by child spans
     let player_span_for_events = player_span.clone();
-    
+
     // Emit connection event in the player span context
     if let Some(ref span) = player_span_for_events {
         let _entered = span.enter();
@@ -154,7 +180,7 @@ async fn handle_connection(
         &mut private_rx,
         &mut public_rx,
     );
-    
+
     // Use instrument to maintain span context across await points
     if let Some(span) = player_span_for_events.clone() {
         game_loop_future.instrument(span).await;
@@ -172,8 +198,11 @@ async fn handle_connection(
             "player_disconnected",
         );
     }
-    
-    info!("👋 Player {} disconnecting from match {}", context.name, match_id);
+
+    info!(
+        "👋 Player {} disconnecting from match {}",
+        context.name, match_id
+    );
     handle_disconnection(&match_arc, &match_id, &context).await;
 }
 
@@ -194,7 +223,10 @@ async fn wait_for_authentication(socket: &mut WebSocket) -> (String, String) {
 
     match serde_json::from_str::<ClientMessage>(&msg) {
         Ok(ClientMessage::Authenticate { token, name }) => {
-            info!("✅ Authentication received - Name: {}, Token: {}", name, token);
+            info!(
+                "✅ Authentication received - Name: {}, Token: {}",
+                name, token
+            );
             (token, name)
         }
         Ok(_) => {
@@ -221,8 +253,11 @@ async fn handle_reconnection(
     tokio::sync::broadcast::Receiver<PrivateEvent>,
     tokio::sync::broadcast::Receiver<PublicEvent>,
 )> {
-    info!("🔄 Processing reconnection for player {} in match {}", token, match_id);
-    
+    info!(
+        "🔄 Processing reconnection for player {} in match {}",
+        token, match_id
+    );
+
     // Get channels for reconnection
     let (public_tx, player_tx, _player_color) = {
         let match_guard = match_arc.read().await;
@@ -253,13 +288,15 @@ async fn handle_reconnection(
                 "✅ Reconnection successful for player {:?} in match {}",
                 result.player, match_id
             );
-            
+
             // Send StateSync to reconnecting player
-            let (game_result, game_end_reason) = result.game_result.as_ref()
+            let (game_result, game_end_reason) = result
+                .game_result
+                .as_ref()
                 .map(|r| r.to_api())
                 .map(|(gr, ger)| (Some(gr), Some(ger)))
                 .unwrap_or((None, None));
-            
+
             let sync_event = PrivateEvent::StateSync {
                 game_state: result.state,
                 current_turn: result.current_turn,
@@ -298,7 +335,7 @@ async fn handle_reconnection(
                 "📢 Broadcast player reconnection: {:?} in match {}",
                 result.player, match_id
             );
-            
+
             let status_event = PublicEvent::PlayerStatusChanged {
                 player: result.player,
                 status: chers_server_api::server::PlayerConnectionStatus::Connected,
@@ -342,8 +379,11 @@ async fn authenticate_player(
     tokio::sync::broadcast::Receiver<PrivateEvent>,
     tokio::sync::broadcast::Receiver<PublicEvent>,
 )> {
-    info!("🔐 Authenticating new player '{}' (token: {}) in match {}", name, token, match_id);
-    
+    info!(
+        "🔐 Authenticating new player '{}' (token: {}) in match {}",
+        name, token, match_id
+    );
+
     // Check match state
     let check_result = {
         let match_guard = match_arc.read().await;
@@ -402,7 +442,10 @@ async fn authenticate_player(
                     crate::matches::state::JoinError::MatchFull => "Match is full",
                     crate::matches::state::JoinError::DuplicateToken => "Token already in use",
                 };
-                warn!("❌ Failed to assign player in match {}: {}", match_id, reason);
+                warn!(
+                    "❌ Failed to assign player in match {}: {}",
+                    match_id, reason
+                );
                 send_auth_failed(socket, reason).await;
                 return None;
             }
@@ -419,14 +462,20 @@ async fn authenticate_player(
         let match_guard = match_arc.read().await;
         match &match_guard.state {
             MatchState::Lobby(lobby) => {
-                let p1 = lobby.player1.as_ref().map(|p| chers_server_api::server::PlayerInfo {
-                    name: p.name.clone(),
-                    connected: p.connected,
-                });
-                let p2 = lobby.player2.as_ref().map(|p| chers_server_api::server::PlayerInfo {
-                    name: p.name.clone(),
-                    connected: p.connected,
-                });
+                let p1 = lobby
+                    .player1
+                    .as_ref()
+                    .map(|p| chers_server_api::server::PlayerInfo {
+                        name: p.name.clone(),
+                        connected: p.connected,
+                    });
+                let p2 = lobby
+                    .player2
+                    .as_ref()
+                    .map(|p| chers_server_api::server::PlayerInfo {
+                        name: p.name.clone(),
+                        connected: p.connected,
+                    });
                 (p1, p2, lobby.player1_ready, lobby.player2_ready)
             }
             _ => (None, None, false, false),
@@ -434,7 +483,7 @@ async fn authenticate_player(
     };
 
     // Player is waiting in lobby - send LobbyJoined with full lobby state
-    let lobby_joined = ServerMessage::Private(PrivateEvent::LobbyJoined { 
+    let lobby_joined = ServerMessage::Private(PrivateEvent::LobbyJoined {
         slot: assigned_slot,
         player1: player1_info,
         player2: player2_info,
@@ -443,10 +492,16 @@ async fn authenticate_player(
     });
     if let Ok(json) = serde_json::to_string(&lobby_joined) {
         let _ = socket.send(Message::Text(json.into())).await;
-        debug!("📤 Sent LobbyJoined with lobby state to slot {}", assigned_slot);
+        debug!(
+            "📤 Sent LobbyJoined with lobby state to slot {}",
+            assigned_slot
+        );
     }
 
-    info!("⏳ Player '{}' waiting in lobby for match {}", name, match_id);
+    info!(
+        "⏳ Player '{}' waiting in lobby for match {}",
+        name, match_id
+    );
 
     // Context without color (will be assigned when game starts via ColorsAssigned)
     let context = PlayerContext {
@@ -478,7 +533,7 @@ async fn broadcast_game_started(
         "📢 Broadcasting GameStarted in match {} - White: {}, Black: {}",
         match_id, game.white.name, game.black.name
     );
-    
+
     let event = PublicEvent::GameStarted {
         game_state: game.state.clone(),
         white_player: chers_server_api::server::PlayerInfo {
@@ -516,7 +571,7 @@ async fn game_loop(
         "🔄 Game loop started for player {} ({:?}) in match {}",
         context.name, context.color, match_id
     );
-    
+
     loop {
         tokio::select! {
             // Handle WebSocket messages from client
@@ -565,8 +620,11 @@ async fn game_loop(
             }
         }
     }
-    
-    debug!("🛑 Game loop ended for player {} in match {}", context.name, match_id);
+
+    debug!(
+        "🛑 Game loop ended for player {} in match {}",
+        context.name, match_id
+    );
 }
 
 async fn handle_disconnection(
@@ -578,26 +636,26 @@ async fn handle_disconnection(
         "🔌 Handling disconnection for player {} (slot {}) in match {}",
         context.name, context.slot, match_id
     );
-    
+
     // Check if we're in lobby or game state
     let is_lobby = {
         let match_guard = match_arc.read().await;
         matches!(match_guard.state, MatchState::Lobby(_))
     };
-    
+
     if is_lobby {
         // In lobby: immediately remove player and notify others
         let removed_slot = {
             let mut match_guard = match_arc.write().await;
             match_guard.remove_player_from_lobby(&context.token)
         };
-        
+
         if let Some(slot) = removed_slot {
             info!(
                 "👋 Player {} left lobby slot {} in match {} (immediate removal)",
                 context.name, slot, match_id
             );
-            
+
             // Broadcast that player left
             let leave_event = PublicEvent::PlayerLeftLobby { slot };
             {
@@ -605,10 +663,10 @@ async fn handle_disconnection(
                 let _ = match_guard.channels.public_tx.send(leave_event);
             }
         }
-        
+
         return;
     }
-    
+
     // In game: use grace period logic (existing code)
     let disconnect_result = {
         let mut match_guard = match_arc.write().await;
@@ -725,7 +783,11 @@ async fn handle_client_message(
         }) => {
             info!(
                 "♟️  Move attempt by {} ({:?}): {} -> {} (promotion: {:?})",
-                context.name, context.color, format_coords(from), format_coords(to), promotion
+                context.name,
+                context.color,
+                format_coords(from),
+                format_coords(to),
+                promotion
             );
             handle_make_move(socket, match_arc, context, from, to, promotion).await
         }
@@ -739,7 +801,10 @@ async fn handle_client_message(
             MessageHandlingResult::Continue
         }
         Ok(ClientMessage::UpdateName { name }) => {
-            info!("✏️  Name update request from {} to '{}'", context.name, name);
+            info!(
+                "✏️  Name update request from {} to '{}'",
+                context.name, name
+            );
             handle_update_name(match_arc, context, name).await
         }
         Ok(ClientMessage::Ready { ready }) => {
@@ -752,7 +817,10 @@ async fn handle_client_message(
             MessageHandlingResult::Continue
         }
         Err(e) => {
-            error!("❌ Failed to parse client message from {}: {}", context.name, e);
+            error!(
+                "❌ Failed to parse client message from {}: {}",
+                context.name, e
+            );
             send_move_rejected(socket, "Invalid message format").await;
             MessageHandlingResult::Continue
         }
@@ -806,7 +874,7 @@ async fn handle_make_move(
                 move_result.is_check,
                 move_result.is_checkmate
             );
-            
+
             // Broadcast MoveMade
             let event = PublicEvent::MoveMade {
                 author: context.color,
@@ -863,11 +931,17 @@ async fn handle_make_move(
                     chers_server_api::server::MoveRejectionReason::IllegalMove
                 }
                 MoveError::GameNotInProgress => {
-                    warn!("⛔ Move rejected for {}: Game not in progress", context.name);
+                    warn!(
+                        "⛔ Move rejected for {}: Game not in progress",
+                        context.name
+                    );
                     chers_server_api::server::MoveRejectionReason::GameOver
                 }
                 MoveError::GamePaused => {
-                    warn!("⛔ Move rejected for {}: Game paused (disconnected)", context.name);
+                    warn!(
+                        "⛔ Move rejected for {}: Game paused (disconnected)",
+                        context.name
+                    );
                     chers_server_api::server::MoveRejectionReason::GameOver
                 }
                 _ => {
@@ -975,7 +1049,7 @@ async fn handle_update_name(
                 "✅ Name updated for player {:?} to '{}'",
                 player_color, new_name
             );
-            
+
             // Broadcast name change to all clients
             let event = PublicEvent::NameChanged {
                 player: player_color,
@@ -987,14 +1061,11 @@ async fn handle_update_name(
                 let match_guard = match_arc.read().await;
                 let _ = match_guard.channels.public_tx.send(event);
             }
-            
+
             MessageHandlingResult::Continue
         }
         Err(error_msg) => {
-            warn!(
-                "⚠️  Name update failed for {}: {}",
-                context.name, error_msg
-            );
+            warn!("⚠️  Name update failed for {}: {}", context.name, error_msg);
             // We could send an error message to the client here, but for now just log it
             MessageHandlingResult::Continue
         }
@@ -1018,7 +1089,7 @@ async fn handle_ready(
                 "✅ Ready status toggled for player {:?}: {} (both ready: {})",
                 player_color, new_ready_status, both_ready
             );
-            
+
             // Broadcast ready status change to all clients
             let event = PublicEvent::PlayerReady {
                 player: player_color,
@@ -1030,13 +1101,13 @@ async fn handle_ready(
                 let match_guard = match_arc.read().await;
                 let _ = match_guard.channels.public_tx.send(event);
             }
-            
+
             // If both players are ready, start the countdown
             if both_ready {
                 info!("🎮 Both players ready! Starting 5-second countdown...");
                 start_countdown(match_arc).await;
             }
-            
+
             MessageHandlingResult::Continue
         }
         Err(error_msg) => {
@@ -1052,7 +1123,7 @@ async fn handle_ready(
 async fn start_countdown(match_arc: &Arc<tokio::sync::RwLock<Match>>) {
     // Spawn countdown task
     let match_weak = Arc::downgrade(match_arc);
-    
+
     tokio::spawn(async move {
         // Countdown from 5 to 1
         for seconds in (1..=5).rev() {
@@ -1063,10 +1134,10 @@ async fn start_countdown(match_arc: &Arc<tokio::sync::RwLock<Match>>) {
                 let _ = match_guard.channels.public_tx.send(event);
                 drop(match_guard);
             }
-            
+
             // Wait 1 second
             tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-            
+
             // Check if we should still proceed (both still ready)
             if let Some(match_arc) = match_weak.upgrade() {
                 let match_guard = match_arc.read().await;
@@ -1076,7 +1147,7 @@ async fn start_countdown(match_arc: &Arc<tokio::sync::RwLock<Match>>) {
                     false
                 };
                 drop(match_guard);
-                
+
                 if !should_proceed {
                     info!("⏹️  Countdown cancelled - players no longer ready");
                     return;
@@ -1085,11 +1156,11 @@ async fn start_countdown(match_arc: &Arc<tokio::sync::RwLock<Match>>) {
                 return;
             }
         }
-        
+
         // Countdown complete - start the game
         if let Some(match_arc) = match_weak.upgrade() {
             info!("🚀 Countdown complete! Starting game...");
-            
+
             // Send GameStarting event
             {
                 let match_guard = match_arc.read().await;
@@ -1097,17 +1168,20 @@ async fn start_countdown(match_arc: &Arc<tokio::sync::RwLock<Match>>) {
                 let _ = match_guard.channels.public_tx.send(event);
                 drop(match_guard);
             }
-            
+
             // Start the game
             let start_result = {
                 let mut match_guard = match_arc.write().await;
                 match_guard.start_game()
             };
-            
+
             match start_result {
                 Ok((active_game, player1_is_white)) => {
-                    info!("🎮 Game started successfully! (player1_is_white: {})", player1_is_white);
-                    
+                    info!(
+                        "🎮 Game started successfully! (player1_is_white: {})",
+                        player1_is_white
+                    );
+
                     // Broadcast GameStarted event
                     let match_guard = match_arc.read().await;
                     let event = PublicEvent::GameStarted {
@@ -1122,16 +1196,32 @@ async fn start_countdown(match_arc: &Arc<tokio::sync::RwLock<Match>>) {
                         },
                     };
                     let _ = match_guard.channels.public_tx.send(event);
-                    
+
                     // Send ColorsAssigned to both players via correct channels
                     // player1 channel gets assigned to whoever is in slot 1
                     // player2 channel gets assigned to whoever is in slot 2
                     if player1_is_white {
-                        let _ = match_guard.channels.player1_tx.send(chers_server_api::PrivateEvent::ColorsAssigned { player: Color::White });
-                        let _ = match_guard.channels.player2_tx.send(chers_server_api::PrivateEvent::ColorsAssigned { player: Color::Black });
+                        let _ = match_guard.channels.player1_tx.send(
+                            chers_server_api::PrivateEvent::ColorsAssigned {
+                                player: Color::White,
+                            },
+                        );
+                        let _ = match_guard.channels.player2_tx.send(
+                            chers_server_api::PrivateEvent::ColorsAssigned {
+                                player: Color::Black,
+                            },
+                        );
                     } else {
-                        let _ = match_guard.channels.player1_tx.send(chers_server_api::PrivateEvent::ColorsAssigned { player: Color::Black });
-                        let _ = match_guard.channels.player2_tx.send(chers_server_api::PrivateEvent::ColorsAssigned { player: Color::White });
+                        let _ = match_guard.channels.player1_tx.send(
+                            chers_server_api::PrivateEvent::ColorsAssigned {
+                                player: Color::Black,
+                            },
+                        );
+                        let _ = match_guard.channels.player2_tx.send(
+                            chers_server_api::PrivateEvent::ColorsAssigned {
+                                player: Color::White,
+                            },
+                        );
                     }
                 }
                 Err(e) => {

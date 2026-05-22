@@ -185,7 +185,7 @@ pub async fn handle_socket<P, S, B, T>(
     // This is stored on the User in the actor and used to:
     //   a) validate that commands originate from the active connection
     //   b) detect when a new connection supersedes this one
-    let connection_id = uuid::Uuid::new_v4().to_string();
+    let connection_id = uuid::Uuid::now_v7().to_string();
 
     // ---- Auth handshake ----
     let msg = match FuturesStreamExt::next(&mut receiver).await {
@@ -233,8 +233,7 @@ pub async fn handle_socket<P, S, B, T>(
     };
 
     // Try lobby Join first, then fall through to reconnect commands.
-    let mut user =
-        try_join(&room, &mut events, &secret, &name, &connection_id).await;
+    let mut user = try_join(&room, &mut events, &secret, &name, &connection_id).await;
     let mut is_reconnect = false;
 
     // If lobby Join didn't match, try game reconnect.
@@ -260,7 +259,9 @@ pub async fn handle_socket<P, S, B, T>(
         } else {
             Event::Lobby(LobbyEvent::PlayerJoined { user: u.clone() })
         };
-        if let Ok(json) = serde_json::to_string(&ServerMessage::Event { payload: auth_event }) {
+        if let Ok(json) = serde_json::to_string(&ServerMessage::Event {
+            payload: auth_event,
+        }) {
             let _ = sender.send(Message::Text(json.into())).await;
         }
     }

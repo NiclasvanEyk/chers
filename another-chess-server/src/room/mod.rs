@@ -33,6 +33,8 @@ pub enum Phase {
     PostGame {
         winner: Option<UserId>,
         reason: Option<chers_server_api::v2::events::GameEndReason>,
+        /// Snapshot of players at game end, persists across leaves.
+        players: Vec<User>,
     },
 }
 
@@ -42,6 +44,9 @@ pub struct Room {
     pub phase: Phase,
     pub players: Vec<User>,
     pub auth: RoomAuth,
+    /// Seconds of emptiness before the actor shuts down.
+    /// `None` means never shut down automatically.
+    pub empty_shutdown_secs: Option<u64>,
 }
 
 /// Per-room authentication state, persisted alongside the room.
@@ -82,7 +87,7 @@ impl RoomAuth {
             return None;
         }
 
-        let user_id = uuid::Uuid::new_v4().to_string();
+        let user_id = uuid::Uuid::now_v7().to_string();
         self.entries.insert(
             secret.to_owned(),
             AuthEntry {
@@ -121,6 +126,7 @@ impl Room {
             },
             players: Vec::with_capacity(MAX_PLAYERS),
             auth: RoomAuth::new(),
+            empty_shutdown_secs: Some(60),
         }
     }
 }

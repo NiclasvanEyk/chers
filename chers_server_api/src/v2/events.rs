@@ -24,13 +24,19 @@ pub enum Event {
 /// Events that are not tied to a specific phase.
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum SystemEvent {
-    CommandRejected { user: User, reason: String },
+    CommandRejected {
+        user: User,
+        reason: String,
+    },
 
     /// A new connection has superseded an existing one for the same user.
     ///
     /// The recipient whose `connection_id` matches `old_connection_id`
     /// should close its WebSocket connection gracefully.
-    ConnectionSuperseded { user: User, old_connection_id: String },
+    ConnectionSuperseded {
+        user: User,
+        old_connection_id: String,
+    },
 }
 
 /// All events published during the lobby phase.

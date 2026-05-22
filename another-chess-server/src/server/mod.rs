@@ -64,7 +64,7 @@ where
     T: CommandBus<Cmd = crate::communication::command::Command> + 'static,
 {
     // Generate a new room ID (UUID)
-    let room_id = uuid::Uuid::new_v4().to_string();
+    let room_id = uuid::Uuid::now_v7().to_string();
 
     // Optionally, we could pre-create the room in the registry here,
     // but lazy creation on first WebSocket connection works fine too.

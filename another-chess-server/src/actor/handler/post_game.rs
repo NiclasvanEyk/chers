@@ -22,8 +22,9 @@ pub fn handle_post_game_command(cmd: Command, room: &mut Room) -> CommandResult 
                 return CommandResult::rejected("user not in this room");
             }
 
-            let mut events =
-                vec![Event::PostGame(PostGameEvent::PlayerReconnected { user: user.clone() })];
+            let mut events = vec![Event::PostGame(PostGameEvent::PlayerReconnected {
+                user: user.clone(),
+            })];
 
             // Update connection_id and emit superseded event if changed
             if let Some(existing) = room.players.iter_mut().find(|p| p.id == user.id) {

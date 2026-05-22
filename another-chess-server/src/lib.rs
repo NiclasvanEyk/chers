@@ -20,6 +20,9 @@ pub mod redis;
 /// HTTP + WebSocket server.
 pub mod server;
 
+/// Telemetry and observability (OTEL export).
+pub mod telemetry;
+
 pub mod utils {
     pub type AnyResult<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 }

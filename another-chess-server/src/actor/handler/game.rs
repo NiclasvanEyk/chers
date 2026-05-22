@@ -25,7 +25,9 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                 return CommandResult::rejected("user not in this room");
             }
 
-            let mut events = vec![Event::Game(GameEvent::PlayerReconnected { user: user.clone() })];
+            let mut events = vec![Event::Game(GameEvent::PlayerReconnected {
+                user: user.clone(),
+            })];
 
             // Update connection_id and emit superseded event if changed
             if let Some(existing) = room.players.iter_mut().find(|p| p.id == user.id) {
@@ -124,6 +126,7 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                             room.phase = Phase::PostGame {
                                 winner: Some(winner_id),
                                 reason: Some(GameEndReason::Checkmate),
+                                players: room.players.clone(),
                             };
 
                             CommandResult {
@@ -181,6 +184,7 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                 room.phase = Phase::PostGame {
                     winner: Some(winner_id),
                     reason: Some(GameEndReason::Resignation),
+                    players: room.players.clone(),
                 };
 
                 CommandResult {

@@ -32,7 +32,7 @@ sentry-opentelemetry = "0.47.0"
 tracing-opentelemetry = "0.30"
 dotenvy = "0.15"
 tonic = { version = "0.12", optional = true }
-uuid = { version = "1.23.0", features = ["v4", "rng"] }
+uuid = { version = "1.23.0", features = ["v7", "rng"] }
 rust-embed = { version = "8", features = ["include-exclude"], optional = true }
 mime_guess = { version = "2", optional = true }
 

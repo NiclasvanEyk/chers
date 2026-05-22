@@ -113,16 +113,20 @@ function handleEvent(state: MatchState, event: Event): MatchState {
 function handleLobbyEvent(state: MatchState, event: LobbyEvent): MatchState {
   if ("PlayerJoined" in event) {
     const user = event.PlayerJoined.user;
+    const isOwn = state.myUser?.id === user.id;
+
+    if (isOwn) {
+      return { ...state, connectionStatus: "open" };
+    }
+
     return {
       ...state,
-      myUser: user,
-      myName: user.name,
       connectionStatus: "open",
       phase: {
         kind: "waiting" as const,
         inviteUrl: `${window.location.origin}/multiplayer/${state.matchId}`,
-        isReady: false,
-        opponent: null,
+        isReady: state.phase.kind === "waiting" ? state.phase.isReady : false,
+        opponent: user,
         opponentIsReady: false,
       },
     };

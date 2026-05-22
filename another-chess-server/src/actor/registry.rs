@@ -98,11 +98,12 @@ impl<
             let storage = Arc::clone(&self.storage);
             let active_rooms = Arc::clone(&self.active_rooms);
             let rid = room_id.clone();
+            let actor_id = uuid::Uuid::now_v7().to_string();
 
             self.active_rooms.write().insert(room_id.clone());
 
             tokio::spawn(async move {
-                super::loop_::run_actor(publisher, storage, cmd_stream, guard).await;
+                super::loop_::run_actor(actor_id, publisher, storage, cmd_stream, guard).await;
                 active_rooms.write().remove(&rid);
             });
         }

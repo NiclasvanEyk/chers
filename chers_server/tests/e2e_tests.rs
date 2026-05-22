@@ -123,7 +123,9 @@ async fn test_two_players_connect_and_start_game() {
                     msg,
                     Some(ServerMessage::Public(PublicEvent::Countdown { seconds })) if seconds == expected_seconds
                 ),
-                "Expected Countdown({}), got: {:?}", expected_seconds, msg
+                "Expected Countdown({}), got: {:?}",
+                expected_seconds,
+                msg
             );
         }
     }
@@ -132,27 +134,35 @@ async fn test_two_players_connect_and_start_game() {
     // These may arrive in different order
     let mut player1_events = vec![];
     let mut player2_events = vec![];
-    
+
     for _ in 0..3 {
         player1_events.push(player1.expect_message(5).await);
         player2_events.push(player2.expect_message(5).await);
     }
-    
+
     println!("Player 1 events: {:?}", player1_events);
     println!("Player 2 events: {:?}", player2_events);
-    
+
     // Verify both players received: GameStarting, ColorsAssigned, GameStarted
     for (events, player_name) in [(&player1_events, "Player 1"), (&player2_events, "Player 2")] {
-        let has_starting = events.iter().any(|m| matches!(
-            m, Some(ServerMessage::Public(PublicEvent::GameStarting))
-        ));
-        let has_colors = events.iter().any(|m| matches!(
-            m, Some(ServerMessage::Private(chers_server_api::PrivateEvent::ColorsAssigned { .. }))
-        ));
-        let has_started = events.iter().any(|m| matches!(
-            m, Some(ServerMessage::Public(PublicEvent::GameStarted { .. }))
-        ));
-        
+        let has_starting = events
+            .iter()
+            .any(|m| matches!(m, Some(ServerMessage::Public(PublicEvent::GameStarting))));
+        let has_colors = events.iter().any(|m| {
+            matches!(
+                m,
+                Some(ServerMessage::Private(
+                    chers_server_api::PrivateEvent::ColorsAssigned { .. }
+                ))
+            )
+        });
+        let has_started = events.iter().any(|m| {
+            matches!(
+                m,
+                Some(ServerMessage::Public(PublicEvent::GameStarted { .. }))
+            )
+        });
+
         assert!(has_starting, "{} should receive GameStarting", player_name);
         assert!(has_colors, "{} should receive ColorsAssigned", player_name);
         assert!(has_started, "{} should receive GameStarted", player_name);
@@ -320,19 +330,19 @@ async fn test_disconnection_and_reconnection() {
 
     // Wait for game to start (ready events, countdown, game starting)
     use chers_server_api::{PublicEvent, ServerMessage};
-    
+
     // Consume ready events
     for _ in 0..4 {
         let _ = white.expect_message(2).await;
         let _ = black.expect_message(2).await;
     }
-    
+
     // Consume countdown (5 seconds)
     for _ in 0..5 {
         let _ = white.expect_message(2).await;
         let _ = black.expect_message(2).await;
     }
-    
+
     // Consume GameStarting, ColorsAssigned, GameStarted
     for _ in 0..3 {
         let _ = white.expect_message(2).await;
@@ -397,19 +407,17 @@ async fn test_disconnection_and_reconnection() {
 }
 
 // Helper function to wait for GameStarted event during lobby/ready flow
-async fn wait_for_game_started(
-    client: &mut common::TestClient,
-) -> chers_server_api::PublicEvent {
-    use chers_server_api::{PublicEvent, PrivateEvent, ServerMessage};
-    
+async fn wait_for_game_started(client: &mut common::TestClient) -> chers_server_api::PublicEvent {
+    use chers_server_api::{PrivateEvent, PublicEvent, ServerMessage};
+
     // Keep consuming messages until we find GameStarted
     // Events in order: LobbyJoined, PlayerReady x2, Countdown x5, GameStarting, ColorsAssigned, GameStarted
     let mut found_game_started = None;
     let mut found_colors_assigned = false;
-    
+
     for _ in 0..20 {
         let msg = client.expect_message(10).await;
-        
+
         match msg {
             Some(ServerMessage::Public(PublicEvent::GameStarted { .. })) => {
                 if let Some(ServerMessage::Public(event)) = msg {
@@ -421,17 +429,17 @@ async fn wait_for_game_started(
             }
             _ => {}
         }
-        
+
         // Once we have both, we can return
         if found_game_started.is_some() && found_colors_assigned {
             return found_game_started.unwrap();
         }
     }
-    
+
     // If we found GameStarted but not ColorsAssigned, return anyway
     if let Some(event) = found_game_started {
         return event;
     }
-    
+
     panic!("Did not receive GameStarted event within expected number of messages");
 }

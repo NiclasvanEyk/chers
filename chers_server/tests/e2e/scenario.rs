@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
-use another_chess_server::actor::lease::Provider;
-use another_chess_server::actor::registry::RoomRegistry;
-use another_chess_server::auth::User;
-use another_chess_server::communication::bus::EventBus;
-use another_chess_server::communication::command::{
+use chers_server::actor::lease::Provider;
+use chers_server::actor::registry::RoomRegistry;
+use chers_server::auth::User;
+use chers_server::communication::bus::EventBus;
+use chers_server::communication::command::{
     Command, CommandBus, CommandResponse, GameCommand, LobbyCommand,
 };
-use another_chess_server::communication::event::{Event, GameEvent, LobbyEvent};
-use another_chess_server::room::storage::Storage;
+use chers_server::communication::event::{Event, GameEvent, LobbyEvent};
+use chers_server::room::storage::Storage;
 
 use tokio_stream::StreamExt;
 
@@ -40,7 +40,7 @@ pub async fn lifecycle_test<P, S, B, T>(
             .get_by_id(&rid)
             .await
             .expect("storage get_by_id should not error")
-            .unwrap_or_else(|| another_chess_server::room::Room::new(room_id.to_string()));
+            .unwrap_or_else(|| chers_server::room::Room::new(room_id.to_string()));
         persisted
             .auth
             .insert("secret-a", "user-a".to_string(), "Player A");
@@ -265,7 +265,7 @@ pub async fn fools_mate_test<P, S, B, T>(
             .get_by_id(&rid)
             .await
             .expect("storage get_by_id should not error")
-            .unwrap_or_else(|| another_chess_server::room::Room::new(room_id.to_string()));
+            .unwrap_or_else(|| chers_server::room::Room::new(room_id.to_string()));
         persisted
             .auth
             .insert("secret-a", "user-a".to_string(), "White Player");
@@ -463,14 +463,14 @@ pub async fn fools_mate_test<P, S, B, T>(
     assert!(
         matches!(&event_a, Some(Event::Game(GameEvent::GameEnded { winner, reason }))
             if winner.as_ref().map(|u| u.id == black_user.id).unwrap_or(false)
-            && matches!(reason, another_chess_server::communication::event::GameEndReason::Checkmate)),
+            && matches!(reason, chers_server::communication::event::GameEndReason::Checkmate)),
         "expected GameEnded with Black winning by checkmate for client A, got {:?}",
         event_a
     );
     assert!(
         matches!(&event_b, Some(Event::Game(GameEvent::GameEnded { winner, reason }))
             if winner.as_ref().map(|u| u.id == black_user.id).unwrap_or(false)
-            && matches!(reason, another_chess_server::communication::event::GameEndReason::Checkmate)),
+            && matches!(reason, chers_server::communication::event::GameEndReason::Checkmate)),
         "expected GameEnded with Black winning by checkmate for client B, got {:?}",
         event_b
     );

@@ -1,27 +1,27 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use another_chess_server::actor::lease::{AnyLease, LeaseConfig, LocalLease};
-use another_chess_server::communication::bus::{AnyEventBus, LocalEventBus};
-use another_chess_server::communication::command::{DistributedCommandBus, LocalCommandBus};
-use another_chess_server::communication::event::Event;
-use another_chess_server::communication::transport::CommandTransport;
-use another_chess_server::communication::transport::pubsub::PubSubCommandTransport;
-use another_chess_server::room::storage::{AnyStorage, InMemoryStorage};
+use chers_server::actor::lease::{AnyLease, LeaseConfig, LocalLease};
+use chers_server::communication::bus::{AnyEventBus, LocalEventBus};
+use chers_server::communication::command::{DistributedCommandBus, LocalCommandBus};
+use chers_server::communication::event::Event;
+use chers_server::communication::transport::CommandTransport;
+use chers_server::communication::transport::pubsub::PubSubCommandTransport;
+use chers_server::room::storage::{AnyStorage, InMemoryStorage};
 
 #[cfg(feature = "redis")]
-use another_chess_server::actor::lease::RedisProvider;
+use chers_server::actor::lease::RedisProvider;
 #[cfg(feature = "redis")]
-use another_chess_server::communication::bus::RedisEventBus;
+use chers_server::communication::bus::RedisEventBus;
 #[cfg(feature = "redis")]
-use another_chess_server::room::storage::RedisStorage;
+use chers_server::room::storage::RedisStorage;
 
 #[cfg(feature = "nats")]
-use another_chess_server::actor::lease::NatsProvider;
+use chers_server::actor::lease::NatsProvider;
 #[cfg(feature = "nats")]
-use another_chess_server::communication::bus::NatsEventBus;
+use chers_server::communication::bus::NatsEventBus;
 #[cfg(feature = "nats")]
-use another_chess_server::room::storage::NatsStorage;
+use chers_server::room::storage::NatsStorage;
 
 use testcontainers::core::IntoContainerPort;
 use testcontainers::{ContainerAsync, GenericImage, ImageExt, core::WaitFor, runners::AsyncRunner};
@@ -110,9 +110,7 @@ pub async fn create_storage_in_memory() -> AnyStorage {
 
 #[cfg(feature = "redis")]
 pub async fn create_event_bus_redis(redis: &RedisInstance) -> AnyEventBus<Event> {
-    let (client, conn) = another_chess_server::redis::connect(&redis.url)
-        .await
-        .unwrap();
+    let (client, conn) = chers_server::redis::connect(&redis.url).await.unwrap();
     AnyEventBus::Redis(RedisEventBus::new(client, conn))
 }
 
@@ -120,9 +118,7 @@ pub async fn create_event_bus_redis(redis: &RedisInstance) -> AnyEventBus<Event>
 pub async fn create_pubsub_transport_redis(
     redis: &RedisInstance,
 ) -> PubSubCommandTransport<AnyEventBus<Vec<u8>>> {
-    let (client, conn) = another_chess_server::redis::connect(&redis.url)
-        .await
-        .unwrap();
+    let (client, conn) = chers_server::redis::connect(&redis.url).await.unwrap();
     PubSubCommandTransport::new(Arc::new(AnyEventBus::Redis(RedisEventBus::new(
         client, conn,
     ))))
@@ -130,9 +126,7 @@ pub async fn create_pubsub_transport_redis(
 
 #[cfg(feature = "redis")]
 pub async fn create_lease_redis(redis: &RedisInstance) -> AnyLease {
-    let (_client, conn) = another_chess_server::redis::connect(&redis.url)
-        .await
-        .unwrap();
+    let (_client, conn) = chers_server::redis::connect(&redis.url).await.unwrap();
     let config = LeaseConfig {
         ttl: Duration::from_secs(5),
         renewal_interval: Duration::from_millis(500),
@@ -146,20 +140,18 @@ pub async fn create_lease_redis(redis: &RedisInstance) -> AnyLease {
 
 #[cfg(feature = "redis")]
 pub async fn create_storage_redis(redis: &RedisInstance) -> AnyStorage {
-    let (_client, conn) = another_chess_server::redis::connect(&redis.url)
-        .await
-        .unwrap();
+    let (_client, conn) = chers_server::redis::connect(&redis.url).await.unwrap();
     AnyStorage::Redis(RedisStorage::new(conn))
 }
 
 #[cfg(feature = "nats")]
 pub async fn create_nats_transport(
     nats: &NatsInstance,
-) -> another_chess_server::communication::transport::nats::NatsCommandTransport {
+) -> chers_server::communication::transport::nats::NatsCommandTransport {
     let client = async_nats::connect(&nats.url)
         .await
         .expect("should connect to NATS");
-    another_chess_server::communication::transport::nats::NatsCommandTransport::new(client)
+    chers_server::communication::transport::nats::NatsCommandTransport::new(client)
 }
 
 #[cfg(feature = "nats")]

@@ -8,17 +8,13 @@ Replace the old `chers_server/` with `another-chess-server/` and deploy on Fly.i
   - [x] Update workspace `Cargo.toml`: change `"another-chess-server"` member to `"chers_server"`
   - [x] Update `chers_server/Cargo.toml`: set `name = "chers_server"`, keep `edition = "2024"`
 
-- [ ] **2. Update Rust code references**
-  - [ ] `chers_server/src/main.rs`: replace `another_chess_server::` → `chers_server::`
-  - [ ] `chers_server/src/lib.rs`: update any references
-  - [ ] `chers_server/src/config.rs`: update references in feature-gated blocks
-  - [ ] `chers_server/src/server/mod.rs`: update references
-  - [ ] `chers_server/src/server/ws.rs`: update references
-  - [ ] `chers_server/src/room/storage/`: update references
-  - [ ] `chers_server/src/communication/`: update references in all sub-modules
-  - [ ] `chers_server/src/actor/`: update references in all sub-modules
-  - [ ] `chers_server/tests/`: update test imports if needed
-  - [ ] Run `cargo check` to verify no broken references remain
+- [x] **2. Update Rust code references**
+  - [x] `chers_server/src/main.rs`: replace `another_chess_server::` → `chers_server::` (7 occurrences)
+  - [x] `chers_server/tests/e2e/scenario.rs`: replace `another_chess_server::` → `chers_server::` (11 occurrences)
+  - [x] `chers_server/tests/e2e/helpers.rs`: replace `another_chess_server::` → `chers_server::` (19 occurrences)
+  - [x] `chers_server/src/lib.rs`, `config.rs`, `server/`, `actor/`, `room/`, `communication/`: no crate-path references, all use `crate::`
+  - [x] Run `cargo check` ✓
+  - [x] Run `cargo test` — 34 unit + 15 integration all pass ✓
 
 - [ ] **3. Add `PORT` env var fallback to `main.rs` (Option A)**
   - [ ] Modify `main.rs` to read `PORT` first, fall back to `CHERS_ADDR`, then default `0.0.0.0:8000`

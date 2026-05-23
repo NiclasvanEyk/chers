@@ -1,7 +1,6 @@
 [tools]
 "github:wasm-bindgen/wasm-bindgen" = "0.2.122"
 node = "latest"
-"npm:vite-plus" = "latest"
 pnpm = "latest"
 tombi = "latest"
 

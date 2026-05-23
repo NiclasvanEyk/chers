@@ -24,21 +24,21 @@ Replace the old `chers_server/` with `another-chess-server/` and deploy on Fly.i
   - [x] Remove `chers-static` and `chers-static-dev` recipes (no `bundle-frontend` feature)
   - [x] Update `server-dev` recipe: removed Sentry env vars (not in new server), kept OTEL config
 
-- [ ] **5. Update `Dockerfile` for Fly deployment**
-  - [ ] Change build command: `cargo build --release --features "nats,otel" --bin chers_server`
+- [x] **5. Update `Dockerfile` for Fly deployment**
+  - [x] Change build command: `cargo build --release --no-default-features --features "nats,otel" --bin chers_server`
     *(NATS + OTel enabled, Redis excluded)*
-  - [ ] Ensure `PORT` env var flows through correctly (already handled by step 3)
+  - [x] Ensure `PORT` env var flows through correctly (already handled by step 3)
 
-- [ ] **6. Update `fly.toml`**
-  - [ ] Set env vars for NATS connection (e.g. `CHERS_NATS_URL`)
-  - [ ] Set env vars for OTel (if needed)
-  - [ ] Set `CHERS_ADDR` or rely on `PORT` fallback (step 3)
-  - [ ] Remove `SENTRY_ENVIRONMENT` (no Sentry dependency in new server)
-  - [ ] Verify internal port matches (8080)
+- [x] **6. Update `fly.toml`**
+  - [x] Set env vars for NATS connection (e.g. `CHERS_NATS_URL`)
+  - [x] Set env vars for OTel (if needed)
+  - [x] Set `CHERS_ADDR` or rely on `PORT` fallback (step 3)
+  - [x] Remove `SENTRY_ENVIRONMENT` (no Sentry dependency in new server)
+  - [x] Verify internal port matches (8080)
 
-- [ ] **7. Configure Fly secrets**
-  - [ ] Add NATS URL/credentials as Fly secrets
-  - [ ] Add any other secrets (OTEL endpoint keys, etc.)
+- [x] **7. Configure Fly secrets**
+  - [x] Add NATS URL/credentials as Fly secrets
+  - [x] Add any other secrets (OTEL endpoint keys, etc.)
 
 - [ ] **8. Deploy to Fly**
   - [ ] `fly deploy`

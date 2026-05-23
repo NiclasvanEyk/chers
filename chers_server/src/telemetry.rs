@@ -17,7 +17,7 @@ impl TelemetryConfig {
         Self {
             otlp_endpoint: Self::otlp_endpoint_from_env(),
             service_name: env::var("OTEL_SERVICE_NAME")
-                .unwrap_or_else(|_| "another-chess-server".to_string()),
+                .unwrap_or_else(|_| "chers-server".to_string()),
             service_version: env!("CARGO_PKG_VERSION").to_string(),
             #[cfg(feature = "otel")]
             otel_traces_sampler_arg: Self::sampler_arg_from_env(),
@@ -79,7 +79,7 @@ pub fn init(config: TelemetryConfig) -> TelemetryGuards {
 
     #[cfg(feature = "otel")]
     if let Some(provider) = try_init_otel(&config) {
-        let tracer = provider.tracer("another-chess-server");
+        let tracer = provider.tracer("chers-server");
         tracing_subscriber::registry()
             .with(tracing_subscriber::fmt::layer())
             .with(env_filter)

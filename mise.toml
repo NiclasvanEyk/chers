@@ -1,5 +1,5 @@
 [tools]
-"github:wasm-bindgen/wasm-bindgen" = "latest"
+"github:wasm-bindgen/wasm-bindgen" = "0.2.122"
 node = "latest"
 "npm:vite-plus" = "latest"
 pnpm = "latest"
@@ -14,6 +14,83 @@ run = "cargo fmt && tombi format"
 alias = "tests"
 description = "Runs all Rust tests"
 run = "cargo test"
+
+[tasks.install-pnpm-deps]
+description = "Install frontend dependencies"
+hide = true
+run = "pnpm install"
+
+[tasks.wasm-dev]
+description = "Build WASM engine (debug)"
+run = """
+cargo build --package=chers --target=wasm32-unknown-unknown
+wasm-bindgen target/wasm32-unknown-unknown/debug/chers.wasm --target=web --debug --out-dir=chers_web/src/generated/chers
+"""
+
+[tasks.wasm-release]
+description = "Build WASM engine (release)"
+run = """
+cargo build --package=chers --target=wasm32-unknown-unknown --release
+wasm-bindgen target/wasm32-unknown-unknown/release/chers.wasm --target=web --out-dir=chers_web/src/generated/chers
+"""
+
+[tasks.server-ts]
+description = "Generate TypeScript types from server API"
+run = """
+rm -rf chers_web/src/generated/chers_server_api
+mkdir -p chers_web/src/generated/chers_server_api
+TS_RS_EXPORT_DIR={{config_root}}/chers_web/src/generated/chers_server_api cargo test --package=chers_server_api
+"""
+
+[tasks.server-dev]
+description = "Start backend server with debug logging on port 8000"
+env.PORT = "8000"
+env.RUST_LOG = "chers_server=debug,axum=info,tower_http=info"
+dir = "chers_server"
+run = """
+set -uo pipefail
+export OTEL_EXPORTER_OTLP_ENDPOINT="${OTEL_EXPORTER_OTLP_ENDPOINT:-http://127.0.0.1:18889}"
+export OTEL_TRACES_SAMPLER_ARG="${OTEL_TRACES_SAMPLER_ARG:-1.0}"
+export OTEL_SERVICE_NAME="${OTEL_SERVICE_NAME:-chers-server}"
+cargo run
+"""
+
+[tasks.play]
+description = "Run CLI chess client"
+run = "cargo run --bin=chers_cli"
+
+[tasks.web-dev]
+description = "Start frontend dev server with WASM + types"
+run = [
+    { task = "install-pnpm-deps" },
+    { task = "wasm-dev" },
+    { task = "server-ts" },
+    "pnpm --filter chers_web run dev",
+]
+
+[tasks.web-release]
+description = "Build frontend for production"
+run = [
+    { task = "install-pnpm-deps" },
+    { task = "wasm-release" },
+    { task = "server-ts" },
+    "pnpm --filter chers_web run build",
+]
+
+[tasks.clean]
+description = "Clean all build artifacts"
+run = """
+cargo clean
+rm -rf \
+    node_modules \
+    chers_web/node_modules \
+    chers_web/dist \
+    chers_web/.output \
+    chers_web/.tanstack \
+    chers_web/.pnpm-store \
+    chers_web/generated \
+    chers_web/src/generated/chers*
+"""
 
 [settings]
 idiomatic_version_file_enable_tools = ["rust"]

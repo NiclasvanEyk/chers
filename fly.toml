@@ -10,7 +10,20 @@ primary_region = "ams"
 
 [env]
 PORT = "8080"
-SENTRY_ENVIRONMENT = "production"
+CHERS_NATS_CREDS = "/secrets/chers-nats.creds"
+CHERS_NATS_URL = "tls://connect.ngs.global"
+CHERS_EVENT_BUS_DRIVER = "nats"
+CHERS_LEASE_DRIVER = "nats"
+CHERS_STORAGE_DRIVER = "nats"
+CHERS_COMMAND_BUS_DRIVER = "nats"
+OTEL_EXPORTER_OTLP_ENDPOINT = "https://api.honeycomb.io"
+OTEL_EXPORTER_OTLP_PROTOCOL = "http/protobuf"
+OTEL_SERVICE_NAME = "chers-server"
+# OTEL_EXPORTER_OTLP_HEADERS="x-honeycomb-team=my-secret" is set via fly secrets
+
+[[files]]
+guest_path = "/secrets/chers-nats.creds"
+secret_name = "FLY_NATS_CREDS_FILE"
 
 [http_service]
 internal_port = 8080

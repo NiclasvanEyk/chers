@@ -200,10 +200,16 @@ async fn get_or_create_lease_bucket(
         return Ok(store);
     }
 
+    let max_bytes = env::var("CHERS_NATS_LEASE_BUCKET_MAX_BYTES")
+        .ok()
+        .and_then(|s| s.parse::<i64>().ok())
+        .unwrap_or(1_048_576); // 1 MB default
+
     let store = jetstream
         .create_key_value(async_nats::jetstream::kv::Config {
             bucket: "chers_lease".to_string(),
             max_age: ttl,
+            max_bytes,
             history: 1,
             ..Default::default()
         })
@@ -231,9 +237,15 @@ async fn get_or_create_storage_bucket(
         return Ok(store);
     }
 
+    let max_bytes = env::var("CHERS_NATS_STORAGE_BUCKET_MAX_BYTES")
+        .ok()
+        .and_then(|s| s.parse::<i64>().ok())
+        .unwrap_or(10_485_760); // 10 MB default
+
     let store = jetstream
         .create_key_value(async_nats::jetstream::kv::Config {
             bucket: "chers_room".to_string(),
+            max_bytes,
             history: 1,
             ..Default::default()
         })

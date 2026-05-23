@@ -1,42 +1,41 @@
 "use client";
 
 import { useNavigate } from "@tanstack/react-router";
-import type { GameResult } from "@/generated/chers_server_api/GameResult";
-import type { GameEndReason } from "@/generated/chers_server_api/GameEndReason";
 import type { Color } from "@/generated/chers/chers";
+import type { GameEndReason } from "@/lib/multiplayer/protocol";
 
 interface GameOverProps {
-  result: GameResult;
+  youWon: boolean;
   reason: GameEndReason;
   myColor: Color;
 }
 
-export function GameOver({ result, reason, myColor }: GameOverProps) {
+export function GameOver({ youWon, reason, myColor }: GameOverProps) {
   const navigate = useNavigate();
 
   const getWinnerText = () => {
-    if (result === "Draw") return "It's a Draw!";
-
-    const iWon =
-      (result === "WhiteWins" && myColor === "White") ||
-      (result === "BlackWins" && myColor === "Black");
-
-    return iWon ? "You Won!" : "You Lost";
+    return youWon ? "You Won!" : "You Lost";
   };
 
   const getReasonText = () => {
     switch (reason) {
-      case "checkmate":
+      case "Checkmate":
         return "by checkmate";
-      case "stalemate":
+      case "Stalemate":
         return "by stalemate";
-      case "resignation":
+      case "Resignation":
         return "by resignation";
-      case "draw_agreement":
+      case "DrawAgreement":
         return "by agreement";
-      case "timeout":
+      case "FiftyMoveRule":
+        return "by 50-move rule";
+      case "InsufficientMaterial":
+        return "by insufficient material";
+      case "ThreefoldRepetition":
+        return "by threefold repetition";
+      case "Timeout":
         return "by timeout";
-      case "abandoned":
+      case "Abandoned":
         return "by abandonment";
       default:
         return "";
@@ -56,7 +55,7 @@ export function GameOver({ result, reason, myColor }: GameOverProps) {
       <div className="bg-white dark:bg-gray-900 rounded-lg p-8 max-w-md w-full mx-4 text-center shadow-2xl">
         <h2 className="text-4xl font-bold mb-2">{getWinnerText()}</h2>
 
-        {reason !== "checkmate" && (
+        {reason !== "Checkmate" && (
           <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">{getReasonText()}</p>
         )}
 

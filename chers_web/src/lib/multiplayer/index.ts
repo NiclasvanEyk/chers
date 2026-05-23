@@ -11,3 +11,5 @@ export type { ConnectionState, ConnectionCallbacks } from "./connection";
 
 export { useMatch } from "./useMatch";
 export type { MatchState, MatchPhase, MatchAction } from "./useMatch";
+
+export type * from "./protocol";

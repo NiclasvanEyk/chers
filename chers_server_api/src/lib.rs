@@ -536,3 +536,9 @@ pub mod server {
 // Re-export the main types for convenience
 pub use client::ClientMessage;
 pub use server::{PrivateEvent, PublicEvent, ServerMessage};
+
+/// Version 2 protocol types (for another-chess-server).
+///
+/// This module contains the next-generation event and command definitions
+/// used by the distributed chess server.
+pub mod v2;

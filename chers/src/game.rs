@@ -55,6 +55,15 @@ impl Game {
         autocomplete_to(state, from)
     }
 
+    /// Checks if a move is legal for the given state.
+    ///
+    /// Returns `true` if the move is valid, `false` otherwise.
+    /// This can be used to pre-validate moves before attempting to execute them.
+    pub fn is_valid_move(&self, state: &State, r#move: Move) -> bool {
+        let legal_moves = self.available_moves(state, r#move.from);
+        legal_moves.contains(&r#move.to)
+    }
+
     pub fn move_piece(
         &self,
         state: &State,

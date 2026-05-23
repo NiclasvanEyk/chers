@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import type { User } from "@/lib/multiplayer/protocol";
 
 interface LobbyProps {
   inviteUrl: string;
   myName: string;
   onUpdateName: (name: string) => void;
   isReady: boolean;
-  opponentName?: string;
-  opponentReady: boolean;
+  opponent: User | null;
+  opponentIsReady: boolean;
   onToggleReady: (ready: boolean) => void;
-  countdown: number | null;
 }
 
 // State machine for the current player's UI
@@ -24,16 +24,23 @@ export function Lobby({
   myName,
   onUpdateName,
   isReady,
-  opponentName,
-  opponentReady,
+  opponent,
+  opponentIsReady,
   onToggleReady,
-  countdown,
 }: LobbyProps) {
   const [copied, setCopied] = useState(false);
   const [editName, setEditName] = useState(myName);
   const [displayName, setDisplayName] = useState(myName); // Local display name for immediate updates
   const [nameError, setNameError] = useState<string | null>(null);
   const [uiState, setUiState] = useState<PlayerUIState>(1); // Start in editing mode
+  const readyButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Focus the ready button when entering state 2
+  useEffect(() => {
+    if (uiState === 2) {
+      readyButtonRef.current?.focus();
+    }
+  }, [uiState]);
 
   // Update display name when prop changes (from server)
   useEffect(() => {
@@ -101,7 +108,10 @@ export function Lobby({
     switch (uiState) {
       case 1: // Editing mode
         return (
-          <div className="flex items-center justify-between gap-3">
+          <form
+            onSubmit={(e) => { e.preventDefault(); handleSaveName(); }}
+            className="flex items-center justify-between gap-3"
+          >
             <div className="flex-1">
               <input
                 type="text"
@@ -114,13 +124,13 @@ export function Lobby({
               {nameError && <p className="text-red-500 text-xs mt-1">{nameError}</p>}
             </div>
             <button
-              onClick={handleSaveName}
+              type="submit"
               disabled={!!nameError || editName.length === 0}
-              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-stone-400 disabled:cursor-not-allowed text-white rounded transition-colors text-sm whitespace-nowrap"
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-stone-400 disabled:cursor-not-allowed text-white rounded transition-colors text-sm whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
             >
               Save
             </button>
-          </div>
+          </form>
         );
 
       case 2: // Ready mode (not ready yet)
@@ -130,17 +140,14 @@ export function Lobby({
             <div className="flex gap-2">
               <button
                 onClick={() => setUiState(1)}
-                disabled={countdown !== null}
-                className="px-3 py-2 rounded transition-colors text-sm font-medium bg-stone-500 hover:bg-stone-600 text-white"
+                className="px-3 py-2 rounded transition-colors text-sm font-medium bg-stone-500 hover:bg-stone-600 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
               >
                 Change
               </button>
               <button
+                ref={readyButtonRef}
                 onClick={handleReadyClick}
-                disabled={countdown !== null}
-                className={`px-4 py-2 rounded transition-colors text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white ${
-                  countdown !== null ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className="px-4 py-2 rounded transition-colors text-sm font-medium bg-amber-600 hover:bg-amber-700 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
               >
                 Ready?
               </button>
@@ -152,13 +159,10 @@ export function Lobby({
         return (
           <div className="flex items-center justify-between">
             <span className="font-medium">{displayName}</span>
-            <button
-              onClick={handleAbortClick}
-              disabled={countdown !== null}
-              className={`px-4 py-2 rounded transition-colors text-sm font-medium bg-red-600 hover:bg-red-700 text-white ${
-                countdown !== null ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-            >
+              <button
+                onClick={handleAbortClick}
+                className="px-4 py-2 rounded transition-colors text-sm font-medium bg-red-600 hover:bg-red-700 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+              >
               Abort
             </button>
           </div>
@@ -184,7 +188,7 @@ export function Lobby({
             />
             <button
               onClick={handleCopy}
-              className="px-4 py-2 bg-stone-600 hover:bg-stone-700 text-white rounded transition-colors"
+              className="px-4 py-2 bg-stone-600 hover:bg-stone-700 text-white rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
             >
               {copied ? "Copied!" : "Copy"}
             </button>
@@ -199,27 +203,19 @@ export function Lobby({
           </div>
 
           {/* Opponent */}
-          {opponentName ? (
+          {opponent ? (
             <div className="flex items-center justify-between">
-              <span className="font-medium">{opponentName}</span>
+              <span className="font-medium">{opponent.name}</span>
               <span
-                className={`text-sm ${opponentReady ? "text-green-600 font-medium" : "text-stone-400"}`}
+                className={`text-sm ${opponentIsReady ? "text-green-600 font-medium" : "text-stone-400"}`}
               >
-                {opponentReady ? "Ready ✓" : "Not Ready"}
+                {opponentIsReady ? "Ready ✓" : "Not Ready"}
               </span>
             </div>
           ) : (
             <p className="text-sm text-stone-500 text-center">Waiting for opponent to join...</p>
           )}
         </div>
-
-        {/* Countdown */}
-        {countdown !== null && (
-          <div className="text-center">
-            <p className="text-4xl font-bold text-amber-600 animate-pulse">{countdown}</p>
-            <p className="text-sm text-stone-500">Game starting...</p>
-          </div>
-        )}
       </div>
     </div>
   );

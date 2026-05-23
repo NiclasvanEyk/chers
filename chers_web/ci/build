@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
-
 set -e
 
+# Use Vercel's cached Rust dependencies for faster builds
 export CARGO_HOME=/vercel/.cargo
 
 # Vercel runs from chers_web/, need to go up to project root for workspace
 cd ..
 
-just web-release
+export VITE_CHERS_SERVER_HOST=chers-server.fly.dev
+export VITE_CHERS_USE_SSL=true
+export VERCEL=true
+
+./bin/mise run web-release

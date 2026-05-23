@@ -13,7 +13,7 @@ import type {
   Color,
   Piece,
 } from "@/generated/chers/chers";
-import type { PlayerInfo } from "@/generated/chers_server_api/PlayerInfo";
+import type { User } from "@/lib/multiplayer/protocol";
 import { getMoves } from "@/lib/chers";
 import { canPickUp } from "@/lib/ui/state";
 
@@ -120,7 +120,7 @@ interface MultiplayerGameProps {
   myColor: Color;
   myTurn: boolean;
   myName: string;
-  opponent: PlayerInfo;
+  opponent: User;
   onMove: (from: Coordinate, to: Coordinate, promotion: PromotedFigure | null) => void;
 }
 
@@ -228,15 +228,9 @@ export function MultiplayerGame({
             <Board state={localState as any} dispatch={handleDispatch as any} />
           </div>
 
-          {!myTurn && opponent.connected && (
+          {!myTurn && (
             <div className="mt-4 text-center text-gray-600 dark:text-gray-400">
               Waiting for opponent&apos;s move...
-            </div>
-          )}
-
-          {!opponent.connected && (
-            <div className="mt-4 text-center text-yellow-600 dark:text-yellow-400 font-medium">
-              Opponent disconnected - waiting for reconnection...
             </div>
           )}
         </div>

@@ -1,0 +1,9 @@
+{
+	"installCommand": "./ci/install",
+	"buildCommand": "./ci/build",
+	"env": {
+		"VITE_CHERS_SERVER_HOST": "chers-server.fly.dev",
+		"VITE_CHERS_USE_SSL": "true"
+	}
+}
+

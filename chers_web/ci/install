@@ -5,8 +5,7 @@ set -e
 # Vercel runs from chers_web/, need to go up to project root for workspace
 cd ..
 
-curl https://mise.run | sh
-mise install
+./bin/mise install
 
 # Install wasm target for Rust (not managed by mise)
-rustup target add wasm32-unknown-unknown
+./bin/mise x -- rustup target add wasm32-unknown-unknown

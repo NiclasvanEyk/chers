@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use serde_json::Value as JsonValue;
 use tokio_stream::StreamExt;
 
 use crate::actor::handler;
@@ -72,14 +73,42 @@ fn cmd_identity(cmd: &Command) -> (Option<&str>, Option<&str>) {
     }
 }
 
-/// Log a debug summary for each event (always includes room_id).
-fn log_event(room_id: &str, event: &Event) {
+/// Create an info-level span for an event with its full payload.
+fn event_span(room_id: &str, event: &Event) -> tracing::Span {
+    let payload = serialized_payload(event);
     match event {
-        Event::Lobby(e) => tracing::debug!(room_id, ?e, "lobby event"),
-        Event::Game(e) => tracing::debug!(room_id, ?e, "game event"),
-        Event::PostGame(e) => tracing::debug!(room_id, ?e, "post_game event"),
-        Event::System(e) => tracing::debug!(room_id, ?e, "system event"),
+        Event::Lobby(_) => tracing::info_span!("Event:Lobby", room_id, %payload),
+        Event::Game(_) => tracing::info_span!("Event:Game", room_id, %payload),
+        Event::PostGame(_) => tracing::info_span!("Event:PostGame", room_id, %payload),
+        Event::System(_) => tracing::info_span!("Event:System", room_id, %payload),
     }
+}
+
+/// Recursively replace known sensitive fields with `"***"`.
+fn redact_value(value: &mut JsonValue) {
+    match value {
+        JsonValue::Object(map) => {
+            if map.contains_key("secret") {
+                map.insert("secret".into(), JsonValue::String("***".into()));
+            }
+            for val in map.values_mut() {
+                redact_value(val);
+            }
+        }
+        JsonValue::Array(arr) => {
+            for val in arr.iter_mut() {
+                redact_value(val);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Serialize a value to a JSON string, redacting sensitive fields.
+fn serialized_payload<T: serde::Serialize>(value: &T) -> String {
+    let mut json = serde_json::to_value(value).unwrap_or_default();
+    redact_value(&mut json);
+    json.to_string()
 }
 
 fn phase_label(phase: &Phase) -> &'static str {
@@ -100,51 +129,52 @@ fn cmd_span(
 ) -> tracing::Span {
     let user_id = user_id.unwrap_or("");
     let connection_id = connection_id.unwrap_or("");
+    let payload = serialized_payload(cmd);
     match cmd {
         Command::Lobby(LobbyCommand::Join { .. }) => {
-            tracing::info_span!("Lobby:Join", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("Lobby:Join", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::Lobby(LobbyCommand::Leave { .. }) => {
-            tracing::info_span!("Lobby:Leave", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("Lobby:Leave", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::Lobby(LobbyCommand::ChangeName { .. }) => {
-            tracing::info_span!("Lobby:ChangeName", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("Lobby:ChangeName", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::Lobby(LobbyCommand::ChangeReady { .. }) => {
-            tracing::info_span!("Lobby:ChangeReady", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("Lobby:ChangeReady", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::Game(GameCommand::Reconnect { .. }) => {
-            tracing::info_span!("Game:Reconnect", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("Game:Reconnect", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::Game(GameCommand::Leave { .. }) => {
-            tracing::info_span!("Game:Leave", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("Game:Leave", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::Game(GameCommand::MakeMove { .. }) => {
-            tracing::info_span!("Game:MakeMove", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("Game:MakeMove", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::Game(GameCommand::Resign { .. }) => {
-            tracing::info_span!("Game:Resign", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("Game:Resign", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::PostGame(PostGameCommand::Reconnect { .. }) => {
-            tracing::info_span!("PostGame:Reconnect", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("PostGame:Reconnect", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::PostGame(PostGameCommand::Leave { .. }) => {
-            tracing::info_span!("PostGame:Leave", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("PostGame:Leave", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::PostGame(PostGameCommand::OfferRematch { .. }) => {
-            tracing::info_span!("PostGame:OfferRematch", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("PostGame:OfferRematch", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::PostGame(PostGameCommand::AcceptRematch { .. }) => {
-            tracing::info_span!("PostGame:AcceptRematch", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("PostGame:AcceptRematch", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::PostGame(PostGameCommand::DeclineRematch { .. }) => {
-            tracing::info_span!("PostGame:DeclineRematch", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("PostGame:DeclineRematch", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::RequestState { .. } => {
-            tracing::info_span!("RequestState", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("RequestState", %phase, room_id, %user_id, %connection_id, %payload)
         }
         Command::Leave { .. } => {
-            tracing::info_span!("Leave", %phase, room_id, %user_id, %connection_id)
+            tracing::info_span!("Leave", %phase, room_id, %user_id, %connection_id, %payload)
         }
     }
 }
@@ -228,11 +258,14 @@ pub async fn run_actor<S, B>(
                     incoming.response_channel.respond(result.response).await;
 
                     for event in result.events {
-                        log_event(&room_id, &event);
-
-                        if let Err(err) = publisher.publish(event).await {
-                            tracing::warn!("failed to publish event for room {room_id}: {err}");
+                        let span = event_span(&room_id, &event);
+                        async {
+                            if let Err(err) = publisher.publish(event).await {
+                                tracing::warn!("failed to publish event for room {room_id}: {err}");
+                            }
                         }
+                        .instrument(span)
+                        .await;
                     }
 
                     if let Err(err) = storage.persist(&state).await {

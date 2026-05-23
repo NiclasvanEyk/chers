@@ -16,9 +16,9 @@ Replace the old `chers_server/` with `another-chess-server/` and deploy on Fly.i
   - [x] Run `cargo check` ✓
   - [x] Run `cargo test` — 34 unit + 15 integration all pass ✓
 
-- [ ] **3. Add `PORT` env var fallback to `main.rs` (Option A)**
-  - [ ] Modify `main.rs` to read `PORT` first, fall back to `CHERS_ADDR`, then default `0.0.0.0:8000`
-  - [ ] Verify with `cargo check`
+- [x] **3. Add `PORT` env var fallback to `main.rs` (Option A)**
+  - [x] Modify `main.rs` to read `PORT` first, fall back to `CHERS_ADDR`, then default `0.0.0.0:8000`
+  - [x] Verify with `cargo check` ✓
 
 - [ ] **4. Update `justfile` for the new server**
   - [ ] Remove `chers-static` and `chers-static-dev` recipes (no `bundle-frontend` feature)

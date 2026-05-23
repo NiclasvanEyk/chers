@@ -14,7 +14,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let registry = RoomRegistry::new(lease, storage, event_bus, command_bus);
 
-    let addr = std::env::var("CHERS_ADDR").unwrap_or_else(|_| "0.0.0.0:8000".into());
+    let addr = std::env::var("PORT")
+        .map(|p| format!("0.0.0.0:{p}"))
+        .or_else(|_| std::env::var("CHERS_ADDR"))
+        .unwrap_or_else(|_| "0.0.0.0:8000".into());
     chers_server::server::run(registry, &addr).await?;
 
     telemetry::shutdown(_guards);

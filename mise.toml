@@ -7,9 +7,11 @@ tombi = "latest"
 
 [tasks.format]
 description = "Auto-formats files in the codebase"
+alias = "fmt"
 run = "cargo fmt && tombi format"
 
 [tasks.test]
+alias = "tests"
 description = "Runs all Rust tests"
 run = "cargo test"
 

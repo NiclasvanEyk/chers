@@ -40,11 +40,7 @@ export function play(matchId: string): WebSocket {
   const wsUrl = WEBSOCKET_URL
     ? `${WEBSOCKET_URL}/rooms/${matchId}/ws`
     : `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/rooms/${matchId}/ws`;
-  
-  console.log("🔌 Connecting to WebSocket:", wsUrl);
-  console.log("📍 Current location:", window.location.protocol, window.location.host);
-  console.log("🔧 WEBSOCKET_URL config:", WEBSOCKET_URL || "(empty - using relative URL)");
-  
+
   return new WebSocket(wsUrl);
 }
 

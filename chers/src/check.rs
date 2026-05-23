@@ -34,29 +34,15 @@ pub fn check_by_opponent_is_mate(state: &State) -> bool {
             continue;
         }
 
-        println!(
-            "Checking moves of {piece}, since {:?} owns it",
-            state.player
-        );
         for to in possible_moves(state, from) {
             let (resulting_state, _) = force_move_piece(state, Move::simple(from, to)).unwrap();
             let checking = checking_pieces_of_opponent(&resulting_state.reversed());
             if checking.is_empty() {
-                println!(
-                    "[info] The {} could move from {} to {} in order to escape the check",
-                    piece, from, to
-                );
                 return false;
-            } else {
-                println!(
-                    "Moving the {} from {} to {} still results in the king being checked",
-                    piece, from, to
-                );
             }
         }
     }
 
-    println!("We are checking");
     true
 }
 

@@ -7,8 +7,8 @@ use super::{Coordinate, State};
 
 /// Returns all *legal* moves.
 pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
-    let possible = dbg!(possible_moves(state, from));
-    let without_chk = dbg!(without_checks(state, from, possible));
+    let possible = possible_moves(state, from);
+    let without_chk = without_checks(state, from, possible);
 
     without_chk
 }

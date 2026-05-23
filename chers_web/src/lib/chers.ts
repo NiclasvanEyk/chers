@@ -30,9 +30,7 @@ export type Cell = Piece | null;
 export type Board = Cell[][];
 
 export function getMoves(state: State, from: Coordinate): Coordinate[] {
-  console.time("getMoves");
   const moves = available_moves(state, from) as Coordinate[];
-  console.timeEnd("getMoves");
   return moves;
 }
 
@@ -45,10 +43,6 @@ export function nextState(
   const next = next_state(current, { from, to, promotion }) as
     | MoveExecutionResult
     | MoveExecutionError;
-
-  if ("events" in next) {
-    console.log(next.events);
-  }
 
   return next;
 }

@@ -1,13 +1,28 @@
-pub mod handlers;
-pub mod matches;
+/// Message exchange between components.
+pub mod communication;
 
-pub use matches::repository::MatchRepository;
+/// Coordination primitives for the actor model (leases, registry, etc.).
+pub mod actor;
 
-use std::sync::Arc;
+/// Player connection and auth{orization,entication} management.
+pub mod auth;
 
-pub struct AppState {
-    pub matches: MatchRepository,
+/// Phase-independent container for players, spectators, etc.
+pub mod room;
+
+/// Actually building components from env vars.
+pub mod config;
+
+/// Shared Redis connection utilities.
+#[cfg(feature = "redis")]
+pub mod redis;
+
+/// HTTP + WebSocket server.
+pub mod server;
+
+/// Telemetry and observability (OTEL export).
+pub mod telemetry;
+
+pub mod utils {
+    pub type AnyResult<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 }
-
-pub use axum;
-pub use tokio;

@@ -22,8 +22,6 @@ server-dev:
     export OTEL_EXPORTER_OTLP_ENDPOINT="${OTEL_EXPORTER_OTLP_ENDPOINT:-http://127.0.0.1:18889}"
     export OTEL_TRACES_SAMPLER_ARG="${OTEL_TRACES_SAMPLER_ARG:-1.0}"
     export OTEL_SERVICE_NAME="${OTEL_SERVICE_NAME:-chers-server}"
-    export SENTRY_ENVIRONMENT="${SENTRY_ENVIRONMENT:-}"
-    export SENTRY_TRACES_SAMPLE_RATE="${SENTRY_TRACES_SAMPLE_RATE:-1.0}"
     cargo run
 
 play:
@@ -37,32 +35,6 @@ web-dev: wasm-dev server-ts
 
 web-release: wasm-release server-ts
     pnpm install && pnpm --filter chers_web run build
-
-# Build production binary with embedded frontend (uses relative URLs for same-origin)
-chers-static: wasm-release server-ts
-    #!/usr/bin/env bash
-    set -euxo pipefail
-    pnpm install
-    # Build frontend without SERVER_HOST to use relative URLs (same origin as backend)
-    VITE_CHERS_SERVER_HOST="" \
-        pnpm --filter chers_web run build
-    cargo build --package=chers_server --release --features bundle-frontend
-    echo "✓ Built: target/release/chers_server"
-
-# Build debug binary with embedded frontend (for troubleshooting)
-# Uses debug WASM, unminified frontend build, and debug Rust build
-chers-static-dev: wasm-dev server-ts
-    #!/usr/bin/env bash
-    set -euxo pipefail
-    pnpm install
-    # Build frontend in development mode (source maps, no minification)
-    # but still output to dist/ for embedding
-    VITE_CHERS_SERVER_HOST="" \
-    NODE_ENV=development \
-        pnpm --filter chers_web exec vp build --mode development
-    cargo build --package=chers_server --features bundle-frontend
-    echo "✓ Built: target/debug/chers_server (debug mode)"
-    echo "Run with: RUST_LOG=debug ./target/debug/chers_server"
 
 clean:
     cargo clean

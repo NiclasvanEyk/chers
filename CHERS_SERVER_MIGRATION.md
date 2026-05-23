@@ -20,9 +20,9 @@ Replace the old `chers_server/` with `another-chess-server/` and deploy on Fly.i
   - [x] Modify `main.rs` to read `PORT` first, fall back to `CHERS_ADDR`, then default `0.0.0.0:8000`
   - [x] Verify with `cargo check` ✓
 
-- [ ] **4. Update `justfile` for the new server**
-  - [ ] Remove `chers-static` and `chers-static-dev` recipes (no `bundle-frontend` feature)
-  - [ ] Update `server-dev` recipe to work with the new server (uses `PORT` + correct tracing env vars)
+- [x] **4. Update `justfile` for the new server**
+  - [x] Remove `chers-static` and `chers-static-dev` recipes (no `bundle-frontend` feature)
+  - [x] Update `server-dev` recipe: removed Sentry env vars (not in new server), kept OTEL config
 
 - [ ] **5. Update `Dockerfile` for Fly deployment**
   - [ ] Change build command: `cargo build --release --features "nats,otel" --bin chers_server`

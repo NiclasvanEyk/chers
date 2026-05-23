@@ -3,43 +3,46 @@ name = "chers_server"
 version = "0.1.0"
 edition = "2021"
 
-[features]
-default = []
-bundle-frontend = ["rust-embed", "mime_guess"]
-
-[dependencies]
-chers = { path = "../chers" }
-chers_server_api = { path = "../chers_server_api" }
-axum = { version = "0.8", features = ["ws"] }
-tower-http = { version = "0.6.8", features = ["trace", "cors"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = { version = "1" }
-futures = "0.3"
-tokio = { version = "1", features = ["full"] }
-tower = { version = "0.4", features = ["util"] }
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-jiff = "0.2.23"
-rand = "0.8"
-scc = "3.6.12"
-sentry = { version = "0.47.0", features = ["tower-axum-matched-path", "tracing", "logs"] }
-# OpenTelemetry
-opentelemetry = { version = "0.29.1", features = ["trace"] }
-opentelemetry_sdk = { version = "0.29.0", features = ["trace", "rt-tokio"] }
-opentelemetry-otlp = { version = "0.29.0", features = ["trace", "grpc-tonic"] }
-opentelemetry-semantic-conventions = "0.29.0"
-sentry-opentelemetry = "0.47.0"
-tracing-opentelemetry = "0.30"
-dotenvy = "0.15"
-tonic = { version = "0.12", optional = true }
-uuid = { version = "1.23.0", features = ["v7", "rng"] }
-rust-embed = { version = "8", features = ["include-exclude"], optional = true }
-mime_guess = { version = "2", optional = true }
-
-[dev-dependencies]
-tokio-tungstenite = "0.24"
-reqwest = { version = "0.12", features = ["json"] }
-
 [[bin]]
 name = "chers_server"
 path = "src/main.rs"
+
+[dependencies]
+axum = { version = "0.8", features = ["ws"] }
+chers = { path = "../chers" }
+chers_server_api = { path = "../chers_server_api" }
+dotenvy = "0.15"
+futures = "0.3"
+jiff = "0.2.23"
+mime_guess = { version = "2", optional = true }
+# OpenTelemetry
+opentelemetry = { version = "0.29.1", features = ["trace"] }
+opentelemetry-otlp = { version = "0.29.0", features = ["grpc-tonic", "trace"] }
+opentelemetry_sdk = { version = "0.29.0", features = ["rt-tokio", "trace"] }
+opentelemetry-semantic-conventions = "0.29.0"
+rand = "0.8"
+rust-embed = { version = "8", features = ["include-exclude"], optional = true }
+scc = "3.6.12"
+sentry = {
+  version = "0.47.0",
+  features = ["logs", "tower-axum-matched-path", "tracing"]
+}
+sentry-opentelemetry = "0.47.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1" }
+tokio = { version = "1", features = ["full"] }
+tonic = { version = "0.12", optional = true }
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.6.8", features = ["cors", "trace"] }
+tracing = "0.1"
+tracing-opentelemetry = "0.30"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1.23.0", features = ["rng", "v7"] }
+
+[dev-dependencies]
+reqwest = { version = "0.12", features = ["json"] }
+tokio-tungstenite = "0.24"
+
+[features]
+default = []
+bundle-frontend = ["mime_guess", "rust-embed"]

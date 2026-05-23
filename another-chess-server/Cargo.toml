@@ -4,54 +4,67 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-chers = { path = "../chers" }
-chers_server_api = { path = "../chers_server_api" }
 async-nats = { version = "0.38", optional = true }
 axum = { version = "0.8", features = ["ws"] }
 bytes = { version = "1", optional = true }
+chers = { path = "../chers" }
+chers_server_api = { path = "../chers_server_api" }
 enum_dispatch = "0.3"
 futures = "0.3"
+opentelemetry = { version = "0.29.1", features = ["trace"], optional = true }
+opentelemetry-otlp = {
+  version = "0.29.0",
+  features = ["grpc-tonic", "http-proto", "trace"],
+  optional = true
+}
+opentelemetry_sdk = {
+  version = "0.29.0",
+  features = ["rt-tokio", "trace"],
+  optional = true
+}
+opentelemetry-semantic-conventions = { version = "0.29.0", optional = true }
 parking_lot = "0.12.5"
 rand = "0.8"
-redis = { version = "0.28", features = [
-  "connection-manager",
-  "tokio-comp",
-], optional = true }
+redis = {
+  version = "0.28",
+  features = [
+    "connection-manager",
+    "tokio-comp",
+  ],
+  optional = true
+}
+reqwest = {
+  version = "0.12",
+  default-features = false,
+  features = ["rustls-tls"],
+  optional = true
+}
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_plain = "1.0.2"
-tokio = { version = "1.52.3", features = [
-  "macros",
-  "net",
-  "parking_lot",
-  "rt-multi-thread",
-  "sync",
-  "time"
-] }
+tokio = {
+  version = "1.52.3",
+  features = ["macros", "net", "parking_lot", "rt-multi-thread", "sync", "time"]
+}
 tokio-stream = { version = "0.1.18", features = ["sync"] }
 tower-http = { version = "0.6", features = ["cors"] }
 tracing = "0.1.44"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-opentelemetry = { version = "0.30", optional = true }
-opentelemetry = { version = "0.29.1", features = ["trace"], optional = true }
-opentelemetry_sdk = { version = "0.29.0", features = ["trace", "rt-tokio"], optional = true }
-opentelemetry-otlp = { version = "0.29.0", features = ["trace", "grpc-tonic", "http-proto"], optional = true }
-opentelemetry-semantic-conventions = { version = "0.29.0", optional = true }
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"], optional = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 uuid = { version = "1", features = ["v7"] }
 
 [dev-dependencies]
 testcontainers = "0.23"
 
 [features]
-default = ["nats", "redis", "otel"]
+default = ["nats", "otel", "redis"]
 nats = ["dep:async-nats", "dep:bytes"]
-redis = ["dep:redis"]
 otel = [
   "dep:opentelemetry",
-  "dep:opentelemetry_sdk",
   "dep:opentelemetry-otlp",
-  "dep:tracing-opentelemetry",
+  "dep:opentelemetry_sdk",
   "dep:opentelemetry-semantic-conventions",
   "dep:reqwest",
+  "dep:tracing-opentelemetry",
 ]
+redis = ["dep:redis"]

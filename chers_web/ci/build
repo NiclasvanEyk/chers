@@ -7,4 +7,8 @@ export CARGO_HOME=/vercel/.cargo
 # Vercel runs from chers_web/, need to go up to project root for workspace
 cd ..
 
+export VITE_CHERS_SERVER_HOST=chers-server.fly.dev
+export VITE_CHERS_USE_SSL=true
+export VERCEL=true
+
 ./bin/mise run web-release

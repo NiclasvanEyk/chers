@@ -127,6 +127,9 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                                 winner: Some(winner_id),
                                 reason: Some(GameEndReason::Checkmate),
                                 players: room.players.clone(),
+                                final_state: state.clone(),
+                                white_player_id: white_player_id.clone(),
+                                black_player_id: black_player_id.clone(),
                             };
 
                             CommandResult {
@@ -164,9 +167,9 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
             }
 
             if let Phase::Game {
+                state,
                 white_player_id,
                 black_player_id,
-                ..
             } = &room.phase
             {
                 // Determine who is resigning and who wins
@@ -185,6 +188,9 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                     winner: Some(winner_id),
                     reason: Some(GameEndReason::Resignation),
                     players: room.players.clone(),
+                    final_state: state.clone(),
+                    white_player_id: white_player_id.clone(),
+                    black_player_id: black_player_id.clone(),
                 };
 
                 CommandResult {

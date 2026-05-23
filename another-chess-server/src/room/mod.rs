@@ -35,6 +35,12 @@ pub enum Phase {
         reason: Option<chers_server_api::v2::events::GameEndReason>,
         /// Snapshot of players at game end, persists across leaves.
         players: Vec<User>,
+        /// Final board state at the moment the game ended.
+        final_state: chers::State,
+        /// The player who played white.
+        white_player_id: UserId,
+        /// The player who played black.
+        black_player_id: UserId,
     },
 }
 

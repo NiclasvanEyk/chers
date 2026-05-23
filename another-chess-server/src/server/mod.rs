@@ -28,6 +28,10 @@ pub struct CreateRoomResponse {
     pub room_id: RoomId,
 }
 
+async fn health_check() -> &'static str {
+    "OK"
+}
+
 pub async fn run<P, S, B, T>(
     registry: RoomRegistry<P, S, B, T>,
     addr: &str,
@@ -41,6 +45,7 @@ where
     let state = Arc::new(AppState { registry });
 
     let app = Router::new()
+        .route("/health", get(health_check))
         .route("/rooms/new", post(create_room_handler::<P, S, B, T>))
         .route("/rooms/{room_id}/ws", get(ws_handler::<P, S, B, T>))
         .layer(CorsLayer::permissive())

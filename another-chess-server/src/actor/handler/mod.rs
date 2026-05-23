@@ -136,6 +136,9 @@ fn build_state_mirror(user: User, room: &Room) -> CommandResult {
             winner,
             reason,
             players,
+            final_state,
+            white_player_id,
+            black_player_id,
         } => {
             let you = resolve_user(players, &user).clone();
             let opponent = players
@@ -144,22 +147,31 @@ fn build_state_mirror(user: User, room: &Room) -> CommandResult {
                 .cloned()
                 .expect("opponent should be present in post-game player snapshot");
 
-            let your_color = Color::White;
-            let opponent_color = Color::Black;
+            let (your_color, opponent_color) = if user.id == *white_player_id {
+                (Color::White, Color::Black)
+            } else {
+                (Color::Black, Color::White)
+            };
+
+            let winner_color = if winner.as_ref() == Some(white_player_id) {
+                Some(Color::White)
+            } else if winner.as_ref() == Some(black_player_id) {
+                Some(Color::Black)
+            } else {
+                None
+            };
 
             let you_won = winner.as_ref() == Some(&user.id);
-
-            let final_board = chers::Game::new().start();
 
             RoomStateMirror::PostGame {
                 you,
                 your_color,
                 opponent,
                 opponent_color,
-                winner: None,
+                winner: winner_color,
                 you_won,
                 reason: reason.clone().unwrap_or(GameEndReason::Checkmate),
-                final_board,
+                final_board: final_state.clone(),
             }
         }
     };

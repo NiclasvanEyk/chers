@@ -6,6 +6,7 @@ Contains:
 - A core [engine](./chers/) that validates and suggests moves
 - A [command line interface](./chers_cli/) that enables you to play chess inside your terminal
 - A [web interface](./chers_web/) that re-uses the core engine compiled to Webassembly to run chess in your browser
+- A [multiplayer server](./chers_server/) that allows account-less matchmaking via links and different storage backends
 
 ## Try it out
 
@@ -27,6 +28,6 @@ to get up and running in the terminal (requires Rust to be installed locally) or
 - [ ] Castling
 - [ ] Halfmove clock
 - [ ] Fullmove number
-- [ ] Checkmate
-- [ ] Mate
+- [x] Checkmate
+- [x] Mate
 - [ ] Remove this list once all items are finished

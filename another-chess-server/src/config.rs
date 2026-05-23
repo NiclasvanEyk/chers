@@ -104,11 +104,33 @@ pub async fn command_bus() -> Result<AnyCommandBus, Box<dyn Error>> {
     })
 }
 
-/// Connect to the NATS server using `CHERS_NATS_URL` (or `NATS_URL`).
+/// Connect to the NATS server using `CHERS_NATS_URL` (or `NATS_URL`),
+/// optionally authenticating with a `.creds` file from `CHERS_NATS_CREDS` (or `NATS_CREDS`).
 #[cfg(feature = "nats")]
 async fn connect_nats() -> Result<async_nats::Client, Box<dyn Error>> {
     let url = resolve_nats_url()?;
-    Ok(async_nats::connect(&url).await?)
+    match resolve_nats_creds() {
+        Some(path) => {
+            let nc = async_nats::ConnectOptions::with_credentials_file(path)
+                .await?
+                .connect(&url)
+                .await?;
+            Ok(nc)
+        }
+        None => {
+            let nc = async_nats::connect(&url).await?;
+            Ok(nc)
+        }
+    }
+}
+
+/// Resolve a NATS credentials file from `CHERS_NATS_CREDS` env var,
+/// falling back to `NATS_CREDS`.
+#[cfg(feature = "nats")]
+fn resolve_nats_creds() -> Option<std::path::PathBuf> {
+    std::env::var_os("CHERS_NATS_CREDS")
+        .or_else(|| std::env::var_os("NATS_CREDS"))
+        .map(std::path::PathBuf::from)
 }
 
 /// Create a [`NatsCommandTransport`] from the NATS connection.

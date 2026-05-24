@@ -3,6 +3,7 @@ import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
 import { nitro } from "nitro/vite";
 
 export default defineConfig(({ mode }) => ({
@@ -33,5 +34,12 @@ export default defineConfig(({ mode }) => ({
     tanstackStart({ spa: { enabled: true } }),
     viteReact(),
     process.env.VERCEL ? nitro() : undefined,
+    process.env.SENTRY_AUTH_TOKEN
+      ? sentryTanstackStart({
+          org: "niclas-van-eyk",
+          project: "chers-web",
+          authToken: process.env.SENTRY_AUTH_TOKEN,
+        })
+      : undefined,
   ],
 }));

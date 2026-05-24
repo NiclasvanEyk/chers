@@ -10,6 +10,8 @@
     "test": "vp test run"
   },
   "dependencies": {
+    "@sentry/tanstackstart-react": "catalog:",
+    "@sentry/tanstackstart-react": "catalog:",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-router": "latest",
     "@tanstack/react-router-devtools": "latest",

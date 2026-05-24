@@ -9,6 +9,7 @@ cd ..
 
 export VITE_CHERS_SERVER_HOST=chers-server.fly.dev
 export VITE_CHERS_USE_SSL=true
+export VITE_SENTRY_DSN=https://b90b18845160b85eed570354a02b9dfa@o248360.ingest.us.sentry.io/4511446118694912
 export VERCEL=true
 
 ./bin/mise run web-release

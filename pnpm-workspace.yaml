@@ -4,6 +4,7 @@ allowBuilds:
   esbuild: false
 
 catalog:
+  '@sentry/tanstackstart-react': ^10.53.1
   "@types/node": ^24
   typescript: ^5
   vite: npm:@voidzero-dev/vite-plus-core@latest

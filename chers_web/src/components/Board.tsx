@@ -58,7 +58,7 @@ export function Board({ state, dispatch }: BoardProps) {
       key="board"
       // @ts-ignore-next-line
       inert={state.type === "PROMOTING" ? true : null}
-      className="w-full h-full grid grid-cols-8 grid-rows-8"
+      className="w-full aspect-square grid grid-cols-8 grid-rows-8"
     >
       {board.flatMap((row, y) =>
         row.map((contents, x) => {

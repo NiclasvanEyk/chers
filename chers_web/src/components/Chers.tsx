@@ -17,7 +17,7 @@ export default function Chers() {
       />
       <Settings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
-      <div className="relative touch-manipulation">
+      <div className="relative touch-manipulation" style={{ width: 'min(100vw, 512px)', margin: '0 auto' }}>
         <Board state={state} dispatch={dispatch} />
       </div>
     </ChersSettingsProvider>

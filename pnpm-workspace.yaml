@@ -1,6 +1,7 @@
 packages:
   - chers_web
 allowBuilds:
+  '@sentry/cli': true
   esbuild: false
 
 catalog:

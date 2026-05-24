@@ -24,6 +24,10 @@ export const Route = createRootRoute({
         href: appCss,
       },
       {
+        rel: "icon",
+        href: "/favicon.ico",
+      },
+      {
         rel: "manifest",
         href: "/manifest.json",
       },

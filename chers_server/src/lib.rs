@@ -20,7 +20,7 @@ pub mod redis;
 /// HTTP + WebSocket server.
 pub mod server;
 
-/// Telemetry and observability (OTEL export).
+/// Telemetry and observability (OTEL + Sentry).
 pub mod telemetry;
 
 pub mod utils {

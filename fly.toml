@@ -10,6 +10,7 @@ primary_region = "ams"
 
 [env]
 PORT = "8080"
+CHERS_ENV = "production"
 CHERS_NATS_CREDS = "/secrets/chers-nats.creds"
 CHERS_NATS_URL = "tls://connect.ngs.global"
 CHERS_EVENT_BUS_DRIVER = "nats"

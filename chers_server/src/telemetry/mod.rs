@@ -8,8 +8,10 @@ use opentelemetry::trace::TracerProvider;
 
 pub struct TelemetryConfig {
     pub otlp_endpoint: Option<String>,
+    pub sentry_dsn: Option<String>,
     pub service_name: String,
     pub service_version: String,
+    pub environment: String,
     #[cfg(feature = "otel")]
     pub otel_traces_sampler_arg: f64,
 }
@@ -18,9 +20,11 @@ impl TelemetryConfig {
     pub fn from_env() -> Self {
         Self {
             otlp_endpoint: Self::otlp_endpoint_from_env(),
+            sentry_dsn: env::var("SENTRY_DSN").ok(),
             service_name: env::var("OTEL_SERVICE_NAME")
                 .unwrap_or_else(|_| "chers-server".to_string()),
             service_version: env!("CARGO_PKG_VERSION").to_string(),
+            environment: env::var("CHERS_ENV").unwrap_or_else(|_| "production".to_string()),
             #[cfg(feature = "otel")]
             otel_traces_sampler_arg: Self::sampler_arg_from_env(),
         }
@@ -48,6 +52,10 @@ impl TelemetryConfig {
         if self.otlp_endpoint.is_some() {
             return TelemetryMode::Otel;
         }
+        #[cfg(feature = "sentry")]
+        if self.sentry_dsn.is_some() {
+            return TelemetryMode::Sentry;
+        }
         TelemetryMode::None
     }
 }
@@ -57,11 +65,15 @@ pub enum TelemetryMode {
     None,
     #[cfg(feature = "otel")]
     Otel,
+    #[cfg(feature = "sentry")]
+    Sentry,
 }
 
 pub struct TelemetryGuards {
     #[cfg(feature = "otel")]
     pub tracer_provider: Option<opentelemetry_sdk::trace::SdkTracerProvider>,
+    #[cfg(feature = "sentry")]
+    pub sentry_guard: Option<sentry::ClientInitGuard>,
     pub mode: TelemetryMode,
 }
 
@@ -95,9 +107,21 @@ pub(crate) fn redact_value(value: &mut JsonValue) {
     }
 }
 
+#[cfg(feature = "sentry")]
+pub(crate) mod sentry_integration;
+
 pub fn init(config: TelemetryConfig) -> TelemetryGuards {
     let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info"));
+
+    #[cfg(feature = "sentry")]
+    let sentry_guard = config.sentry_dsn.as_ref().map(|dsn| {
+        self::sentry_integration::init(
+            dsn,
+            &config.environment,
+            &format!("chers-server@{}", config.service_version),
+        )
+    });
 
     #[cfg(feature = "otel")]
     if let Some(provider) = try_init_otel(&config) {
@@ -110,6 +134,8 @@ pub fn init(config: TelemetryConfig) -> TelemetryGuards {
         tracing::info!(mode = ?TelemetryMode::Otel, "Telemetry initialized");
         return TelemetryGuards {
             tracer_provider: Some(provider),
+            #[cfg(feature = "sentry")]
+            sentry_guard,
             mode: TelemetryMode::Otel,
         };
     }
@@ -124,6 +150,8 @@ pub fn init(config: TelemetryConfig) -> TelemetryGuards {
         mode,
         #[cfg(feature = "otel")]
         tracer_provider: None,
+        #[cfg(feature = "sentry")]
+        sentry_guard,
     }
 }
 

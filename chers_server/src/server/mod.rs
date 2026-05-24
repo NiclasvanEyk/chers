@@ -44,12 +44,18 @@ where
 {
     let state = Arc::new(AppState { registry });
 
-    let app = Router::new()
+    #[allow(unused_mut)]
+    let mut app = Router::new()
         .route("/health", get(health_check))
         .route("/rooms/new", post(create_room_handler::<P, S, B, T>))
         .route("/rooms/{room_id}/ws", get(ws_handler::<P, S, B, T>))
         .layer(CorsLayer::permissive())
         .with_state(state);
+
+    #[cfg(feature = "sentry")]
+    {
+        app = crate::telemetry::sentry_integration::apply_middleware(app);
+    }
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!("listening on {addr}");

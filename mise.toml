@@ -61,19 +61,19 @@ run = "cargo run --bin=chers_cli"
 [tasks.web-dev]
 description = "Start frontend dev server with WASM + types"
 run = [
-    { task = "install-pnpm-deps" },
-    { task = "wasm-dev" },
-    { task = "server-ts" },
-    "pnpm --filter chers_web run dev",
+  { task = "install-pnpm-deps" },
+  { task = "wasm-dev" },
+  { task = "server-ts" },
+  "pnpm --filter chers_web run dev",
 ]
 
 [tasks.web-release]
 description = "Build frontend for production"
 run = [
-    { task = "install-pnpm-deps" },
-    { task = "wasm-release" },
-    { task = "server-ts" },
-    "pnpm --filter chers_web run build",
+  { task = "install-pnpm-deps" },
+  { task = "wasm-release" },
+  { task = "server-ts" },
+  "pnpm --filter chers_web run build",
 ]
 
 [tasks.clean]

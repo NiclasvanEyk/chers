@@ -1,7 +1,6 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use serde_json::Value as JsonValue;
 use tokio_stream::StreamExt;
 
 use crate::actor::handler;
@@ -73,41 +72,44 @@ fn cmd_identity(cmd: &Command) -> (Option<&str>, Option<&str>) {
     }
 }
 
-/// Create an info-level span for an event with its full payload.
+/// Create an info-level span for an event.
+///
+/// When `otel` feature is enabled, adds structured nested attributes
+/// (e.g. `event.type`, `event.payload.user.id`) to the underlying OTel span.
+/// When `otel` is disabled, records the full JSON payload string for console logging.
 fn event_span(room_id: &str, event: &Event) -> tracing::Span {
-    let payload = serialized_payload(event);
-    match event {
-        Event::Lobby(_) => tracing::info_span!("Event:Lobby", room_id, %payload),
-        Event::Game(_) => tracing::info_span!("Event:Game", room_id, %payload),
-        Event::PostGame(_) => tracing::info_span!("Event:PostGame", room_id, %payload),
-        Event::System(_) => tracing::info_span!("Event:System", room_id, %payload),
-    }
-}
+    let span = match event {
+        Event::Lobby(_) => {
+            tracing::info_span!("Event:Lobby", room_id, payload = tracing::field::Empty)
+        }
+        Event::Game(_) => {
+            tracing::info_span!("Event:Game", room_id, payload = tracing::field::Empty)
+        }
+        Event::PostGame(_) => {
+            tracing::info_span!("Event:PostGame", room_id, payload = tracing::field::Empty)
+        }
+        Event::System(_) => {
+            tracing::info_span!("Event:System", room_id, payload = tracing::field::Empty)
+        }
+    };
 
-/// Recursively replace known sensitive fields with `"***"`.
-fn redact_value(value: &mut JsonValue) {
-    match value {
-        JsonValue::Object(map) => {
-            if map.contains_key("secret") {
-                map.insert("secret".into(), JsonValue::String("***".into()));
-            }
-            for val in map.values_mut() {
-                redact_value(val);
-            }
-        }
-        JsonValue::Array(arr) => {
-            for val in arr.iter_mut() {
-                redact_value(val);
-            }
-        }
-        _ => {}
-    }
+    #[cfg(not(feature = "otel"))]
+    span.record(
+        "payload",
+        &tracing::field::display(serialized_payload(event)),
+    );
+
+    #[cfg(feature = "otel")]
+    crate::telemetry::otel::add_event_attributes(&span, event);
+
+    span
 }
 
 /// Serialize a value to a JSON string, redacting sensitive fields.
+#[cfg(not(feature = "otel"))]
 fn serialized_payload<T: serde::Serialize>(value: &T) -> String {
     let mut json = serde_json::to_value(value).unwrap_or_default();
-    redact_value(&mut json);
+    crate::telemetry::redact_value(&mut json);
     json.to_string()
 }
 
@@ -120,6 +122,10 @@ fn phase_label(phase: &Phase) -> &'static str {
 }
 
 /// Create an info-level span whose name is the human-readable command label.
+///
+/// When `otel` feature is enabled, adds structured nested attributes
+/// (e.g. `command.type`, `command.payload.user.id`) to the underlying OTel span.
+/// When `otel` is disabled, records the full JSON payload string for console logging.
 fn cmd_span(
     cmd: &Command,
     phase: &str,
@@ -129,54 +135,61 @@ fn cmd_span(
 ) -> tracing::Span {
     let user_id = user_id.unwrap_or("");
     let connection_id = connection_id.unwrap_or("");
-    let payload = serialized_payload(cmd);
-    match cmd {
+    let span = match cmd {
         Command::Lobby(LobbyCommand::Join { .. }) => {
-            tracing::info_span!("Lobby:Join", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("Lobby:Join", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::Lobby(LobbyCommand::Leave { .. }) => {
-            tracing::info_span!("Lobby:Leave", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("Lobby:Leave", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::Lobby(LobbyCommand::ChangeName { .. }) => {
-            tracing::info_span!("Lobby:ChangeName", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("Lobby:ChangeName", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::Lobby(LobbyCommand::ChangeReady { .. }) => {
-            tracing::info_span!("Lobby:ChangeReady", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("Lobby:ChangeReady", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::Game(GameCommand::Reconnect { .. }) => {
-            tracing::info_span!("Game:Reconnect", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("Game:Reconnect", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::Game(GameCommand::Leave { .. }) => {
-            tracing::info_span!("Game:Leave", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("Game:Leave", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::Game(GameCommand::MakeMove { .. }) => {
-            tracing::info_span!("Game:MakeMove", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("Game:MakeMove", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::Game(GameCommand::Resign { .. }) => {
-            tracing::info_span!("Game:Resign", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("Game:Resign", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::PostGame(PostGameCommand::Reconnect { .. }) => {
-            tracing::info_span!("PostGame:Reconnect", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("PostGame:Reconnect", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::PostGame(PostGameCommand::Leave { .. }) => {
-            tracing::info_span!("PostGame:Leave", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("PostGame:Leave", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::PostGame(PostGameCommand::OfferRematch { .. }) => {
-            tracing::info_span!("PostGame:OfferRematch", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("PostGame:OfferRematch", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::PostGame(PostGameCommand::AcceptRematch { .. }) => {
-            tracing::info_span!("PostGame:AcceptRematch", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("PostGame:AcceptRematch", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::PostGame(PostGameCommand::DeclineRematch { .. }) => {
-            tracing::info_span!("PostGame:DeclineRematch", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("PostGame:DeclineRematch", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::RequestState { .. } => {
-            tracing::info_span!("RequestState", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("RequestState", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
         Command::Leave { .. } => {
-            tracing::info_span!("Leave", %phase, room_id, %user_id, %connection_id, %payload)
+            tracing::info_span!("Leave", %phase, room_id, %user_id, %connection_id, payload = tracing::field::Empty)
         }
-    }
+    };
+
+    #[cfg(not(feature = "otel"))]
+    span.record("payload", &tracing::field::display(serialized_payload(cmd)));
+
+    #[cfg(feature = "otel")]
+    crate::telemetry::otel::add_command_attributes(&span, cmd);
+
+    span
 }
 
 /// Log a shutdown message including the OTEL trace ID when available.

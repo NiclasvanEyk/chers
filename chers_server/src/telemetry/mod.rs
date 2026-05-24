@@ -1,6 +1,8 @@
 use std::env;
 use tracing_subscriber::prelude::*;
 
+use serde_json::Value as JsonValue;
+
 #[cfg(feature = "otel")]
 use opentelemetry::trace::TracerProvider;
 
@@ -70,6 +72,26 @@ impl TelemetryGuards {
             .as_ref()
             .expect("OTEL tracer provider not initialized")
             .tracer(name)
+    }
+}
+
+/// Recursively replace known sensitive fields with `"***"`.
+pub(crate) fn redact_value(value: &mut JsonValue) {
+    match value {
+        JsonValue::Object(map) => {
+            if map.contains_key("secret") {
+                map.insert("secret".into(), JsonValue::String("***".into()));
+            }
+            for val in map.values_mut() {
+                redact_value(val);
+            }
+        }
+        JsonValue::Array(arr) => {
+            for val in arr.iter_mut() {
+                redact_value(val);
+            }
+        }
+        _ => {}
     }
 }
 
@@ -159,3 +181,6 @@ pub fn shutdown(guards: TelemetryGuards) {
     }
     tracing::info!("Telemetry shutdown complete");
 }
+
+#[cfg(feature = "otel")]
+pub(crate) mod otel;

@@ -1,8 +1,28 @@
+use std::env;
+
+use opentelemetry::global;
+use opentelemetry::trace::TracerProvider;
+use opentelemetry_sdk::trace::SdkTracerProvider;
+use opentelemetry_semantic_conventions::resource::{SERVICE_NAME, SERVICE_VERSION};
 use serde_json::Value as JsonValue;
+use tracing_subscriber::layer::SubscriberExt;
+use tracing_subscriber::{EnvFilter, prelude::*};
 
 use crate::communication::command::Command;
 use crate::communication::event::Event;
 use crate::telemetry::redact_value;
+
+pub(crate) struct Config {
+    pub otlp_endpoint: Option<String>,
+}
+
+impl Config {
+    pub(crate) fn from_env() -> Config {
+        Config {
+            otlp_endpoint: env::var("OTEL_EXPORTER_OTLP_ENDPOINT").ok(),
+        }
+    }
+}
 
 /// Recursively flatten a JSON value into dot-separated key-value pairs.
 ///
@@ -126,4 +146,52 @@ pub(crate) fn add_command_attributes(span: &tracing::Span, cmd: &Command) {
     for (key, value) in flatten_json(&payload, "command.payload") {
         otel_span.set_attribute(opentelemetry::KeyValue::new(key, value));
     }
+}
+
+pub(crate) fn init(
+    chers_config: &super::Config,
+    env_filter: EnvFilter,
+) -> Option<opentelemetry_sdk::trace::SdkTracerProvider> {
+    let otel_config = Config::from_env();
+    if otel_config.otlp_endpoint.is_none() {
+        return None;
+    }
+
+    let resource = opentelemetry_sdk::Resource::builder()
+        .with_attributes(vec![
+            opentelemetry::KeyValue::new(SERVICE_NAME, chers_config.service_name.clone()),
+            opentelemetry::KeyValue::new(SERVICE_VERSION, chers_config.service_version.clone()),
+        ])
+        .build();
+
+    let exporter = match env::var("OTEL_EXPORTER_OTLP_PROTOCOL")
+        .as_deref()
+        .unwrap_or("grpc")
+    {
+        "http/protobuf" => opentelemetry_otlp::SpanExporter::builder()
+            .with_http()
+            .build()
+            .expect("Failed to build OTLP span exporter"),
+        _ => opentelemetry_otlp::SpanExporter::builder()
+            .with_tonic()
+            .build()
+            .expect("Failed to build OTLP span exporter"),
+    };
+
+    let provider = SdkTracerProvider::builder()
+        .with_resource(resource)
+        .with_batch_exporter(exporter)
+        .build();
+
+    global::set_text_map_propagator(opentelemetry_sdk::propagation::TraceContextPropagator::new());
+    global::set_tracer_provider(provider.clone());
+
+    let tracer = provider.tracer(chers_config.service_name.clone());
+    tracing_subscriber::registry()
+        .with(tracing_subscriber::fmt::layer())
+        .with(env_filter)
+        .with(tracing_opentelemetry::layer().with_tracer(tracer))
+        .init();
+
+    Some(provider)
 }

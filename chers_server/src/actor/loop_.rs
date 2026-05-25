@@ -221,7 +221,8 @@ pub async fn run_actor<S, B>(
     B: EventBus<Item = Event>,
 {
     let room_id = publisher.room_id().clone();
-    let actor_span = tracing::info_span!("actor", actor_id = %actor_id, room_id = %room_id);
+    let actor_span =
+        tracing::info_span!(parent: None, "actor", actor_id = %actor_id, room_id = %room_id);
 
     let mut state = match storage.get_by_id(&room_id).await {
         Ok(Some(room)) => room,
@@ -306,11 +307,11 @@ pub async fn run_actor<S, B>(
         }
 
         log_actor_shutdown(&room_id);
+
+        publisher.remove().await;
     }
     .instrument(actor_span)
     .await;
-
-    publisher.remove().await;
 }
 
 #[cfg(test)]

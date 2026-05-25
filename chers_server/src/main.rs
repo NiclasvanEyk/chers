@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
 use chers_server::actor::registry::RoomRegistry;
-use chers_server::telemetry;
+use chers_server::telemetry::Telemetry;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let _guards = telemetry::init(telemetry::TelemetryConfig::from_env());
+    let _telemetry = Telemetry::init_from_env();
+    tracing::info!("Telemetry initialized"); // TODO: Bitflags of modes: Sentry / OTEL
 
     let event_bus = Arc::new(chers_server::config::event_bus().await?);
     let lease = Arc::new(chers_server::config::lease_provider().await?);
@@ -19,8 +20,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .or_else(|_| std::env::var("CHERS_ADDR"))
         .unwrap_or_else(|_| "0.0.0.0:8000".into());
     chers_server::server::run(registry, &addr).await?;
-
-    telemetry::shutdown(_guards);
 
     Ok(())
 }

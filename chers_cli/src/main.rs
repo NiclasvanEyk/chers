@@ -2,11 +2,11 @@ use std::process::exit;
 
 use clap::Parser;
 
-use chers::moves::serialization::SimpleMoveConverter;
-use chers::moves::transport::Coordinator;
 use chers_cli::modes::local::TerminalChersMatch;
 use chers_cli::modes::remote::connection::Role;
 use chers_cli::modes::remote::game::RemoteChersMatch;
+use chers_cli::moves::serialization::SimpleMoveConverter;
+use chers_cli::moves::transport::Coordinator;
 
 #[derive(Parser)]
 #[command(name = "chers")]

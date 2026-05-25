@@ -1,6 +1,6 @@
 use crate::{
     check::{check_by_opponent_is_mate, checking_pieces_of_opponent},
-    moves_available::autocomplete_to,
+    moves::moves_available,
     piece_at, Color, Coordinate, Event, Figure, Move, Piece, State, BOARD_SIZE,
 };
 
@@ -43,7 +43,7 @@ fn inner_move_piece(
     }
 
     if check_legality {
-        let legal = autocomplete_to(state, from);
+        let legal = moves_available(state, from);
         if !legal.contains(&to) {
             return Err(CantMovePiece::IllegalMove {
                 attempted: the_move,

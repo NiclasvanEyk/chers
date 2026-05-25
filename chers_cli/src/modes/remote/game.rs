@@ -1,7 +1,5 @@
-use chers::{
-    available_moves, initial_state, move_piece, moves::transport::Coordinator, Coordinate, Move,
-    State,
-};
+use crate::moves::transport::Coordinator;
+use chers::{initial_state, move_piece, moves::moves_available, Coordinate, Move, State};
 
 use crate::{
     rendering::TerminalRenderer,
@@ -35,7 +33,7 @@ impl RemoteChersMatch {
     fn print_possible_moves(&self, from: Coordinate) {
         println!("Possible moves:");
 
-        for possible in available_moves(&self.game_state, from) {
+        for possible in moves_available(&self.game_state, from) {
             println!("- {}", possible)
         }
     }

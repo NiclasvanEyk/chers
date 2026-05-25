@@ -96,7 +96,7 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                 }
 
                 // Pre-validate the move to provide better error messages
-                if !chers::is_valid_move(state, move_) {
+                if !chers::moves::is_valid_move(state, move_) {
                     return CommandResult::accepted(Event::Game(GameEvent::MoveRejected {
                         author: user,
                         reason: "illegal move".to_string(),

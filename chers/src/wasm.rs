@@ -3,8 +3,8 @@ use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    initial_state, move_piece, moves_available::autocomplete_to, CantMovePiece, Coordinate, Event,
-    Move, State,
+    initial_state, move_piece, moves::moves_available, CantMovePiece, Coordinate, Event, Move,
+    State,
 };
 
 use serde_wasm_bindgen as bridge;
@@ -35,7 +35,7 @@ pub fn available_moves(state: JsValue, from: JsValue) -> Result<JsValue, JsError
     let from: Coordinate = bridge::from_value(from)
         .map_err(|e| JsError::new(&format!("Failed to deserialize coordinate: {}", e)))?;
 
-    let moves = autocomplete_to(&state, from);
+    let moves = moves_available(&state, from);
     bridge::to_value(&moves).map_err(|e| JsError::new(&format!("Serialization error: {}", e)))
 }
 

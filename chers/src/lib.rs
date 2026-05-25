@@ -8,7 +8,7 @@ mod game;
 mod coordinates;
 
 /// Computes valid moves given a game state and a starting position.
-mod moves_available;
+pub mod moves;
 
 /// TODO: Document
 mod movement_patterns;
@@ -24,8 +24,6 @@ pub mod engine;
 
 /// Parses a description in Forsyth–Edwards Notation.
 pub mod fen;
-
-pub mod moves;
 
 /// WASM bindings
 pub mod wasm;

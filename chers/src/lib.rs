@@ -2,7 +2,7 @@
 mod structs;
 
 /// Responsible for the game loop and higher-level processes.
-mod game;
+mod lifecycle;
 
 /// Low-level coordinate movements
 mod coordinates;
@@ -29,6 +29,6 @@ pub mod fen;
 pub mod wasm;
 
 pub use coordinates::*;
-pub use game::*;
+pub use lifecycle::*;
 pub use move_execution::*;
 pub use structs::*;

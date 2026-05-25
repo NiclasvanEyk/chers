@@ -7,8 +7,8 @@ pub(crate) mod sentry_integration;
 use std::env;
 
 use serde_json::Value as JsonValue;
-use tracing_subscriber::prelude::*;
 use tracing_subscriber::EnvFilter;
+use tracing_subscriber::prelude::*;
 
 /// Recursively replace known sensitive fields with `"***"`.
 pub(crate) fn redact_value(value: &mut JsonValue) {

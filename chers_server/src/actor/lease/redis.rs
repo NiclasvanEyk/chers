@@ -3,7 +3,7 @@ use std::time::Duration;
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
 use tokio::sync::oneshot;
-use tracing::{error, info, warn};
+use tracing::{Instrument, error, info, warn};
 
 use super::{Lease, LeaseConfig, LeaseError, Provider};
 use crate::room::RoomId;
@@ -83,36 +83,41 @@ impl Provider for RedisProvider {
         let ttl = self.config.ttl;
         let renew_interval = self.config.renewal_interval;
 
-        tokio::spawn(async move {
-            let mut interval = tokio::time::interval(renew_interval);
-            // Skip the first tick – the key was just set with a TTL
-            interval.tick().await;
+        let room_id = room_id.clone();
+        let span_instance = renew_instance.clone();
+        tokio::spawn(
+            async move {
+                let mut interval = tokio::time::interval(renew_interval);
+                // Skip the first tick – the key was just set with a TTL
+                interval.tick().await;
 
-            loop {
-                tokio::select! {
-                    _ = interval.tick() => {
-                        match renew_lease(&mut renew_conn, &renew_key, &renew_instance, ttl).await {
-                            Ok(true) => {},
-                            Ok(false) => {
-                                warn!(key = %renew_key, "Lease was lost to another instance");
-                                let _ = expired_tx.send(());
-                                return;
-                            }
-                            Err(e) => {
-                                error!(%e, "Lease renewal failed");
-                                let _ = expired_tx.send(());
-                                return;
+                loop {
+                    tokio::select! {
+                        _ = interval.tick() => {
+                            match renew_lease(&mut renew_conn, &renew_key, &renew_instance, ttl).await {
+                                Ok(true) => {},
+                                Ok(false) => {
+                                    warn!(key = %renew_key, "Lease was lost to another instance");
+                                    let _ = expired_tx.send(());
+                                    return;
+                                }
+                                Err(e) => {
+                                    error!(%e, "Lease renewal failed");
+                                    let _ = expired_tx.send(());
+                                    return;
+                                }
                             }
                         }
-                    }
-                    _ = &mut cancel_rx => {
-                        info!(key = %renew_key, "Releasing lease");
-                        let _: Result<(), _> = renew_conn.del(&renew_key).await;
-                        return;
+                        _ = &mut cancel_rx => {
+                            info!(key = %renew_key, "Releasing lease");
+                            let _: Result<(), _> = renew_conn.del(&renew_key).await;
+                            return;
+                        }
                     }
                 }
             }
-        });
+            .instrument(tracing::info_span!("lease:renew", %room_id, %span_instance)),
+        );
 
         let expired = async move {
             let _ = expired_rx.await;

@@ -266,25 +266,29 @@ pub async fn run_actor<S, B>(
                     );
 
                     let phase = phase_label(&state.phase);
-                    let result = cmd_span(&incoming.command, phase, &room_id, user_id, conn_id)
-                        .in_scope(|| handler::handle_command(incoming.command, &mut state));
+                    let cmd_span = cmd_span(&incoming.command, phase, &room_id, user_id, conn_id);
+                    let result = cmd_span.in_scope(|| handler::handle_command(incoming.command, &mut state));
 
-                    incoming.response_channel.respond(result.response).await;
+                    async {
+                        incoming.response_channel.respond(result.response).await;
 
-                    for event in result.events {
-                        let span = event_span(&room_id, &event);
-                        async {
-                            if let Err(err) = publisher.publish(event).await {
-                                tracing::warn!("failed to publish event for room {room_id}: {err}");
+                        for event in result.events {
+                            let span = event_span(&room_id, &event);
+                            async {
+                                if let Err(err) = publisher.publish(event).await {
+                                    tracing::warn!("failed to publish event for room {room_id}: {err}");
+                                }
                             }
+                            .instrument(span)
+                            .await;
                         }
-                        .instrument(span)
-                        .await;
-                    }
 
-                    if let Err(err) = storage.persist(&state).await {
-                        tracing::error!("failed to persist room {room_id}: {err}");
+                        if let Err(err) = storage.persist(&state).await {
+                            tracing::error!("failed to persist room {room_id}: {err}");
+                        }
                     }
+                    .instrument(cmd_span)
+                    .await;
                 }
                 _ = guard.expired() => {
                     tracing::warn!("lease expired for room {room_id}");

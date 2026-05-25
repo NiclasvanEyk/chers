@@ -1,7 +1,7 @@
 use async_nats::jetstream::kv::{CreateErrorKind, Store};
 use bytes::Bytes;
 use tokio::sync::oneshot;
-use tracing::{error, info, warn};
+use tracing::{Instrument, error, info, warn};
 
 use super::{Lease, LeaseConfig, LeaseError, Provider};
 use crate::room::RoomId;
@@ -56,35 +56,40 @@ impl Provider for NatsProvider {
                 let renew_instance_id = self.instance_id.clone();
                 let renew_interval = self.config.renewal_interval;
 
-                tokio::spawn(async move {
-                    let mut interval = tokio::time::interval(renew_interval);
-                    interval.tick().await;
+                let room_id = room_id.clone();
+                let span_instance_id = renew_instance_id.clone();
+                tokio::spawn(
+                    async move {
+                        let mut interval = tokio::time::interval(renew_interval);
+                        interval.tick().await;
 
-                    loop {
-                        tokio::select! {
-                            _ = interval.tick() => {
-                                match renew_lease(&kv, &renew_key, &renew_instance_id).await {
-                                    Ok(true) => {}
-                                    Ok(false) => {
-                                        warn!(key = %renew_key, "Lease was lost to another instance");
-                                        let _ = expired_tx.send(());
-                                        return;
-                                    }
-                                    Err(e) => {
-                                        error!(%e, "Lease renewal failed");
-                                        let _ = expired_tx.send(());
-                                        return;
+                        loop {
+                            tokio::select! {
+                                _ = interval.tick() => {
+                                    match renew_lease(&kv, &renew_key, &renew_instance_id).await {
+                                        Ok(true) => {}
+                                        Ok(false) => {
+                                            warn!(key = %renew_key, "Lease was lost to another instance");
+                                            let _ = expired_tx.send(());
+                                            return;
+                                        }
+                                        Err(e) => {
+                                            error!(%e, "Lease renewal failed");
+                                            let _ = expired_tx.send(());
+                                            return;
+                                        }
                                     }
                                 }
-                            }
-                            _ = &mut cancel_rx => {
-                                info!(key = %renew_key, "Releasing lease");
-                                let _ = kv.delete(&renew_key).await;
-                                return;
+                                _ = &mut cancel_rx => {
+                                    info!(key = %renew_key, "Releasing lease");
+                                    let _ = kv.delete(&renew_key).await;
+                                    return;
+                                }
                             }
                         }
                     }
-                });
+                    .instrument(tracing::info_span!("lease:renew", %room_id, %span_instance_id)),
+                );
 
                 let expired = async move {
                     let _ = expired_rx.await;

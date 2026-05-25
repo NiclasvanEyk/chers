@@ -107,9 +107,8 @@ pub fn handle_lobby_command(cmd: Command, room: &mut Room) -> CommandResult {
                 } else {
                     (room.players[1].clone(), room.players[0].clone())
                 };
-                let game = chers::Game::new();
                 room.phase = Phase::Game {
-                    state: game.start(),
+                    state: chers::initial_state(),
                     white_player_id: white.id.clone(),
                     black_player_id: black.id.clone(),
                 };

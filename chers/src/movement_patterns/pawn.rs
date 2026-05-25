@@ -87,13 +87,13 @@ fn capture_moves(forward: Coordinate) -> Vec<Coordinate> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{fen, Cell, Game};
+    use crate::{fen, initial_state, Cell};
 
     use super::*;
 
     #[test]
     fn pawns_can_move_forward_once_and_twice_at_the_beginning() {
-        let state = Game {}.start();
+        let state = initial_state();
         let from = Cell::A2;
         let targets = moves(
             &state.board,

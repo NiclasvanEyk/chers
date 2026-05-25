@@ -1,4 +1,7 @@
-use chers::{moves::transport::Coordinator, Coordinate, Game, Move, State};
+use chers::{
+    available_moves, initial_state, move_piece, moves::transport::Coordinator, Coordinate, Move,
+    State,
+};
 
 use crate::{
     rendering::TerminalRenderer,
@@ -13,7 +16,6 @@ enum InputState {
 }
 
 pub struct RemoteChersMatch {
-    engine: Game,
     renderer: TerminalRenderer,
     coordinator: Coordinator,
     game_state: State,
@@ -21,14 +23,11 @@ pub struct RemoteChersMatch {
 }
 
 impl RemoteChersMatch {
-    pub fn new(engine: Game, coordinator: Coordinator) -> Self {
-        let initial_state = engine.start();
-
+    pub fn new(coordinator: Coordinator) -> Self {
         Self {
-            engine,
             renderer: TerminalRenderer {},
             coordinator,
-            game_state: initial_state,
+            game_state: initial_state(),
             input_state: InputState::PromptingFrom,
         }
     }
@@ -36,7 +35,7 @@ impl RemoteChersMatch {
     fn print_possible_moves(&self, from: Coordinate) {
         println!("Possible moves:");
 
-        for possible in self.engine.available_moves(&self.game_state, from) {
+        for possible in available_moves(&self.game_state, from) {
             println!("- {}", possible)
         }
     }
@@ -75,39 +74,37 @@ impl RemoteChersMatch {
                     }
                 }
 
-                InputState::Execute(the_move) => {
-                    match self.engine.move_piece(&self.game_state, the_move) {
-                        Err(error) => {
-                            println!("{:#?}", error);
-                            InputState::PromptingTo(the_move.from)
-                        }
-                        Ok((new_state, events)) => {
-                            let current_player = self.game_state.player;
-                            self.game_state = new_state;
-
-                            self.renderer.render(&self.game_state.board);
-
-                            for event in events {
-                                println!("{:?}", event);
-                                if let chers::Event::Mate = event {
-                                    println!("{:?} wins!", current_player);
-                                    break 'game;
-                                }
-                            }
-
-                            match self.coordinator.send(&the_move) {
-                                Ok(()) => {
-                                    println!("Waiting for other player to make a move...");
-                                }
-                                Err(error) => {
-                                    println!("Something went wrong: {}", error);
-                                }
-                            }
-
-                            InputState::WaitingForOtherPartyToMove
-                        }
+                InputState::Execute(the_move) => match move_piece(&self.game_state, the_move) {
+                    Err(error) => {
+                        println!("{:#?}", error);
+                        InputState::PromptingTo(the_move.from)
                     }
-                }
+                    Ok((new_state, events)) => {
+                        let current_player = self.game_state.player;
+                        self.game_state = new_state;
+
+                        self.renderer.render(&self.game_state.board);
+
+                        for event in events {
+                            println!("{:?}", event);
+                            if let chers::Event::Mate = event {
+                                println!("{:?} wins!", current_player);
+                                break 'game;
+                            }
+                        }
+
+                        match self.coordinator.send(&the_move) {
+                            Ok(()) => {
+                                println!("Waiting for other player to make a move...");
+                            }
+                            Err(error) => {
+                                println!("Something went wrong: {}", error);
+                            }
+                        }
+
+                        InputState::WaitingForOtherPartyToMove
+                    }
+                },
                 InputState::WaitingForOtherPartyToMove => {
                     // TODO: Actually wait? implement timers?
                     std::thread::sleep(std::time::Duration::from_secs(10));

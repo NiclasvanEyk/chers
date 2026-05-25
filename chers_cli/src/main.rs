@@ -1,6 +1,5 @@
 use std::process::exit;
 
-use chers::Game;
 use clap::Parser;
 
 use chers::moves::serialization::SimpleMoveConverter;
@@ -34,8 +33,7 @@ fn main() {
     let cli = Cli::parse();
 
     let Some(role) = cli.role else {
-        let engine = Game::new();
-        let mut ui = TerminalChersMatch::new(engine);
+        let mut ui = TerminalChersMatch::new();
 
         ui.run();
         exit(0);
@@ -59,9 +57,8 @@ fn main() {
     let other = stream.peer_addr().unwrap().to_string();
     println!("Successfully connected to {other}!");
 
-    let engine = Game::new();
     let coordinator = Coordinator::new(stream, Box::new(SimpleMoveConverter::new()));
-    let mut ui = RemoteChersMatch::new(engine, coordinator);
+    let mut ui = RemoteChersMatch::new(coordinator);
 
     ui.run();
 }

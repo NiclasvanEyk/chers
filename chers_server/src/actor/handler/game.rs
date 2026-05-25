@@ -95,17 +95,15 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                     }));
                 }
 
-                let game = chers::Game::new();
-
                 // Pre-validate the move to provide better error messages
-                if !game.is_valid_move(state, move_) {
+                if !chers::is_valid_move(state, move_) {
                     return CommandResult::accepted(Event::Game(GameEvent::MoveRejected {
                         author: user,
                         reason: "illegal move".to_string(),
                     }));
                 }
 
-                match game.move_piece(state, move_) {
+                match chers::move_piece(state, move_) {
                     Ok((new_state, events)) => {
                         *state = new_state;
 

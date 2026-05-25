@@ -59,25 +59,25 @@ fn find_king_of(board: &Board, player: Player) -> Coordinate {
 
 #[cfg(test)]
 mod tests {
-    use crate::{fen::parse_state, Cell, Game};
+    use crate::{fen::parse_state, initial_state, Cell};
 
     use super::*;
 
     #[test]
     fn it_finds_the_king() {
-        let initial_state = Game::new().start();
+        let state = initial_state();
 
-        assert_eq!(Cell::E1, find_king_of(&initial_state.board, Player::White));
-        assert_eq!(Cell::E8, find_king_of(&initial_state.board, Player::Black));
+        assert_eq!(Cell::E1, find_king_of(&state.board, Player::White));
+        assert_eq!(Cell::E8, find_king_of(&state.board, Player::Black));
     }
 
     #[test]
     fn at_the_beginning_no_mate_exist() {
         // This is theoretically invalid state, but it allows us to test the
         // functionality in isoloation
-        let initial_state = Game::new().start();
+        let state = initial_state();
 
-        assert!(checking_pieces_of_opponent(&initial_state).is_empty());
+        assert!(checking_pieces_of_opponent(&state).is_empty());
     }
 
     #[test]

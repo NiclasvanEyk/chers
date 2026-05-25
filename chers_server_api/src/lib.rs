@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 // Re-export types from chers for convenience
-pub use chers::{Color, Coordinate, Game, PromotedFigure};
+pub use chers::{Color, Coordinate, PromotedFigure};
 
 /// The piece a pawn can be promoted to.
 ///

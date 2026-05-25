@@ -143,7 +143,7 @@ fn parse_castling_rights(_notation: &str) -> Result<CastlingRights, CouldNotPars
 
 #[cfg(test)]
 mod tests {
-    use crate::Game;
+    use crate::initial_state;
 
     use super::*;
 
@@ -152,6 +152,6 @@ mod tests {
         let notation = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w QKqk - 0 1";
         let parsed = parse_state(notation).unwrap();
 
-        assert_eq!(Game::new().start(), parsed);
+        assert_eq!(initial_state(), parsed);
     }
 }

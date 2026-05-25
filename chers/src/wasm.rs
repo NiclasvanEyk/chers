@@ -3,8 +3,8 @@ use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    move_piece, moves_available::autocomplete_to, CantMovePiece, Coordinate, Event, Game, Move,
-    State,
+    initial_state, move_piece, moves_available::autocomplete_to, CantMovePiece, Coordinate, Event,
+    Move, State,
 };
 
 use serde_wasm_bindgen as bridge;
@@ -24,7 +24,7 @@ pub struct MoveExecutionResult {
 
 #[wasm_bindgen]
 pub fn new_game() -> Result<JsValue, JsError> {
-    let state = Game::new().start();
+    let state = initial_state();
     bridge::to_value(&state).map_err(|e| JsError::new(&format!("Serialization error: {}", e)))
 }
 

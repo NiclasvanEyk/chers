@@ -19,9 +19,6 @@ mod move_execution;
 /// Computes whether a given state represents check or even mate.
 mod check;
 
-/// Autonomusly generate moves and play the game.
-pub mod engine;
-
 /// Parses a description in Forsyth–Edwards Notation.
 pub mod fen;
 

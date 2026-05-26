@@ -108,7 +108,8 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                         *state = new_state;
 
                         // Check for checkmate
-                        let is_checkmate = events.iter().any(|e| matches!(e, chers::Event::Mate));
+                        let is_checkmate =
+                            events.iter().any(|e| matches!(e, chers::Event::CheckMate));
 
                         if is_checkmate {
                             // Determine winner info before transitioning phase

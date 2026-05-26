@@ -108,7 +108,7 @@ fn inner_move_piece(
             });
 
             if check_by_opponent_is_mate(&new_state) {
-                events.push(Event::Mate);
+                events.push(Event::CheckMate);
             }
         }
     }

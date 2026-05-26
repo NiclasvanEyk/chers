@@ -81,7 +81,7 @@ impl TerminalChersMatch {
 
                         for event in events {
                             println!("{:?}", event);
-                            if let chers::Event::Mate = event {
+                            if let chers::Event::CheckMate = event {
                                 println!("{:?} wins!", current_player);
                                 break 'game;
                             }

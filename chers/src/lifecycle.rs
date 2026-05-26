@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 
-use crate::PromotedFigure;
+use crate::{Move, PromotedFigure};
 
 use super::{CastlingRights, Color::White, Coordinate, Piece, State, INITIAL_BOARD};
 
@@ -23,7 +23,7 @@ pub enum Event {
     Check {
         by: Vec<(Coordinate, Piece)>,
     },
-    Mate,
+    CheckMate,
 }
 
 pub fn initial_state() -> State {

@@ -84,6 +84,7 @@ fn is_check(events: &[Event]) -> bool {
         Event::Promotion { to: _ } => false,
         Event::Check { by: _ } => true,
         Event::CheckMate => false,
+        Event::StaleMate => false,
     })
 }
 
@@ -102,5 +103,6 @@ fn is_mate(events: &[Event]) -> bool {
         Event::Promotion { to: _ } => false,
         Event::Check { by: _ } => false,
         Event::CheckMate => true,
+        Event::StaleMate => true,
     })
 }

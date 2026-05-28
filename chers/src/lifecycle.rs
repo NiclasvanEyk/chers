@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 
-use crate::PromotedFigure;
+use crate::{Player, PromotedFigure};
 
 use super::{CastlingRights, Color::White, Coordinate, Piece, State, INITIAL_BOARD};
 
@@ -31,8 +31,13 @@ pub enum Event {
     Check { by: Vec<(Coordinate, Piece)> },
 
     /// The move checks the opponents king in a way where it is unable to move out
-    /// of the check. This ends the game.
+    /// of the check. The current player wins the game.
     CheckMate,
+
+    /// The move does not check the oponnents king, but leads to it being unable to
+    /// make another legal move (one that would not lead to it being checked). This
+    /// ends the game in a draw.
+    StaleMate,
 }
 
 pub fn initial_state() -> State {
@@ -44,4 +49,14 @@ pub fn initial_state() -> State {
         halfmove_clock: 0,
         fullmove_number: 1,
     }
+}
+
+pub enum FinishedReason {
+    Checkmate,
+    Stalemate,
+    Resignation,
+    DrawAgreement,
+    FiftyMoveRule,
+    InsufficientMaterial,
+    ThreefoldRepetition,
 }

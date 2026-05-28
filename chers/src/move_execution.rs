@@ -110,6 +110,8 @@ fn inner_move_piece(
             if check_by_opponent_is_mate(&new_state) {
                 events.push(Event::CheckMate);
             }
+        } else if check_by_opponent_is_mate(&new_state) {
+            events.push(Event::StaleMate);
         }
     }
 

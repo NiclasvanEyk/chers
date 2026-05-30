@@ -2,7 +2,7 @@
 //!
 //! Provides a personalized mirror of the room state for clients.
 
-use chers::{Color, State};
+use chers::{Color, Move, State};
 
 use crate::v2::{events::GameEndReason, types::User};
 
@@ -35,6 +35,8 @@ pub enum RoomStateMirror {
         board_state: State,
         /// Whether it's your turn to move
         is_your_turn: bool,
+        /// The sequence of moves played so far
+        move_history: Vec<Move>,
     },
 
     /// PostGame phase - game has ended
@@ -55,5 +57,7 @@ pub enum RoomStateMirror {
         reason: GameEndReason,
         /// Final board state
         final_board: State,
+        /// The complete sequence of moves from the game
+        move_history: Vec<Move>,
     },
 }

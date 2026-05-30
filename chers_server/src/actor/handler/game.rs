@@ -68,6 +68,7 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                 state,
                 white_player_id,
                 black_player_id,
+                move_history,
             } = &mut room.phase
             {
                 // Check if it's this player's turn based on their color assignment
@@ -106,6 +107,7 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                 match chers::move_piece(state, move_) {
                     Ok((new_state, events)) => {
                         *state = new_state;
+                        move_history.push(move_);
 
                         // Check for checkmate
                         let is_checkmate =
@@ -129,6 +131,7 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                                 final_state: state.clone(),
                                 white_player_id: white_player_id.clone(),
                                 black_player_id: black_player_id.clone(),
+                                move_history: move_history.clone(),
                             };
 
                             CommandResult {
@@ -169,6 +172,7 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                 state,
                 white_player_id,
                 black_player_id,
+                move_history,
             } = &room.phase
             {
                 // Determine who is resigning and who wins
@@ -190,6 +194,7 @@ pub fn handle_game_command(cmd: Command, room: &mut Room) -> CommandResult {
                     final_state: state.clone(),
                     white_player_id: white_player_id.clone(),
                     black_player_id: black_player_id.clone(),
+                    move_history: move_history.clone(),
                 };
 
                 CommandResult {

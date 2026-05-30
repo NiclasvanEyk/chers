@@ -6,6 +6,7 @@ use crate::actor::lease::LeaseConfig;
 #[cfg(feature = "nats")]
 use crate::actor::lease::NatsProvider;
 use crate::actor::lease::{AnyLease, LocalLease};
+use crate::actor::registry::RoomRegistry;
 use crate::communication::{
     bus::{AnyEventBus, EventBusDriver, LocalEventBus},
     command::{AnyCommandBus, DistributedCommandBus, LocalCommandBus},
@@ -262,4 +263,21 @@ enum StorageDriver {
     Redis,
     #[cfg(feature = "nats")]
     Nats,
+}
+
+pub async fn room_registry()
+-> Result<RoomRegistry<AnyLease, AnyStorage, AnyEventBus<Event>, AnyCommandBus>, Box<dyn Error>> {
+    Ok(RoomRegistry::new(
+        Arc::new(lease_provider().await?),
+        Arc::new(storage().await?),
+        Arc::new(event_bus().await?),
+        Arc::new(command_bus().await?),
+    ))
+}
+
+pub fn server_address() -> String {
+    std::env::var("PORT")
+        .map(|p| format!("0.0.0.0:{p}"))
+        .or_else(|_| std::env::var("CHERS_ADDR"))
+        .unwrap_or_else(|_| "0.0.0.0:8000".into())
 }

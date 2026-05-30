@@ -1,7 +1,7 @@
 use std::process::exit;
 
-use clap::Parser;
 use chers_cli::modes::local::TerminalChersMatch;
+use clap::Parser;
 
 #[derive(Parser)]
 #[command(name = "chers")]

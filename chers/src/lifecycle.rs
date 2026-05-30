@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 
-use crate::{Player, PromotedFigure};
+use crate::PromotedFigure;
 
 use super::{CastlingRights, Color::White, Coordinate, Piece, State, INITIAL_BOARD};
 

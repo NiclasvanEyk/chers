@@ -5,8 +5,10 @@ pub(crate) mod otel;
 pub(crate) mod sentry_integration;
 
 use std::env;
+use std::fmt::Display;
 
 use serde_json::Value as JsonValue;
+use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::prelude::*;
 
@@ -47,6 +49,25 @@ impl Config {
     }
 }
 
+pub enum TelemetryFeatureMode {
+    /// Feature is not compiled
+    Disabled,
+    /// Feature code is compiled, but e.g. an important env var like SENTRY_DSN is missing
+    InActive,
+    /// Integration working and actively gathering telemetry
+    Active,
+}
+
+impl Display for TelemetryFeatureMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TelemetryFeatureMode::Disabled => write!(f, "disabled"),
+            TelemetryFeatureMode::InActive => write!(f, "inactive"),
+            TelemetryFeatureMode::Active => write!(f, "active"),
+        }
+    }
+}
+
 pub struct Telemetry {
     pub config: Config,
 
@@ -81,6 +102,34 @@ impl Telemetry {
             #[cfg(feature = "sentry")]
             sentry_guard: self::sentry_integration::init(&config),
         };
+    }
+
+    pub fn otel_feature_mode(&self) -> TelemetryFeatureMode {
+        #[cfg(not(feature = "otel"))]
+        return TelemetryFeatureMode::Disabled;
+        #[cfg(feature = "otel")]
+        {
+            match self.tracer_provider {
+                Some(_) => TelemetryFeatureMode::Active,
+                None => TelemetryFeatureMode::Disabled,
+            }
+        }
+    }
+
+    pub fn sentry_feature_mode(&self) -> TelemetryFeatureMode {
+        #[cfg(not(feature = "sentry"))]
+        return TelemetryFeatureMode::Disabled;
+        #[cfg(feature = "sentry")]
+        {
+            match self.sentry_guard {
+                Some(_) => TelemetryFeatureMode::Active,
+                None => TelemetryFeatureMode::Disabled,
+            }
+        }
+    }
+
+    pub fn log_level(&self) -> LevelFilter {
+        tracing::level_filters::LevelFilter::current()
     }
 
     fn env_filter() -> EnvFilter {

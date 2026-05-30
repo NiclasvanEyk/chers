@@ -17,11 +17,11 @@ use super::proxy::{PublisherScope, Room, RoomEventSubscriber};
 /// Each room has at most one actor across the cluster, guaranteed by
 /// the lease provider. The actor owns room state, processes commands,
 /// and publishes events to the bus.
-pub struct RoomRegistry<P, S, B, T> {
-    lease: Arc<P>,
+pub struct RoomRegistry<L, S, B, C> {
+    lease: Arc<L>,
     storage: Arc<S>,
     event_bus: Arc<B>,
-    command_bus: Arc<T>,
+    command_bus: Arc<C>,
     active_rooms: Arc<RwLock<HashSet<RoomId>>>,
 }
 
@@ -53,13 +53,13 @@ impl From<LeaseError> for RegistryError {
 }
 
 impl<
-    P: lease::Provider,
+    L: lease::Provider,
     S: Storage + 'static,
     B: EventBus<Item = Event> + 'static,
-    T: CommandBus<Cmd = Command> + 'static,
-> RoomRegistry<P, S, B, T>
+    C: CommandBus<Cmd = Command> + 'static,
+> RoomRegistry<L, S, B, C>
 {
-    pub fn new(lease: Arc<P>, storage: Arc<S>, event_bus: Arc<B>, command_bus: Arc<T>) -> Self {
+    pub fn new(lease: Arc<L>, storage: Arc<S>, event_bus: Arc<B>, command_bus: Arc<C>) -> Self {
         Self {
             lease,
             storage,
@@ -77,7 +77,7 @@ impl<
     /// Get or create a room, spawning an actor if needed.
     ///
     /// Returns `LeaseHeldElsewhere` if another server holds the lease.
-    pub async fn get_or_create(&self, room_id: RoomId) -> Result<Room<B, T>, RegistryError> {
+    pub async fn get_or_create(&self, room_id: RoomId) -> Result<Room<B, C>, RegistryError> {
         if !self.active_rooms.read().contains(&room_id) {
             let guard = self
                 .lease
@@ -111,7 +111,7 @@ impl<
         Ok(Room {
             room_id,
             subscriber: RoomEventSubscriber::new(Arc::clone(&self.event_bus)),
-            command_bus: T::clone(&self.command_bus),
+            command_bus: C::clone(&self.command_bus),
         })
     }
 }

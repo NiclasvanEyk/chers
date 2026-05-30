@@ -1,16 +1,18 @@
 use crate::{
-    check::checking_pieces_of_opponent, force_move_piece, movement_patterns, piece_at, Move,
-    Player, PromotedFigure,
+    check::checking_pieces_of_opponent, force_move_piece, movement_patterns, piece_at, Coordinate,
+    Move, Player, PromotedFigure, State,
 };
 
-use super::{Coordinate, State};
-
-/// Returns all *legal* moves.
-pub fn autocomplete_to(state: &State, from: Coordinate) -> Vec<Coordinate> {
+/// Returns all *legal* moves for the piece at the given coordinate.
+pub fn moves_available(state: &State, from: Coordinate) -> Vec<Coordinate> {
     let possible = possible_moves(state, from);
-    let without_chk = without_checks(state, from, possible);
+    without_checks(state, from, possible)
+}
 
-    without_chk
+/// Checks if a move is legal for the given state.
+pub fn is_valid_move(state: &State, r#move: Move) -> bool {
+    let legal_moves = moves_available(state, r#move.from);
+    legal_moves.contains(&r#move.to)
 }
 
 /// Returns all possible moves, also including ones that are not legal, e.g.
@@ -104,7 +106,7 @@ mod tests {
         let notation = "rnbqkbnr/pppp3p/5pp1/4P3/3Q4/8/PPP1PPPP/RNB1KBNR w KQkq - 0 4";
         let state = parse_state(notation).unwrap();
 
-        let moves = autocomplete_to(&state, Cell::D4);
+        let moves = moves_available(&state, Cell::D4);
 
         for expected in [
             // Up/Down
@@ -146,7 +148,7 @@ mod tests {
         let notation = "rnbqkbnr/pP1ppppp/8/8/8/8/1pPPPPPP/RNBQKBNR w KQkq - 0 5";
         let state = parse_state(notation).unwrap();
 
-        let moves = autocomplete_to(&state, Cell::B7);
+        let moves = moves_available(&state, Cell::B7);
 
         for expected in [Cell::A8, Cell::C8] {
             assert!(
@@ -164,7 +166,7 @@ mod tests {
     // fn king_cant_move_if_result_still_checks() {
     //     let notation = "rnb1kbnr/pppp1ppp/8/4P3/7q/8/PPPPP1PP/RNBQKBNR w KQkq - 0 1";
     //     let state = parse_state(notation).unwrap();
-    //     let available_moves = autocomplete_to(&state, Cell::e1);
+    //     let available_moves = moves_available(&state, Cell::e1);
     //
     //     assert!(
     //         !is_checked_by_opponent(&state).is_empty(),

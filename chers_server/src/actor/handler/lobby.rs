@@ -111,6 +111,7 @@ pub fn handle_lobby_command(cmd: Command, room: &mut Room) -> CommandResult {
                     state: chers::initial_state(),
                     white_player_id: white.id.clone(),
                     black_player_id: black.id.clone(),
+                    move_history: vec![],
                 };
                 CommandResult {
                     response: CommandResponse::Accepted,
@@ -478,7 +479,7 @@ mod tests {
             "expected both players to be assigned to different colors randomly"
         );
         assert!(
-            matches!(room.phase, Phase::Game { state: _, white_player_id, black_player_id }
+            matches!(room.phase, Phase::Game { state: _, white_player_id, black_player_id, .. }
                 if (&white_player_id == "user-a" && &black_player_id == "user-b")
                     || (&white_player_id == "user-b" && &black_player_id == "user-a")
             )

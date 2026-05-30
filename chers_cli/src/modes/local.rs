@@ -1,4 +1,4 @@
-use chers::{available_moves, initial_state, move_piece, Coordinate, Move, State};
+use chers::{initial_state, move_piece, moves::moves_available, Coordinate, Move, State};
 
 use crate::{
     rendering::TerminalRenderer,
@@ -29,7 +29,7 @@ impl TerminalChersMatch {
     fn print_possible_moves(&self, from: Coordinate) {
         println!("Possible moves:");
 
-        for possible in available_moves(&self.game_state, from) {
+        for possible in moves_available(&self.game_state, from) {
             println!("- {}", possible)
         }
     }
@@ -81,7 +81,7 @@ impl TerminalChersMatch {
 
                         for event in events {
                             println!("{:?}", event);
-                            if let chers::Event::Mate = event {
+                            if let chers::Event::CheckMate = event {
                                 println!("{:?} wins!", current_player);
                                 break 'game;
                             }

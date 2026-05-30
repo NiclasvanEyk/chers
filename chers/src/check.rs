@@ -1,6 +1,6 @@
 use crate::{
-    force_move_piece, moves_available::possible_moves, pieces, Board, Coordinate, Figure, Move,
-    Piece, Player, State,
+    force_move_piece, moves::possible_moves, pieces, Board, Coordinate, Figure, Move, Piece,
+    Player, State,
 };
 
 /// Computes if any of the current player's pieces can capture their opponents king.

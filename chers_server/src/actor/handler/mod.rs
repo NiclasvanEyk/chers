@@ -100,6 +100,7 @@ fn build_state_mirror(user: User, room: &Room) -> CommandResult {
             state,
             white_player_id,
             black_player_id,
+            move_history,
         } => {
             let you = resolve_user(&room.players, &user).clone();
             let (your_color, opponent_color, opponent) = if user.id == *white_player_id {
@@ -129,6 +130,7 @@ fn build_state_mirror(user: User, room: &Room) -> CommandResult {
                 opponent_color,
                 board_state: state.clone(),
                 is_your_turn,
+                move_history: move_history.clone(),
             }
         }
 
@@ -139,6 +141,7 @@ fn build_state_mirror(user: User, room: &Room) -> CommandResult {
             final_state,
             white_player_id,
             black_player_id,
+            move_history,
         } => {
             let you = resolve_user(players, &user).clone();
             let opponent = players
@@ -172,6 +175,7 @@ fn build_state_mirror(user: User, room: &Room) -> CommandResult {
                 you_won,
                 reason: reason.clone().unwrap_or(GameEndReason::Checkmate),
                 final_board: final_state.clone(),
+                move_history: move_history.clone(),
             }
         }
     };

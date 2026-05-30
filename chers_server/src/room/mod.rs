@@ -29,6 +29,12 @@ pub enum Phase {
         white_player_id: UserId,
         /// The player ID controlling the black pieces.
         black_player_id: UserId,
+        /// The sequence of moves made so far.
+        ///
+        /// Moves are stored in order — even indices are White's moves,
+        /// odd indices are Black's moves. Replaying from the initial
+        /// position reconstructs the board at any point.
+        move_history: Vec<chers::Move>,
     },
     PostGame {
         winner: Option<UserId>,
@@ -41,6 +47,8 @@ pub enum Phase {
         white_player_id: UserId,
         /// The player who played black.
         black_player_id: UserId,
+        /// The complete sequence of moves from the game.
+        move_history: Vec<chers::Move>,
     },
 }
 
